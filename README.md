@@ -1,154 +1,101 @@
-# ActivityBot - Telegram бот для выбора случайных активностей
+# DCMaid Bot
 
-Бот для создания пулов (категорий) активностей с механизмом справедливого случайного выбора с учётом пенальти.
+A Telegram bot for creating pools of activities with a fair random selection mechanism. Perfect for teams or groups who need to assign tasks or activities fairly.
 
-## Возможности
+## Features
 
-- Создание и управление пулами (категориями) активностей
-- Добавление активностей в пулы
-- Система приглашений - только создатель пула может приглашать участников
-- Случайный выбор активности с учётом справедливого распределения
-- Система пенальти для равномерного использования активностей
-- Работа только в личных сообщениях для защиты приватности
+- **Pool Management**: Create, join, exit, and view pools
+- **Activity Management**: Add and list activities within pools
+- **Smart Selection**: Fair and random selection of activities
+- **Invitation System**: Only pool creators can invite other users to their pools
+- **Penalty System**: Ensures all activities are used equally over time
 
-## Технические детали
+## Technical Details
 
-Проект реализован на Python с использованием:
-- aiogram 3.x - библиотека для Telegram Bot API
-- pydantic - валидация данных
-- pytest - тестирование с поддержкой asyncio
+- **Language**: Python 3.9+
+- **Framework**: aiogram 3.x (Telegram Bot API)
+- **Storage**: JSON file-based storage
+- **Deployment**: Vercel serverless functions
 
-## Структура проекта
+## Project Structure
 
 ```
-project-root/
-├── bot.py                 # Основной файл запуска бота
-├── handlers/
-│   ├── categories.py      # Хендлеры управления пулами
-│   ├── activities.py      # Хендлеры управления активностями
-│   ├── selection.py       # Хендлеры выбора активностей
-│   └── info.py            # Хендлеры получения информации
-├── services/
-│   ├── pool_service.py    # Бизнес-логика для управления пулами
-│   ├── activity_service.py# Бизнес-логика для управления активностями
-│   └── selection_service.py # Бизнес-логика выборов и пенальти
-├── middlewares/
-│   └── private_only.py    # Middleware для ограничения работы в ЛС
-├── models/
-│   └── data.py            # Описание структур данных
-├── storage/
-│   └── storage.json       # Хранилище данных JSON
-├── tests/                 # Тесты проекта
-│   ├── test_services.py   # Тесты сервисных функций
-│   └── test_handlers.py   # Тесты хендлеров
-├── conftest.py            # Конфигурация pytest
-├── requirements.txt       # Python зависимости
-└── .env                   # Переменные окружения
+dcmaidbot/
+├── api/                  # Vercel serverless functions
+├── handlers/             # Command and callback handlers
+├── middlewares/          # Request processing middlewares
+├── services/             # Business logic and utilities
+├── storage/              # Data storage
+├── tests/                # Test files
+├── .env                  # Environment variables (not in repo)
+├── .env.example          # Example environment file
+├── .gitignore            # Git ignore file
+├── bot.py                # Bot entry point for local development
+├── requirements.txt      # Python dependencies
+└── README.md             # This file
 ```
 
-## Установка и запуск
+## Installation
 
-### Локальный запуск
+1. Clone this repository:
+   ```
+   git clone https://github.com/yourusername/dcmaidbot.git
+   cd dcmaidbot
+   ```
 
-1. Клонируйте репозиторий:
-```bash
-git clone <repository-url>
-cd <repository-folder>
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Create a `.env` file with your bot token:
+   ```
+   BOT_TOKEN=your_telegram_bot_token_here
+   ```
+
+4. Run the bot:
+   ```
+   python bot.py
+   ```
+
+## Bot Commands
+
+- `/start` - Initialize the bot
+- `/help` - Display help information
+- `/create_pool` - Create a new activity pool
+- `/join_pool` - Join an existing pool with an invite code
+- `/invite` - Invite users to your created pools (only creators can invite)
+- `/exit_pool` - Leave a pool you're participating in
+- `/my_pools` - List all pools you're participating in
+- `/add_activity` - Add a new activity to a pool
+- `/list_activities` - List all activities in a pool
+- `/select` - Select a random activity from the pool
+- `/pool_info` - Display information about a pool
+- `/penalties` - Show and manage penalties for activities
+
+## Development
+
+For local development:
+
 ```
-
-2. Создайте виртуальное окружение и активируйте его:
-```bash
-python -m venv venv
-source venv/bin/activate  # На Windows: venv\Scripts\activate
-```
-
-3. Установите зависимости:
-```bash
-pip install -r requirements.txt
-```
-
-4. Создайте файл .env с данными вашего бота:
-```
-BOT_TOKEN=your_bot_token_here
-DEBUG=False
-```
-
-5. Запустите бота в режиме long polling:
-```bash
 python bot.py
 ```
 
-### Деплой на Vercel
+For testing the serverless functions:
 
-1. Создайте аккаунт на [Vercel](https://vercel.com) и установите [Vercel CLI](https://vercel.com/docs/cli):
-```bash
-npm i -g vercel
+```
+cd api
+python -m http.server 8000
 ```
 
-2. Авторизуйтесь в Vercel CLI:
-```bash
-vercel login
+## Testing
+
+Run tests with:
+
 ```
-
-3. Задайте переменные окружения на Vercel (замените YOUR_BOT_TOKEN на ваш токен):
-```bash
-vercel env add BOT_TOKEN
-```
-
-4. Разверните проект на Vercel:
-```bash
-vercel
-```
-
-5. После успешного деплоя, установите вебхук для вашего бота:
-```bash
-python set_webhook.py https://your-vercel-project-url.vercel.app/api/webhook
-```
-
-## Команды бота
-
-- `/start` - Начало работы с ботом
-- `/help` - Показать справку
-- `/create_pool` - Создать новый пул активностей
-- `/join_pool [код]` - Присоединиться к существующему пулу по коду приглашения
-- `/invite` - Пригласить участника в пул (только для создателя пула)
-- `/exit_pool` - Выйти из пула
-- `/my_pools` - Показать ваши пулы
-- `/add_activity` - Добавить активность в пул
-- `/list_activities` - Показать активности в пуле
-- `/select [номер_пула]` - Выбрать случайную активность
-- `/pool_info [название_пула]` - Показать информацию о пуле
-- `/penalties` - Показать информацию о пенальти
-
-## Система приглашений
-
-В этом боте **только создатель пула** может приглашать новых участников. Система работает следующим образом:
-
-1. Создатель пула использует команду `/invite`
-2. Выбирает пул из списка своих пулов
-3. Получает уникальный код приглашения
-4. Отправляет этот код приглашаемому пользователю
-5. Пользователь присоединяется с помощью `/join_pool код_приглашения`
-
-## Система выбора активностей
-
-Активности выбираются с учетом:
-- Частоты предыдущих выборов (менее используемые имеют больший шанс)
-- Времени последнего выбора (недавно выбранные имеют меньший шанс)
-- Системы пенальти (участник получает штраф после выбора)
-
-## Разработка и тестирование
-
-Для запуска тестов используйте:
-```bash
 pytest tests/
 ```
 
-При разработке используются:
-- pytest-asyncio для асинхронного тестирования
-- MemoryStorage для хранения состояний FSM
-- JSON для постоянного хранения данных
+## License
 
-## Лицензия
-
-MIT 
+This project is licensed under the MIT License - see the LICENSE file for details. 
