@@ -59,12 +59,19 @@ def _normalize_weights(weights: List[float]) -> List[float]:
 
 def _update_penalty(pool: Pool, user_id: int, selected_index: int) -> None:
     """Update user penalty after selection"""
-    # Initialize penalty if not exists
-    if user_id not in pool.penalties:
-        pool.penalties[user_id] = 0.0
+    # Get the selected activity
+    if selected_index < 0 or selected_index >= len(pool.activities):
+        return
     
-    # Increase penalty for the user who made the selection
-    pool.penalties[user_id] += PENALTY_BASE
+    # Get the user who created the activity (added_by)
+    activity_creator_id = pool.activities[selected_index].added_by
+    
+    # Initialize penalty if not exists
+    if activity_creator_id not in pool.penalties:
+        pool.penalties[activity_creator_id] = 0.0
+    
+    # Increase penalty for the user who created the activity
+    pool.penalties[activity_creator_id] += PENALTY_BASE
     
     # Decay penalties for all users
     for uid in pool.penalties:

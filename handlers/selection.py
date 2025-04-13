@@ -82,9 +82,11 @@ async def process_direct_selection(message: Message, state: FSMContext, indices:
     # Format response
     pool = pool_service.get_pool(pool_name)
     creator_username = "Unknown"
+    creator_id = activity.added_by
+    
     if pool:
         for participant in pool.participants:
-            if participant.user_id == activity.added_by:
+            if participant.user_id == creator_id:
                 creator_username = participant.username
                 break
     
@@ -95,10 +97,10 @@ async def process_direct_selection(message: Message, state: FSMContext, indices:
         f"Выбрано раз: {activity.selection_count}\n"
     )
     
-    # Add penalty info if available
-    user_penalty = pool.penalties.get(message.from_user.id, 0.0)
-    if user_penalty > 0:
-        response += f"\nВаш текущий штраф: {user_penalty:.2f}"
+    # Add penalty info for the activity creator
+    creator_penalty = pool.penalties.get(creator_id, 0.0)
+    if creator_penalty > 0:
+        response += f"\nШтраф автора активности: {creator_penalty:.2f}"
     
     await message.answer(response, parse_mode="HTML")
     await state.clear()
@@ -133,6 +135,8 @@ async def cmd_penalties(message: Message, state: FSMContext):
         return
     
     response = "📊 <b>Информация о штрафах</b>:\n\n"
+    response += "<i>Штрафы накладываются на создателей активностей, когда их активности выбираются. "
+    response += "Чем выше штраф, тем реже будут выбираться активности этого пользователя в будущем.</i>\n\n"
     
     for pool in user_pools:
         response += f"<b>Пул: {pool.name}</b>\n"
@@ -141,7 +145,7 @@ async def cmd_penalties(message: Message, state: FSMContext):
             response += "Нет активных штрафов\n\n"
             continue
         
-        for user_id, penalty in pool.penalties.items():
+        for user_id, penalty in sorted(pool.penalties.items(), key=lambda x: x[1], reverse=True):
             if penalty > 0:
                 # Find username
                 username = "Unknown"
@@ -149,6 +153,10 @@ async def cmd_penalties(message: Message, state: FSMContext):
                     if participant.user_id == user_id:
                         username = participant.username
                         break
+                
+                # Mark the current user
+                if user_id == message.from_user.id:
+                    username += " (вы)"
                 
                 response += f"{username}: {penalty:.2f}\n"
         
