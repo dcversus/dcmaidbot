@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, validator
-from typing import List, Dict, Optional
+from pydantic import BaseModel, Field, field_validator, ConfigDict
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 import json
 
@@ -14,11 +14,15 @@ class Activity(BaseModel):
     added_at: datetime = Field(default_factory=datetime.now)
     last_selected: Optional[datetime] = None
     selection_count: int = 0
-
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    
+    def model_dump(self, **kwargs) -> Dict[str, Any]:
+        data = super().model_dump(**kwargs)
+        # Convert datetime objects to ISO format
+        if 'added_at' in data and data['added_at']:
+            data['added_at'] = data['added_at'].isoformat()
+        if 'last_selected' in data and data['last_selected']:
+            data['last_selected'] = data['last_selected'].isoformat()
+        return data
 
 class Pool(BaseModel):
     name: str
@@ -28,28 +32,28 @@ class Pool(BaseModel):
     penalties: Dict[int, float] = Field(default_factory=dict)
     invites: Dict[str, int] = Field(default_factory=dict)  # Code -> Inviter ID
 
-    @validator('name')
+    @field_validator('name')
     def name_must_not_be_empty(cls, v):
         if not v or not v.strip():
             raise ValueError('Pool name cannot be empty')
         return v
 
     def to_dict(self):
-        return json.loads(self.json())
+        return self.model_dump(mode='json')
 
 class Storage(BaseModel):
     pools: Dict[str, Pool] = Field(default_factory=dict)
 
     def save_to_file(self, filename: str):
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write(self.json())
+            f.write(self.model_dump_json())
 
     @classmethod
     def load_from_file(cls, filename: str):
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            return cls.parse_obj(data)
+            return cls.model_validate(data)
         except FileNotFoundError:
             return cls()
         except json.JSONDecodeError:
