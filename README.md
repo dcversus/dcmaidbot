@@ -83,6 +83,12 @@ For local development:
 python bot.py
 ```
 
+To test the Vercel serverless function locally:
+
+```
+python test_vercel_handler.py
+```
+
 ## Vercel Deployment
 
 1. Create a Vercel account and install the Vercel CLI:
@@ -95,34 +101,37 @@ python bot.py
    vercel login
    ```
 
-3. Set up your environment variables in the Vercel dashboard or use the CLI:
-   ```
-   vercel env add BOT_TOKEN
-   ```
+3. Set up your environment variables in the Vercel dashboard:
+   - Go to your project settings
+   - Navigate to "Environment Variables"
+   - Add `BOT_TOKEN=your_telegram_bot_token_here`
 
 4. Deploy to Vercel:
    ```
    vercel
    ```
 
-5. Set the webhook URL for your bot:
+5. Set the webhook URL for your bot (replace with your actual deployment URL):
    ```
-   python set_webhook.py https://your-vercel-app.vercel.app
-   ```
-
-6. Test your webhook:
-   ```
-   python test_webhook.py https://your-vercel-app.vercel.app
+   python set_webhook.py https://your-project.vercel.app
    ```
 
 ## Troubleshooting Vercel Deployment
 
 If you encounter issues with your Vercel deployment:
 
-1. Check the logs in the Vercel dashboard
+1. Check Vercel logs in the Vercel dashboard
 2. Make sure your environment variables are properly set
-3. Ensure the deployment contains your latest changes
-4. Verify that the `/api/index.py` file is correctly structured with a `handler` function
+3. Verify the handler function in `api/index.py` is compatible with Vercel's serverless function format
+4. Test the webhook with:
+   ```
+   python test_webhook.py https://your-project.vercel.app
+   ```
+5. Use the local test script to verify the handler works:
+   ```
+   python test_vercel_handler.py
+   ```
+6. Check for storage directory permissions - you may need to use a different storage approach for Vercel
 
 ## Testing
 
