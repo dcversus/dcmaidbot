@@ -5,23 +5,42 @@ from models.data import Pool, Participant, Storage
 from datetime import datetime
 import random
 import string
+import redis
 
 # Use an absolute path that works with Vercel
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STORAGE_FILE = os.path.join(BASE_DIR, "storage", "storage.json")
 
+# Get Redis URL from environment (if available)
+REDIS_URL = os.environ.get("REDIS_URL")
+redis_client = redis.from_url(REDIS_URL) if REDIS_URL else None
+
+# Configure Storage class with Redis client if available
+if redis_client:
+    Storage.configure_redis(redis_client)
+
 def _ensure_storage_file():
+    if REDIS_URL:
+        return  # No need for file if using Redis
     os.makedirs(os.path.dirname(STORAGE_FILE), exist_ok=True)
     if not os.path.exists(STORAGE_FILE):
         with open(STORAGE_FILE, 'w') as f:
             json.dump({"pools": {}}, f)
 
 def _get_storage() -> Storage:
-    _ensure_storage_file()
-    return Storage.load_from_file(STORAGE_FILE)
+    # Use the enhanced Storage.load method that automatically detects storage type
+    if REDIS_URL and redis_client:
+        return Storage.load(storage_type="redis")
+    else:
+        _ensure_storage_file()
+        return Storage.load(storage_type="file", filename=STORAGE_FILE)
 
 def _save_storage(storage: Storage):
-    storage.save_to_file(STORAGE_FILE)
+    # Use the enhanced Storage.save method that automatically detects storage type
+    if REDIS_URL and redis_client:
+        storage.save(storage_type="redis")
+    else:
+        storage.save(storage_type="file", filename=STORAGE_FILE)
 
 def generate_invitation_code(user_id: int, pool_name: str) -> Optional[str]:
     """
