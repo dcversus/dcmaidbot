@@ -23,13 +23,13 @@ def _get_storage() -> Storage:
 def _save_storage(storage: Storage):
     storage.save_to_file(STORAGE_FILE)
 
-def generate_invitation_code(pool_name: str, user_id: int) -> Optional[str]:
+def generate_invitation_code(user_id: int, pool_name: str) -> Optional[str]:
     """
     Generate an invitation code for a pool.
-    Only participants of the pool can generate invitation codes.
+    Only the creator of the pool can generate invitation codes.
     
-    :param pool_name: The name of the pool
     :param user_id: The user ID of the participant generating the code
+    :param pool_name: The name of the pool
     :return: The invitation code or None if the user is not authorized
     """
     storage = _get_storage()
@@ -40,11 +40,8 @@ def generate_invitation_code(pool_name: str, user_id: int) -> Optional[str]:
     
     pool = storage.pools[pool_name]
     
-    # Check if the user is a participant
-    for participant in pool.participants:
-        if participant.user_id == user_id:
-            break
-    else:
+    # Check if the user is the creator
+    if pool.creator_id != user_id:
         return None
     
     # Simple code generation - combine pool name with random chars
@@ -159,6 +156,27 @@ def get_pool(pool_name: str) -> Optional[Pool]:
     storage = _get_storage()
     
     return storage.pools.get(pool_name)
+
+def get_pool_by_name_and_creator(pool_name: str, creator_id: int) -> Optional[Pool]:
+    """Get a pool by name and creator ID"""
+    storage = _get_storage()
+    
+    pool = storage.pools.get(pool_name)
+    if pool and pool.creator_id == creator_id:
+        return pool
+    
+    return None
+
+def get_pools_by_creator(creator_id: int) -> List[Pool]:
+    """Get all pools where the user is the creator"""
+    storage = _get_storage()
+    
+    creator_pools = []
+    for pool_name, pool in storage.pools.items():
+        if pool.creator_id == creator_id:
+            creator_pools.append(pool)
+    
+    return creator_pools
 
 def is_user_authorized_for_pool(pool_name: str, user_id: int) -> bool:
     """Check if a user is authorized to invite others to a pool (only the creator can invite)"""

@@ -2,7 +2,6 @@ import json
 import os
 import sys
 import logging
-from http.server import BaseHTTPRequestHandler
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -59,25 +58,40 @@ async def process_update(update_data):
         logging.error(f"Error processing update: {e}")
         return False
 
-# Vercel serverless function handler
-async def handle_vercel_request(method, body_data):
+# Primary handler for Vercel serverless functions
+def handler(request):
+    """Handle HTTP requests for Vercel"""
+    # Get request method
+    method = request.get('method', '')
+    
+    # Support for different Vercel event formats
+    if not method:
+        # Try to extract method from httpMethod
+        method = request.get('httpMethod', 'GET')
+    
+    # Get request body
+    body = request.get('body', '{}')
+    
+    # For GET requests, return a simple status page
     if method == 'GET':
         return {
             'statusCode': 200,
             'body': 'Bot webhook is active!'
         }
+    
+    # For POST requests, process the Telegram update
     elif method == 'POST':
         try:
-            # Parse the request body
-            update_data = json.loads(body_data) if isinstance(body_data, str) else body_data
+            # Parse the update data
+            update_data = json.loads(body) if isinstance(body, str) else body
             
             # Process the update
-            result = await process_update(update_data)
+            result = asyncio.run(process_update(update_data))
             
-            # Return response
+            # Return appropriate response
             if result:
                 return {
-                    'statusCode': 200, 
+                    'statusCode': 200,
                     'body': 'OK'
                 }
             else:
@@ -91,68 +105,39 @@ async def handle_vercel_request(method, body_data):
                 'statusCode': 500,
                 'body': f'Internal server error: {str(e)}'
             }
+    
+    # For unsupported methods, return 405 Method Not Allowed
     else:
         return {
             'statusCode': 405,
             'body': 'Method not allowed'
         }
 
-# BaseHTTPRequestHandler for local testing
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        self.wfile.write('Bot webhook is active!'.encode())
-        
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        
-        # Parse the JSON data
-        try:
-            update_data = json.loads(post_data.decode('utf-8'))
-            # Process the update
-            result = asyncio.run(process_update(update_data))
-            
-            # Send response
-            self.send_response(200 if result else 400)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(b'OK' if result else b'Failed to process update')
-        except Exception as e:
-            logging.error(f"Error in webhook handler: {e}")
-            self.send_response(500)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(f'Internal server error: {str(e)}'.encode())
-
-# Main entry point for Vercel serverless functions
-def handler(event, context):
-    """Handle Vercel serverless function requests"""
-    try:
-        # For Vercel, we need to adapt the event format
-        method = event.get('httpMethod', '')
-        body = event.get('body', '{}')
-        
-        # Run the async handler
-        response = asyncio.run(handle_vercel_request(method, body))
-        
-        return {
-            'statusCode': response.get('statusCode', 500),
-            'body': response.get('body', 'Error')
-        }
-    except Exception as e:
-        logging.error(f"Error in handler: {e}")
-        return {
-            'statusCode': 500,
-            'body': f'Server error: {str(e)}'
-        }
-
 # For local testing
 if __name__ == "__main__":
-    from http.server import HTTPServer
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    
+    class TestHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            result = handler({'method': 'GET'})
+            self.send_response(result['statusCode'])
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(result['body'].encode())
+        
+        def do_POST(self):
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            
+            result = handler({'method': 'POST', 'body': post_data})
+            
+            self.send_response(result['statusCode'])
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(result['body'].encode())
+    
+    # Start local test server
     port = int(os.environ.get("PORT", 8000))
-    server = HTTPServer(('', port), Handler)
+    server = HTTPServer(('', port), TestHandler)
     print(f"Starting server on port {port}...")
     server.serve_forever() 
