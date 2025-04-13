@@ -19,4 +19,8 @@ logs/
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Vercel
+.vercel
+.venv 

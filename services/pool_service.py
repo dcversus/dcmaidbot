@@ -6,7 +6,9 @@ from datetime import datetime
 import random
 import string
 
-STORAGE_FILE = "storage/storage.json"
+# Use an absolute path that works with Vercel
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STORAGE_FILE = os.path.join(BASE_DIR, "storage", "storage.json")
 
 def _ensure_storage_file():
     os.makedirs(os.path.dirname(STORAGE_FILE), exist_ok=True)

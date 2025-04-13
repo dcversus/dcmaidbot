@@ -1,0 +1,10 @@
+{
+  "name": "dcmaidbot",
+  "version": "1.0.0",
+  "description": "Telegram bot for random activity selection",
+  "main": "api/webhook.py",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "private": true
+} 
