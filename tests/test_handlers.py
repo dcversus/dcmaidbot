@@ -149,7 +149,7 @@ async def test_handle_add_activity_command(mock_get_pools, mock_message, mock_st
     await activities.cmd_add_activity(mock_message, mock_state)
     
     # Check that state was set and user_pools was stored
-    mock_state.set_state.assert_called_once_with(activities.ActivityAddition.selecting_pool)
+    mock_state.set_state.assert_called_once_with(activities.ActivityManagement.selecting_pool)
     mock_state.update_data.assert_called_once()
     
     # Reset mocks
@@ -166,7 +166,7 @@ async def test_handle_add_activity_command(mock_get_pools, mock_message, mock_st
     
     # Check that state was updated and set to entering_content
     mock_state.update_data.assert_called_once_with(selected_pool="test_pool")
-    mock_state.set_state.assert_called_once_with(activities.ActivityAddition.entering_content)
+    mock_state.set_state.assert_called_once_with(activities.ActivityManagement.entering_activity_content)
     
     # Reset mocks
     mock_state.reset_mock()
