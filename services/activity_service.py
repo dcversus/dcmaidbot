@@ -33,8 +33,8 @@ def get_activities(pool_name: str) -> List[Activity]:
     
     return storage.pools[pool_name].activities
 
-def remove_activity(pool_name: str, activity_index: int) -> bool:
-    """Remove an activity from a pool by index"""
+def remove_activity(pool_name: str, activity_content: str) -> bool:
+    """Remove an activity from a pool by its content"""
     storage = _get_storage()
     
     # Check if pool exists
@@ -43,8 +43,12 @@ def remove_activity(pool_name: str, activity_index: int) -> bool:
     
     pool = storage.pools[pool_name]
     
-    # Check if activity index is valid
-    if activity_index < 0 or activity_index >= len(pool.activities):
+    # Find activity by content
+    activity_index = next((i for i, activity in enumerate(pool.activities) 
+                          if activity.content == activity_content), -1)
+    
+    # Check if activity was found
+    if activity_index == -1:
         return False
     
     # Remove activity
