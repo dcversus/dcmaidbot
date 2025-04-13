@@ -1,4 +1,3 @@
-from http.server import BaseHTTPRequestHandler
 import json
 import os
 import sys
@@ -53,45 +52,43 @@ async def process_update(update_data):
         logging.error(f"Error processing update: {e}")
         return False
 
-# For Vercel serverless function
-async def handle_request(request):
+# Standard Vercel serverless function handler
+async def handle_webhook(request):
+    """Handle HTTP request for Vercel"""
     if request.get('method') == 'GET':
         return {
-            'statusCode': 200,
-            'headers': {'Content-Type': 'text/plain'},
+            'statusCode': 200, 
             'body': 'Bot webhook is active!'
         }
     elif request.get('method') == 'POST':
         try:
-            update_data = json.loads(request.get('body', '{}'))
-            result = await process_update(update_data)
+            body = request.get('body', '{}')
+            update_data = json.loads(body) if isinstance(body, str) else body
             
-            if result:
+            success = await process_update(update_data)
+            if success:
                 return {
                     'statusCode': 200,
-                    'headers': {'Content-Type': 'text/plain'},
                     'body': 'OK'
                 }
             else:
                 return {
                     'statusCode': 400,
-                    'headers': {'Content-Type': 'text/plain'},
                     'body': 'Failed to process update'
                 }
         except Exception as e:
-            logging.error(f"Error handling request: {e}")
+            logging.error(f"Error in webhook handler: {e}")
             return {
                 'statusCode': 500,
-                'headers': {'Content-Type': 'text/plain'},
                 'body': f'Internal server error: {str(e)}'
             }
     else:
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'text/plain'},
             'body': 'Method not allowed'
         }
 
+# Vercel specific handler
 def handler(request, context):
-    """Main handler for Vercel serverless function"""
-    return asyncio.run(handle_request(request)) 
+    """Vercel serverless function entry point"""
+    return asyncio.run(handle_webhook(request)) 

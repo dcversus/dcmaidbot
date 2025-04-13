@@ -28,6 +28,9 @@ def main():
         sys.exit(1)
     webhook_url = sys.argv[1]
 
+    # Make sure the URL has no trailing slash
+    webhook_url = webhook_url.rstrip('/')
+
     # Validate webhook URL
     if not webhook_url.startswith("https://"):
         logging.error("Webhook URL must start with https://")
@@ -41,6 +44,7 @@ def main():
     }
 
     try:
+        logging.info(f"Setting webhook to: {webhook_url}")
         response = requests.post(api_url, json=params)
         response.raise_for_status()
         result = response.json()
