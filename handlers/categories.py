@@ -262,22 +262,23 @@ async def process_join_pool(message: Message, state: FSMContext):
     # Check if pool exists
     pool = pool_service.get_pool(pool_name)
     if not pool:
-        await message.answer(f"❌ Пул с названием '{pool_name}' не найден. Проверьте название и попробуйте снова.")
+        await message.answer(f"❌ Пул с названием '<b>{pool_name}</b>' не найден. Проверьте название и попробуйте снова.", parse_mode="HTML")
         await state.clear()
         return
     
     # Check if user is already a participant
     for participant in pool.participants:
         if participant.user_id == message.from_user.id:
-            await message.answer(f"Вы уже являетесь участником пула '{pool_name}'.")
+            await message.answer(f"Вы уже являетесь участником пула '<b>{pool_name}</b>'.", parse_mode="HTML")
             await state.clear()
             return
     
     # Check if user is authorized to join (must be the creator or use invite code)
     if not pool_service.is_user_authorized_for_pool(pool_name, message.from_user.id):
         await message.answer(
-            f"❌ Для присоединения к пулу '{pool_name}' требуется код приглашения от создателя пула.\n"
-            f"Используйте команду /join_pool с кодом приглашения."
+            f"❌ Для присоединения к пулу '<b>{pool_name}</b>' требуется код приглашения от создателя пула.\n"
+            f"Используйте команду /join_pool с кодом приглашения.",
+            parse_mode="HTML"
         )
         await state.clear()
         return
@@ -291,9 +292,9 @@ async def process_join_pool(message: Message, state: FSMContext):
     success = pool_service.add_participant(pool_name, new_participant)
     
     if success:
-        await message.answer(f"✅ Вы успешно присоединились к пулу '{pool_name}'!")
+        await message.answer(f"✅ Вы успешно присоединились к пулу '<b>{pool_name}</b>'!", parse_mode="HTML")
     else:
-        await message.answer("❌ Не удалось присоединиться к пулу. Пожалуйста, попробуйте снова.")
+        await message.answer("❌ Не удалось присоединиться к пулу. Пожалуйста, попробуйте снова.", parse_mode="HTML")
     
     await state.clear()
 
@@ -410,7 +411,7 @@ async def process_invite_pool_selection(message: Message, state: FSMContext):
             f"Код приглашения для пула '<b>{pool.name}</b>':\n\n"
             f"<code>{invitation_code}</code>\n\n"
             f"Поделитесь этим кодом с человеком, которого хотите пригласить. "
-            f"Они могут присоединиться с помощью команды /join_pool:\n\n",
+            f"Они могут присоединиться с помощью команды /join_pool:\n\n"
             f"<code>/join_pool {invitation_code}</code>",
             parse_mode="HTML",
             reply_markup=ReplyKeyboardRemove()
