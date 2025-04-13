@@ -6,7 +6,12 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Update
-from http import HTTPStatus
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+)
 
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,12 +19,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import handlers
 from handlers import categories, activities, selection, info
 from middlewares.private_only import PrivateChatMiddleware
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-)
 
 # Get bot token from environment variables
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -59,63 +58,48 @@ async def process_update(update_data):
         logging.error(f"Error processing update: {e}")
         return False
 
-def handler(event, context):
-    """Vercel serverless function handler"""
-    try:
-        # Log the event for debugging
-        logging.info(f"Received event: {event}")
-        
-        # Get HTTP method
-        method = event.get('httpMethod', 'GET') 
-        logging.info(f"HTTP Method: {method}")
-        
-        # For GET requests, return a simple status page
-        if method == 'GET':
-            logging.info("Processing GET request")
-            return {
-                'statusCode': 200,
-                'body': 'Bot webhook is active!'
-            }
-        
-        # For POST requests, process the Telegram update
-        elif method == 'POST':
-            logging.info("Processing POST request")
-            
-            # Parse request body
-            body = event.get('body', '{}')
-            logging.info(f"Request body: {body[:100]}...")  # Log first 100 chars
-            
+def handler(request):
+    """Vercel serverless function handler - simplified version"""
+    logging.info(f"Received request: {request.get('httpMethod', 'UNKNOWN')}")
+    
+    # Handle GET requests
+    if request.get('httpMethod') == 'GET':
+        return {
+            "statusCode": 200,
+            "body": "Bot webhook is active!"
+        }
+    
+    # Handle POST requests (Telegram updates)
+    elif request.get('httpMethod') == 'POST':
+        try:
+            # Parse the Telegram update
+            body = request.get('body', '{}')
             update_data = json.loads(body) if isinstance(body, str) else body
-            logging.info(f"Update ID: {update_data.get('update_id', 'unknown')}")
             
-            # Process the update using asyncio
-            logging.info("Running update processing")
+            # Process the update with our bot
             result = asyncio.run(process_update(update_data))
-            logging.info(f"Processing result: {result}")
             
-            # Return response based on result
+            # Return appropriate response
             if result:
                 return {
-                    'statusCode': 200,
-                    'body': 'OK'
+                    "statusCode": 200,
+                    "body": "OK"
                 }
             else:
                 return {
-                    'statusCode': 400,
-                    'body': 'Failed to process update'
+                    "statusCode": 400,
+                    "body": "Failed to process update"
                 }
-        
-        # For other methods, return method not allowed
-        else:
-            logging.info(f"Unsupported method: {method}")
+        except Exception as e:
+            logging.error(f"Error processing request: {str(e)}")
             return {
-                'statusCode': 405,
-                'body': 'Method not allowed'
+                "statusCode": 500,
+                "body": f"Internal server error: {str(e)}"
             }
-    except Exception as e:
-        # Catch and log any unexpected errors
-        logging.error(f"Unhandled exception in handler: {str(e)}", exc_info=True)
+    
+    # Handle other methods
+    else:
         return {
-            'statusCode': 500,
-            'body': f'Internal server error: {str(e)}'
+            "statusCode": 405,
+            "body": "Method not allowed"
         } 
