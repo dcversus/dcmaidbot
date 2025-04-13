@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -51,11 +51,16 @@ async def process_pool_selection(message: Message, state: FSMContext):
                 # Store activities in state for later use
                 await state.update_data(selected_pool=selected_pool.name, activities=activities)
                 
-                # Create activity list for user to choose from
-                activity_list = "\n".join([f"{i+1}. {activity.content}" for i, activity in enumerate(activities)])
+                # Create keyboard with activity content as buttons
+                keyboard = ReplyKeyboardMarkup(
+                    keyboard=[[KeyboardButton(text=activity.content)] for activity in activities],
+                    resize_keyboard=True,
+                    one_time_keyboard=True
+                )
                 
                 await message.answer(
-                    f"Выберите активность для удаления из пула '{selected_pool.name}' (введите номер):\n\n{activity_list}"
+                    f"Выберите активность для удаления из пула '{selected_pool.name}':",
+                    reply_markup=keyboard
                 )
                 await state.set_state(ActivityManagement.selecting_activity_to_remove)
             elif action == "list":
@@ -152,27 +157,27 @@ async def cmd_remove_activity(message: Message, state: FSMContext):
     await state.set_state(ActivityManagement.selecting_pool)
     await state.update_data(user_pools=user_pools, action="remove")
 
-@router.message(F.text.regexp(r"^\d+$"), ActivityManagement.selecting_activity_to_remove)
+@router.message(ActivityManagement.selecting_activity_to_remove)
 async def process_activity_removal(message: Message, state: FSMContext):
     data = await state.get_data()
     activities = data.get("activities", [])
     pool_name = data.get("selected_pool")
     
-    try:
-        index = int(message.text) - 1
-        if 0 <= index < len(activities):
-            activity_to_remove = activities[index]
-            
-            # Remove the activity
-            success = activity_service.remove_activity(pool_name, activity_to_remove.content)
-            
-            if success:
-                await message.answer(f"✅ Активность успешно удалена из пула '{pool_name}'!")
-            else:
-                await message.answer("❌ Не удалось удалить активность. Пожалуйста, попробуйте снова.")
+    # Find activity by content
+    activity_to_remove = next((activity for activity in activities if activity.content == message.text), None)
+    
+    if activity_to_remove:
+        # Remove the activity
+        success = activity_service.remove_activity(pool_name, activity_to_remove.content)
+        
+        if success:
+            await message.answer(
+                f"✅ Активность успешно удалена из пула '{pool_name}'!",
+                reply_markup=ReplyKeyboardRemove()
+            )
         else:
-            await message.answer("❌ Некорректный номер активности. Пожалуйста, выберите номер из списка.")
-    except ValueError:
-        await message.answer("❌ Пожалуйста, введите номер активности из списка.")
+            await message.answer("❌ Не удалось удалить активность. Пожалуйста, попробуйте снова.")
+    else:
+        await message.answer("❌ Выбранная активность не найдена. Пожалуйста, выберите активность из списка.")
     
     await state.clear() 
