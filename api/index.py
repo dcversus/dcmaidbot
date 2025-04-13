@@ -65,4 +65,31 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write('Hello from Python on Vercel!'.encode())
-        return 
+        return
+        
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        
+        try:
+            update_data = json.loads(post_data.decode('utf-8'))
+            logging.info(f"Received update: {update_data}")
+            
+            # Process the update asynchronously
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            success = loop.run_until_complete(process_update(update_data))
+            loop.close()
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write('OK'.encode())
+            
+        except Exception as e:
+            logging.error(f"Error processing webhook: {e}")
+            self.send_response(500)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(f'Error: {str(e)}'.encode()) 
