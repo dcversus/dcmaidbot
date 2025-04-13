@@ -5,7 +5,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 import os
 
-from handlers import categories, activities, selection, info
+from handlers import categories, activities, selection, info, help
 from middlewares.private_only import PrivateChatMiddleware
 
 # Load environment variables
@@ -38,6 +38,7 @@ async def main():
     dp.callback_query.middleware(PrivateChatMiddleware())
     
     # Register all routers
+    dp.include_router(help.router)
     dp.include_router(categories.router)
     dp.include_router(activities.router)
     dp.include_router(selection.router)
