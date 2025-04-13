@@ -6,6 +6,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Update
+from http.server import BaseHTTPRequestHandler
 
 # Configure logging
 logging.basicConfig(
@@ -58,48 +59,10 @@ async def process_update(update_data):
         logging.error(f"Error processing update: {e}")
         return False
 
-def handler(request):
-    """Vercel serverless function handler - simplified version"""
-    logging.info(f"Received request: {request.get('httpMethod', 'UNKNOWN')}")
-    
-    # Handle GET requests
-    if request.get('httpMethod') == 'GET':
-        return {
-            "statusCode": 200,
-            "body": "Bot webhook is active!"
-        }
-    
-    # Handle POST requests (Telegram updates)
-    elif request.get('httpMethod') == 'POST':
-        try:
-            # Parse the Telegram update
-            body = request.get('body', '{}')
-            update_data = json.loads(body) if isinstance(body, str) else body
-            
-            # Process the update with our bot
-            result = asyncio.run(process_update(update_data))
-            
-            # Return appropriate response
-            if result:
-                return {
-                    "statusCode": 200,
-                    "body": "OK"
-                }
-            else:
-                return {
-                    "statusCode": 400,
-                    "body": "Failed to process update"
-                }
-        except Exception as e:
-            logging.error(f"Error processing request: {str(e)}")
-            return {
-                "statusCode": 500,
-                "body": f"Internal server error: {str(e)}"
-            }
-    
-    # Handle other methods
-    else:
-        return {
-            "statusCode": 405,
-            "body": "Method not allowed"
-        } 
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write('Hello from Python on Vercel!'.encode())
+        return 
