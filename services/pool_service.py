@@ -63,9 +63,14 @@ def generate_invitation_code(user_id: int, pool_name: str) -> Optional[str]:
     if pool.creator_id != user_id:
         return None
     
-    # Simple code generation - combine pool name with random chars
-    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    code = f"{pool_name}_{random_part}"
+    # Create a safer pool name for the code (alphanumeric only)
+    safe_name = ''.join(c for c in pool_name if c.isalnum())
+    if not safe_name:
+        safe_name = "pool"  # Fallback if the name has no alphanumeric chars
+    
+    # Simple code generation - combine safe pool name with random chars
+    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    code = f"{safe_name}{random_part}"
     
     # Initialize invites dict if it doesn't exist
     if not hasattr(pool, 'invites') or pool.invites is None:
@@ -81,8 +86,11 @@ def validate_invitation_code(code: str) -> Optional[str]:
     """Validate an invitation code and return the pool name if valid"""
     storage = _get_storage()
     
+    # Clean the code input
+    clean_code = code.strip()
+    
     for pool_name, pool in storage.pools.items():
-        if hasattr(pool, 'invites') and pool.invites and code in pool.invites:
+        if hasattr(pool, 'invites') and pool.invites and clean_code in pool.invites:
             return pool_name
     
     return None

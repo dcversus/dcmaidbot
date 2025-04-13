@@ -186,6 +186,10 @@ async def cmd_join_pool(message: Message, state: FSMContext):
             # Proceed with joining using the code
             await process_join_with_code(message, state, pool_name, code)
             return
+        else:
+            await message.answer("❌ Недействительный код приглашения. Пожалуйста, введите корректный код:")
+            await state.set_state(PoolInvitation.waiting_for_code)
+            return
     
     await message.answer(
         "Чтобы присоединиться к пулу, вам нужен код приглашения от создателя пула.\n"
@@ -202,8 +206,7 @@ async def process_invitation_code(message: Message, state: FSMContext):
     
     if not pool_name:
         await message.answer("❌ Недействительный код приглашения. Пожалуйста, проверьте код и попробуйте снова.")
-        await state.clear()
-        return
+        return  # Keep the state to allow retrying
     
     await process_join_with_code(message, state, pool_name, code)
 
@@ -234,10 +237,17 @@ async def process_join_with_code(message: Message, state: FSMContext, pool_name:
         await message.answer(f"✅ Вы успешно присоединились к пулу '{pool_name}'!")
         
         # Remove the used invitation code
-        if hasattr(pool, 'invites') and code in pool.invites:
+        try:
             storage = pool_service._get_storage()
-            del storage.pools[pool_name].invites[code]
-            pool_service._save_storage(storage)
+            if pool_name in storage.pools and hasattr(storage.pools[pool_name], 'invites'):
+                # Clean the code input to ensure it matches
+                clean_code = code.strip()
+                if clean_code in storage.pools[pool_name].invites:
+                    del storage.pools[pool_name].invites[clean_code]
+                    pool_service._save_storage(storage)
+        except Exception:
+            # If code removal fails, it's not critical - log it but continue
+            pass
     else:
         await message.answer("❌ Не удалось присоединиться к пулу. Пожалуйста, попробуйте снова.")
     
@@ -393,12 +403,13 @@ async def process_invite_pool_selection(message: Message, state: FSMContext):
     # Generate invitation code
     try:
         invitation_code = pool_service.generate_invitation_code(user_id, pool.name)
+        # Use HTML instead of Markdown for more reliable formatting
         await message.answer(
             f"Invitation code for pool '{pool.name}':\n\n"
-            f"`{invitation_code}`\n\n"
+            f"<code>{invitation_code}</code>\n\n"
             f"Share this code with the person you want to invite. "
             f"They can join using /join_pool command.",
-            parse_mode="Markdown",
+            parse_mode="HTML",
             reply_markup=ReplyKeyboardRemove()
         )
     except Exception as e:
