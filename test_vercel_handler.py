@@ -126,6 +126,8 @@ if __name__ == "__main__":
         # Run tests
         test_get_request()
         test_post_request()
+        test_post_request()
+        test_post_request()
         test_invalid_method()
     finally:
         stop_server()
