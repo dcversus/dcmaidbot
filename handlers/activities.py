@@ -1,3 +1,4 @@
+import logging
 from aiogram import Router, F
 from aiogram.types import (
     Message,
@@ -16,8 +17,9 @@ router = Router()
 
 class ActivityManagement(StatesGroup):
     selecting_pool = State()
-    entering_activity_content = State()
+    entering_activity_content = State() # State after pool selection
     selecting_activity_to_remove = State()
+    # waiting_for_media = State() # Removed
 
 # Add activity to a pool
 @router.message(Command("add_activity"))
@@ -61,12 +63,10 @@ async def process_pool_selection(message: Message, state: FSMContext):
                     await state.clear()
                     return
                 
-                # Store activities in state for later use
                 await state.update_data(
                     selected_pool=selected_pool.name, activities=activities
                 )
                 
-                # Create keyboard with activity content as buttons
                 keyboard = ReplyKeyboardMarkup(
                     keyboard=[
                         [KeyboardButton(text=activity.content)]
@@ -81,6 +81,7 @@ async def process_pool_selection(message: Message, state: FSMContext):
                     reply_markup=keyboard
                 )
                 await state.set_state(ActivityManagement.selecting_activity_to_remove)
+            
             elif action == "list":
                 activities = activity_service.get_activities(selected_pool.name)
                 
@@ -94,26 +95,26 @@ async def process_pool_selection(message: Message, state: FSMContext):
                     )
                     
                     for i, activity in enumerate(activities):
-                        # Find username of activity creator
                         creator_username = "Unknown"
                         for participant in selected_pool.participants:
                             if participant.user_id == activity.added_by:
                                 creator_username = participant.username
                                 break
-                        
+                        media_info = " 📷" if activity.media else ""
                         response += (
-                            f"{i+1}. {activity.content}\n"
+                            f"{i+1}. {activity.content}{media_info}\n"
                             f"   Добавил: {creator_username}\n"
                             f"   Выбрано раз: {activity.selection_count}\n\n"
                         )
                     
                     await message.answer(response, parse_mode="HTML")
                 await state.clear()
+
             else:  # action == "add"
                 await state.update_data(selected_pool=selected_pool.name)
                 await message.answer(
                     f"Выбран пул: {selected_pool.name}\n\n"
-                    "Введите текст активности, которую хотите добавить:"
+                    "Теперь отправьте текст активности или фото/файл:"
                 )
                 await state.set_state(ActivityManagement.entering_activity_content)
         else:
@@ -123,37 +124,76 @@ async def process_pool_selection(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("❌ Пожалуйста, введите номер пула из списка.")
 
-@router.message(ActivityManagement.entering_activity_content)
-async def process_activity_content(message: Message, state: FSMContext):
-    content = message.text.strip()
-    
-    if not content:
-        await message.answer(
-            "Текст активности не может быть пустым. Пожалуйста, введите текст:"
-        )
-        return
-    
+# Combined handler for text and media activities
+@router.message(ActivityManagement.entering_activity_content, F.content_type.in_({'text', 'photo', 'document'}))
+async def process_activity_input(message: Message, state: FSMContext):
     data = await state.get_data()
     pool_name = data.get("selected_pool")
-    
+
+    if not pool_name:
+        logging.error("State lost pool_name in entering_activity_content")
+        await message.answer("Произошла ошибка состояния. Пожалуйста, начните заново /add_activity")
+        await state.clear()
+        return
+
+    content = ""
+    media_ids = []
+    success_message = ""
+
+    if message.text:
+        content = message.text.strip()
+        if not content:
+            await message.answer("Текст активности не может быть пустым. Пожалуйста, введите текст или отправьте медиа:")
+            return # Remain in the same state
+        success_message = f"✅ Текстовая активность успешно добавлена в пул '{pool_name}'!"
+
+    elif message.photo:
+        photo = message.photo[-1] # Get the largest photo
+        media_ids.append(photo.file_id)
+        content = message.caption.strip() if message.caption else f"Фото ({photo.file_unique_id})" # Use caption or default
+        success_message = f"✅ Активность с фото успешно добавлена в пул '{pool_name}'!"
+
+    elif message.document: # Optional: Handle documents
+        document = message.document
+        media_ids.append(document.file_id)
+        content = message.caption.strip() if message.caption else document.file_name # Use caption or filename
+        success_message = f"✅ Активность с документом успешно добавлена в пул '{pool_name}'!"
+
+    else:
+        # Should not happen due to F.content_type filter, but as a safeguard
+        await message.answer("Пожалуйста, отправьте текст, фото или документ.")
+        return
+
     # Create activity object
     new_activity = Activity(
         content=content,
         added_by=message.from_user.id,
-        added_at=datetime.now()
+        added_at=datetime.now(),
+        media=media_ids # Will be empty list if only text was sent
     )
     
     # Add activity to the pool
     success = activity_service.add_activity(pool_name, new_activity)
     
     if success:
-        await message.answer(f"✅ Активность успешно добавлена в пул '{pool_name}'!")
+        await message.answer(success_message)
     else:
-        await message.answer(
-            "❌ Не удалось добавить активность. Пожалуйста, попробуйте снова."
-        )
+        await message.answer("❌ Не удалось добавить активность. Пожалуйста, попробуйте снова.")
     
     await state.clear()
+
+@router.message(ActivityManagement.entering_activity_content)
+async def invalid_activity_input(message: Message):
+    # Catch any other content types not handled above
+    await message.answer("Неподдерживаемый тип контента. Пожалуйста, отправьте текст, фото или документ.")
+
+
+# --- Removing obsolete waiting_for_media handlers --- 
+# @router.message(ActivityManagement.waiting_for_media, F.text == "Нет, без медиа") ...
+# @router.message(ActivityManagement.waiting_for_media, F.text == "Да, добавить изображение") ...
+# @router.message(ActivityManagement.waiting_for_media, F.photo) ...
+# @router.message(ActivityManagement.waiting_for_media) ...
+
 
 # List activities in a pool
 @router.message(Command("list_activities"))

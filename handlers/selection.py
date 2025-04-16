@@ -3,7 +3,9 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.exceptions import TelegramBadRequest
 from services import pool_service, selection_service
+import logging
 
 router = Router()
 
@@ -114,7 +116,32 @@ async def process_direct_selection(message: Message, state: FSMContext, indices:
     if creator_penalty > 0:
         response += f"\nШтраф автора активности: {creator_penalty:.2f}"
     
+    # --- Send text response first ---
     await message.answer(response, parse_mode="HTML")
+    # --------------------------------
+
+    # --- Send associated media --- 
+    if activity.media and len(activity.media) > 0:
+        logging.info(f"Activity has {len(activity.media)} media items. Attempting to send.")
+        for media_id in activity.media:
+            try:
+                # Attempt to send as photo first
+                await message.answer_photo(photo=media_id)
+                logging.info(f"Sent media (photo): {media_id}")
+            except TelegramBadRequest as e:
+                # Handle cases where it might not be a photo or file_id is bad
+                logging.warning(f"Failed to send media {media_id} as photo: {e}. Maybe it's a document or invalid? Skipping.")
+                # Optionally, try sending as document here if needed:
+                try:
+                    await message.answer_document(document=media_id)
+                    logging.info(f"Sent media (document): {media_id}")
+                except Exception as doc_e:
+                    logging.error(f"Failed to send media {media_id} as document either: {doc_e}")
+            except Exception as e:
+                # Catch other potential errors
+                logging.error(f"Unexpected error sending media {media_id}: {e}")
+    # -----------------------------
+
     await state.clear()
 
 @router.message(ActivitySelection.selecting_pools)
