@@ -91,9 +91,18 @@ class handler(BaseHTTPRequestHandler):
             update_data = json.loads(post_data.decode("utf-8"))
             logging.info(f"Received update via webhook: {update_data.get('update_id')}")
 
-            # Process the update asynchronously
-            # Avoid creating new loops if possible, depends on Vercel env
-            asyncio.run(process_update(update_data))
+            # Get the current event loop or create a new one
+            try:
+                loop = asyncio.get_running_loop()
+                logging.info("Using existing event loop.")
+            except RuntimeError:  # No running loop
+                logging.info("No running event loop, creating a new one.")
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            # Run the async function within the obtained loop
+            # We don't explicitly close the loop here in a serverless context
+            loop.run_until_complete(process_update(update_data))
 
             # Send response immediately (Telegram doesn't wait for processing)
             self.send_response(200)
