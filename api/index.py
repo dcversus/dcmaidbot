@@ -1,9 +1,12 @@
+import os
 import json
+import sys
 import logging
 import asyncio
 from http.server import BaseHTTPRequestHandler
 from aiogram import Bot, types
-from bot import get_bot_token, setup_dispatcher
+from dotenv import load_dotenv
+from bot import setup_dispatcher, get_bot_token
 
 # Configure logging
 logging.basicConfig(
@@ -11,20 +14,38 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 )
 
-bot_token = get_bot_token()
+# Add parent directory to path to import modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Load environment variables after imports
+load_dotenv()
+
+# Get bot token from environment variables
+try:
+    BOT_TOKEN = get_bot_token()
+except ValueError:
+    logging.warning("No BOT_TOKEN found in environment, using test token")
+    BOT_TOKEN = "123456789:TEST_TOKEN_FOR_LOCAL_DEVELOPMENT"
+
+# Make sure storage directory exists
+os.makedirs("storage", exist_ok=True)
+
+# Setup dispatcher
 dp = setup_dispatcher()
-bot = Bot(token=bot_token)
 
 
 async def process_update(update_data):
-    """Process update from Telegram using the pre-configured bot and dispatcher."""
-    if not bot or not dp:
-        logging.error("Bot or Dispatcher not initialized, cannot process update.")
-        return False
+    """Process update from Telegram"""
     try:
+        # Initialize Bot instance
+        bot = Bot(token=BOT_TOKEN)
+
         update = types.Update.model_validate(update_data)
-        # Use the existing bot and dp instances
-        await dp.feed_update(bot=bot, update=update)
+        await dp.feed_update(bot, update)
+
+        # Close bot session to avoid resource leaks
+        await bot.session.close()
+
         return True
     except Exception as e:
         logging.error(f"Error processing update: {e}")
@@ -36,7 +57,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/plain")
         self.end_headers()
-        self.wfile.write("Hello from Python on Vercel!".encode())
+        self.wfile.write("Hello from DCMAIDBOT on Vercel!".encode())
         return
 
     def do_POST(self):
@@ -50,8 +71,11 @@ class handler(BaseHTTPRequestHandler):
             # Process the update asynchronously
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(process_update(update_data))
-            loop.close()
+
+            try:
+                loop.run_until_complete(process_update(update_data))
+            finally:
+                loop.close()
 
             # Send response
             self.send_response(200)
