@@ -10,6 +10,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from models.data import Participant
 from services import pool_service
+import logging
 
 router = Router()
 
@@ -20,6 +21,7 @@ class PoolCreation(StatesGroup):
 class PoolParticipant(StatesGroup):
     waiting_for_pool_name = State()
     waiting_for_pool_to_invite = State()
+    waiting_for_exit_pool_selection = State()
 
 class PoolInvitation(StatesGroup):
     waiting_for_pool_name = State()
@@ -35,7 +37,7 @@ async def cmd_create_pool(message: Message, state: FSMContext):
 async def process_pool_name(message: Message, state: FSMContext):
     pool_name = message.text.strip()
     
-    # Check if name is valid
+    # Check if the name is empty first
     if not pool_name:
         await message.answer(
             "Название пула не может быть пустым. Пожалуйста, введите название:",
@@ -267,11 +269,12 @@ async def cmd_exit_pool(message: Message, state: FSMContext):
         f"Выберите пул, из которого хотите выйти (введите номер):\n{pool_list}",
         parse_mode="HTML",
     )
-    await state.set_state(PoolParticipant.waiting_for_pool_name)
+    await state.set_state(PoolParticipant.waiting_for_exit_pool_selection)
     await state.update_data(user_pools=user_pools)
 
-@router.message(F.text.regexp(r"^\d+$"), PoolParticipant.waiting_for_pool_name)
+@router.message(F.text.regexp(r"^\d+$"), PoolParticipant.waiting_for_exit_pool_selection)
 async def process_exit_pool(message: Message, state: FSMContext):
+    logging.info(f"User {message.from_user.id} entered pool index for exit: {message.text}")
     data = await state.get_data()
     user_pools = data.get("user_pools", [])
     
