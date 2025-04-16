@@ -7,6 +7,17 @@ from http.server import BaseHTTPRequestHandler
 from aiogram import Bot, types
 from dotenv import load_dotenv
 
+# Import setup functions from bot.py first
+# Append path *after* attempting local imports
+APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try:
+    from bot import get_bot_token, setup_dispatcher
+except ImportError:
+    # If running directly in api/, add parent dir to path and retry
+    logging.warning("Could not import 'bot' directly, adding parent directory to path.")
+    sys.path.append(APP_DIR)
+    from bot import get_bot_token, setup_dispatcher
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -16,12 +27,11 @@ logging.basicConfig(
 # Load environment variables first
 load_dotenv()
 
-# Add parent directory to path to import modules
-APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(APP_DIR)
+# Add parent directory to path to import modules (Moved up)
+# sys.path.append(APP_DIR)
 
-# Import setup functions from bot.py
-from bot import get_bot_token, setup_dispatcher
+# Import setup functions from bot.py (Moved up)
+# from bot import get_bot_token, setup_dispatcher
 
 # Get Bot Token and setup Dispatcher ONCE at module level
 try:
@@ -41,6 +51,7 @@ except Exception as e:
     dp = None
     bot = None
 
+
 async def process_update(update_data):
     """Process update from Telegram using the pre-configured bot and dispatcher."""
     if not bot or not dp:
@@ -55,51 +66,53 @@ async def process_update(update_data):
         logging.error(f"Error processing update: {e}")
         return False
 
+
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
+        self.send_header("Content-type", "text/plain")
         self.end_headers()
-        self.wfile.write('Hello from DCMaidBot webhook!'.encode())
+        self.wfile.write("Hello from DCMaidBot webhook!".encode())
         return
-        
+
     def do_POST(self):
         if not bot or not dp:
             logging.error("Bot/Dispatcher not ready, rejecting POST request.")
             self.send_response(500)
-            self.send_header('Content-type', 'text/plain')
+            self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write('Bot not initialized'.encode())
+            self.wfile.write("Bot not initialized".encode())
             return
 
-        content_length = int(self.headers['Content-Length'])
+        content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
-        
+
         try:
-            update_data = json.loads(post_data.decode('utf-8'))
+            update_data = json.loads(post_data.decode("utf-8"))
             logging.info(f"Received update via webhook: {update_data.get('update_id')}")
-            
+
             # Process the update asynchronously
             # Avoid creating new loops if possible, depends on Vercel env
             asyncio.run(process_update(update_data))
-            
+
             # Send response immediately (Telegram doesn't wait for processing)
             self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
+            self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write('OK'.encode())
-            
+            self.wfile.write("OK".encode())
+
         except json.JSONDecodeError as e:
             logging.error(f"Error decoding JSON: {e}")
             self.send_response(400)
-            self.send_header('Content-type', 'text/plain')
+            self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write('Bad Request: Invalid JSON'.encode())
+            self.wfile.write("Bad Request: Invalid JSON".encode())
         except Exception as e:
             logging.error(f"Error processing webhook: {e}")
             # Avoid sending 500 if possible, Telegram might retry
             # Still send OK if we can, log the error server-side.
-            self.send_response(200) 
-            self.send_header('Content-type', 'text/plain')
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write('OK'.encode()) # Acknowledge receipt even if processing fails later 
+            # Acknowledge receipt even if processing fails later
+            self.wfile.write("OK".encode())
