@@ -30,7 +30,7 @@ if not BOT_TOKEN:
     BOT_TOKEN = "123456789:TEST_TOKEN_FOR_LOCAL_DEVELOPMENT"
 
 # Make sure storage directory exists
-os.makedirs("storage", exist_ok=True)
+# os.makedirs("storage", exist_ok=True)
 
 # Initialize dispatcher with memory storage for FSM
 storage = MemoryStorage()
