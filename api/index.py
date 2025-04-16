@@ -1,12 +1,12 @@
-import json
 import os
+import json
 import sys
 import logging
 import asyncio
-from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Update
 from http.server import BaseHTTPRequestHandler
+from aiogram import Bot, types
+from dotenv import load_dotenv
+from bot import setup_dispatcher, get_bot_token
 
 # Configure logging
 logging.basicConfig(
@@ -17,44 +17,32 @@ logging.basicConfig(
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import handlers
-from handlers import categories, activities, selection, info
-from middlewares.private_only import PrivateChatMiddleware
+# Load environment variables after imports
+load_dotenv()
 
 # Get bot token from environment variables
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-
-# For testing purposes only - will be overridden by real token in production
-if not BOT_TOKEN:
+try:
+    BOT_TOKEN = get_bot_token()
+except ValueError:
     logging.warning("No BOT_TOKEN found in environment, using test token")
     BOT_TOKEN = "123456789:TEST_TOKEN_FOR_LOCAL_DEVELOPMENT"
 
-# Make sure storage directory exists
-# os.makedirs("storage", exist_ok=True)
-
-# Initialize dispatcher with memory storage for FSM
-storage = MemoryStorage()
-dp = Dispatcher(storage=storage)
-
-# Register the private chat middleware
-dp.message.middleware(PrivateChatMiddleware())
-dp.callback_query.middleware(PrivateChatMiddleware())
-
-# Register all routers
-dp.include_router(categories.router)
-dp.include_router(activities.router)
-dp.include_router(selection.router)
-dp.include_router(info.router)
+# Setup dispatcher
+dp = setup_dispatcher()
 
 
 async def process_update(update_data):
     """Process update from Telegram"""
     try:
-        # Initialize Bot instance (create it here to ensure token is available)
+        # Initialize Bot instance
         bot = Bot(token=BOT_TOKEN)
 
-        update = Update.model_validate(update_data)
+        update = types.Update.model_validate(update_data)
         await dp.feed_update(bot, update)
+
+        # Close bot session to avoid resource leaks
+        await bot.session.close()
+
         return True
     except Exception as e:
         logging.error(f"Error processing update: {e}")
@@ -66,7 +54,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/plain")
         self.end_headers()
-        self.wfile.write("Hello from Python on Vercel!".encode())
+        self.wfile.write("Hello from DCMAIDBOT on Vercel!".encode())
         return
 
     def do_POST(self):
@@ -80,8 +68,11 @@ class handler(BaseHTTPRequestHandler):
             # Process the update asynchronously
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(process_update(update_data))
-            loop.close()
+
+            try:
+                loop.run_until_complete(process_update(update_data))
+            finally:
+                loop.close()
 
             # Send response
             self.send_response(200)
