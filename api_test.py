@@ -1,13 +1,8 @@
 #!/usr/bin/env python
-import json
 import os
-import sys
 import logging
 import asyncio
-import aiohttp
 from aiohttp import web
-from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 # Load environment variables

@@ -1,5 +1,10 @@
 from aiogram import Router, F
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from aiogram.types import (
+    Message,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardRemove,
+)
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -20,12 +25,18 @@ async def cmd_add_activity(message: Message, state: FSMContext):
     user_pools = pool_service.get_pools_by_participant(message.from_user.id)
     
     if not user_pools:
-        await message.answer("Вы не являетесь участником ни одного пула. Сначала создайте или присоединитесь к пулу.")
+        await message.answer(
+            "Вы не являетесь участником ни одного пула. "
+            "Сначала создайте или присоединитесь к пулу."
+        )
         return
     
     pool_list = "\n".join([f"{i+1}. {pool.name}" for i, pool in enumerate(user_pools)])
     
-    await message.answer(f"Выберите пул, в который хотите добавить активность (введите номер):\n{pool_list}")
+    await message.answer(
+        f"Выберите пул, в который хотите добавить активность "
+        f"(введите номер):\n{pool_list}"
+    )
     await state.set_state(ActivityManagement.selecting_pool)
     await state.update_data(user_pools=user_pools, action="add")
 
@@ -44,18 +55,25 @@ async def process_pool_selection(message: Message, state: FSMContext):
                 activities = activity_service.get_activities(selected_pool.name)
                 
                 if not activities:
-                    await message.answer(f"В пуле '{selected_pool.name}' нет активностей для удаления.")
+                    await message.answer(
+                        f"В пуле '{selected_pool.name}' нет активностей для удаления."
+                    )
                     await state.clear()
                     return
                 
                 # Store activities in state for later use
-                await state.update_data(selected_pool=selected_pool.name, activities=activities)
+                await state.update_data(
+                    selected_pool=selected_pool.name, activities=activities
+                )
                 
                 # Create keyboard with activity content as buttons
                 keyboard = ReplyKeyboardMarkup(
-                    keyboard=[[KeyboardButton(text=activity.content)] for activity in activities],
+                    keyboard=[
+                        [KeyboardButton(text=activity.content)]
+                        for activity in activities
+                    ],
                     resize_keyboard=True,
-                    one_time_keyboard=True
+                    one_time_keyboard=True,
                 )
                 
                 await message.answer(
@@ -67,9 +85,13 @@ async def process_pool_selection(message: Message, state: FSMContext):
                 activities = activity_service.get_activities(selected_pool.name)
                 
                 if not activities:
-                    await message.answer(f"В пуле '{selected_pool.name}' нет активностей.")
+                    await message.answer(
+                        f"В пуле '{selected_pool.name}' нет активностей."
+                    )
                 else:
-                    response = f"📋 <b>Активности в пуле '{selected_pool.name}'</b>:\n\n"
+                    response = (
+                        f"📋 <b>Активности в пуле '{selected_pool.name}'</b>:\n\n"
+                    )
                     
                     for i, activity in enumerate(activities):
                         # Find username of activity creator
@@ -95,7 +117,9 @@ async def process_pool_selection(message: Message, state: FSMContext):
                 )
                 await state.set_state(ActivityManagement.entering_activity_content)
         else:
-            await message.answer("❌ Некорректный номер пула. Пожалуйста, выберите номер из списка.")
+            await message.answer(
+                "❌ Некорректный номер пула. Пожалуйста, выберите номер из списка."
+            )
     except ValueError:
         await message.answer("❌ Пожалуйста, введите номер пула из списка.")
 
@@ -104,7 +128,9 @@ async def process_activity_content(message: Message, state: FSMContext):
     content = message.text.strip()
     
     if not content:
-        await message.answer("Текст активности не может быть пустым. Пожалуйста, введите текст:")
+        await message.answer(
+            "Текст активности не может быть пустым. Пожалуйста, введите текст:"
+        )
         return
     
     data = await state.get_data()
@@ -123,7 +149,9 @@ async def process_activity_content(message: Message, state: FSMContext):
     if success:
         await message.answer(f"✅ Активность успешно добавлена в пул '{pool_name}'!")
     else:
-        await message.answer("❌ Не удалось добавить активность. Пожалуйста, попробуйте снова.")
+        await message.answer(
+            "❌ Не удалось добавить активность. Пожалуйста, попробуйте снова."
+        )
     
     await state.clear()
 
@@ -138,7 +166,10 @@ async def cmd_list_activities(message: Message, state: FSMContext):
     
     pool_list = "\n".join([f"{i+1}. {pool.name}" for i, pool in enumerate(user_pools)])
     
-    await message.answer(f"Выберите пул, активности которого хотите просмотреть (введите номер):\n{pool_list}")
+    await message.answer(
+        f"Выберите пул, активности которого хотите просмотреть "
+        f"(введите номер):\n{pool_list}"
+    )
     await state.set_state(ActivityManagement.selecting_pool)
     await state.update_data(user_pools=user_pools, action="list")
 
@@ -153,7 +184,10 @@ async def cmd_remove_activity(message: Message, state: FSMContext):
     
     pool_list = "\n".join([f"{i+1}. {pool.name}" for i, pool in enumerate(user_pools)])
     
-    await message.answer(f"Выберите пул, из которого хотите удалить активность (введите номер):\n{pool_list}")
+    await message.answer(
+        f"Выберите пул, из которого хотите удалить активность "
+        f"(введите номер):\n{pool_list}"
+    )
     await state.set_state(ActivityManagement.selecting_pool)
     await state.update_data(user_pools=user_pools, action="remove")
 
@@ -164,11 +198,16 @@ async def process_activity_removal(message: Message, state: FSMContext):
     pool_name = data.get("selected_pool")
     
     # Find activity by content
-    activity_to_remove = next((activity for activity in activities if activity.content == message.text), None)
+    activity_to_remove = next(
+        (activity for activity in activities if activity.content == message.text),
+        None,
+    )
     
     if activity_to_remove:
         # Remove the activity
-        success = activity_service.remove_activity(pool_name, activity_to_remove.content)
+        success = activity_service.remove_activity(
+            pool_name, activity_to_remove.content
+        )
         
         if success:
             await message.answer(
@@ -176,8 +215,13 @@ async def process_activity_removal(message: Message, state: FSMContext):
                 reply_markup=ReplyKeyboardRemove()
             )
         else:
-            await message.answer("❌ Не удалось удалить активность. Пожалуйста, попробуйте снова.")
+            await message.answer(
+                "❌ Не удалось удалить активность. Пожалуйста, попробуйте снова."
+            )
     else:
-        await message.answer("❌ Выбранная активность не найдена. Пожалуйста, выберите активность из списка.")
+        await message.answer(
+            "❌ Выбранная активность не найдена. "
+            "Пожалуйста, выберите активность из списка."
+        )
     
     await state.clear() 

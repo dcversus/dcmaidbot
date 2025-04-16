@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import List, Dict, Optional, Any, Union, ClassVar
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Dict, Optional, Any, ClassVar
 from datetime import datetime
 import json
 import os
@@ -86,10 +86,18 @@ class Storage(BaseModel):
         if not self.__class__._redis_client:
             raise ValueError("Redis client not configured")
         
-        self.__class__._redis_client.set(self.__class__._redis_key, self.model_dump_json())
+        self.__class__._redis_client.set(
+            self.__class__._redis_key, self.model_dump_json()
+        )
 
     @classmethod
-    def load(cls, storage_type: str = "auto", filename: str = None, redis_client=None, redis_key=None):
+    def load(
+        cls,
+        storage_type: str = "auto",
+        filename: str = None,
+        redis_client=None,
+        redis_key=None,
+    ):
         """
         Load storage from specified source
         
@@ -102,7 +110,9 @@ class Storage(BaseModel):
         # Auto-detect storage type if not specified
         if storage_type == "auto":
             redis_url = os.environ.get("REDIS_URL")
-            storage_type = "redis" if redis_url and redis_client else "file"
+            storage_type = (
+                "redis" if redis_url and cls._redis_client else "file"
+            )
         
         if storage_type == "redis":
             if redis_client:
@@ -123,7 +133,9 @@ class Storage(BaseModel):
         # Auto-detect storage type if not specified
         if storage_type == "auto":
             redis_url = os.environ.get("REDIS_URL")
-            storage_type = "redis" if redis_url and self.__class__._redis_client else "file"
+            storage_type = (
+                "redis" if redis_url and self.__class__._redis_client else "file"
+            )
         
         if storage_type == "redis":
             self.save_to_redis()

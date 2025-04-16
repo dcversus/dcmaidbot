@@ -1,12 +1,14 @@
-import json
 import os
+import json
 import sys
 import logging
 import asyncio
-from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Update
 from http.server import BaseHTTPRequestHandler
+from aiogram import Bot, Dispatcher, types
+from aiogram.fsm.storage.memory import MemoryStorage
+from handlers import categories, activities, selection, info
+from middlewares.private_only import PrivateChatMiddleware
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(
@@ -14,12 +16,13 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 )
 
+# Load environment variables after imports
+load_dotenv()
+
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import handlers
-from handlers import categories, activities, selection, info
-from middlewares.private_only import PrivateChatMiddleware
 
 # Get bot token from environment variables
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -52,7 +55,7 @@ async def process_update(update_data):
         # Initialize Bot instance (create it here to ensure token is available)
         bot = Bot(token=BOT_TOKEN)
         
-        update = Update.model_validate(update_data)
+        update = types.Update.model_validate(update_data)
         await dp.feed_update(bot, update)
         return True
     except Exception as e:
@@ -78,7 +81,7 @@ class handler(BaseHTTPRequestHandler):
             # Process the update asynchronously
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            success = loop.run_until_complete(process_update(update_data))
+            loop.run_until_complete(process_update(update_data))
             loop.close()
             
             # Send response

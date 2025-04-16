@@ -23,7 +23,9 @@ class PrivateChatMiddleware(BaseMiddleware):
         elif isinstance(event, CallbackQuery) and event.message:
             if event.message.chat.type != ChatType.PRIVATE:
                 # Send message and return None
-                await event.answer("Бот работает только в личных сообщениях.", show_alert=True)
+                await event.answer(
+                    "Бот работает только в личных сообщениях.", show_alert=True
+                )
                 return None
         
         # Process event if it's from a private chat

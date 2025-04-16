@@ -3,8 +3,6 @@ Simple logging utility for Vercel serverless functions.
 This file makes it easier to debug serverless deployments.
 """
 import json
-import os
-import sys
 import logging
 import traceback
 

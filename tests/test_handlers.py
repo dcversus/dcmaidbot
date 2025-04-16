@@ -1,12 +1,11 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from aiogram.types import Message, User, Chat
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
 
-from handlers import categories, activities, selection, info
+from handlers import categories, activities, selection
 from models.data import Pool, Participant, Activity
-from services import pool_service
 
 # Mock user and chat for testing
 @pytest.fixture
@@ -73,7 +72,13 @@ async def test_handle_create_pool_command(mock_create_pool, mock_message, mock_s
 @patch("services.pool_service.add_participant")
 @patch("services.pool_service.get_pool")
 @patch("services.pool_service.validate_invitation_code")
-async def test_handle_join_pool_command(mock_validate_code, mock_get_pool, mock_add_participant, mock_message, mock_state):
+async def test_handle_join_pool_command(
+    mock_validate_code,
+    mock_get_pool,
+    mock_add_participant,
+    mock_message,
+    mock_state,
+):
     # Set up a valid invitation code
     mock_message.text = "/join_pool test_code"
     mock_validate_code.return_value = "test_pool"
@@ -97,7 +102,9 @@ async def test_handle_join_pool_command(mock_validate_code, mock_get_pool, mock_
 @pytest.mark.asyncio
 @patch("services.pool_service.get_pools_by_participant")
 @patch("services.pool_service.remove_participant")
-async def test_handle_exit_pool_command(mock_remove_participant, mock_get_pools, mock_message, mock_state):
+async def test_handle_exit_pool_command(
+    mock_remove_participant, mock_get_pools, mock_message, mock_state
+):
     # Create two test pools for the user
     test_pools = [
         Pool(name="pool1", participants=[Participant(user_id=1, username="test_user")]),
@@ -138,9 +145,13 @@ async def test_handle_exit_pool_command(mock_remove_participant, mock_get_pools,
 # Tests for activities handlers
 @pytest.mark.asyncio
 @patch("services.pool_service.get_pools_by_participant")
-async def test_handle_add_activity_command(mock_get_pools, mock_message, mock_state):
+async def test_handle_add_activity_command(
+    mock_get_pools, mock_message, mock_state
+):
     # Create test pool for the user
-    test_pool = Pool(name="test_pool", participants=[Participant(user_id=1, username="test_user")])
+    test_pool = Pool(
+        name="test_pool", participants=[Participant(user_id=1, username="test_user")]
+    )
     
     # Mock get_pools_by_participant to return test pool
     mock_get_pools.return_value = [test_pool]

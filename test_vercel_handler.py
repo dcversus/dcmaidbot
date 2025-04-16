@@ -4,8 +4,6 @@ Test script for the Vercel serverless function handler.
 This simulates Vercel's environment locally.
 """
 import json
-import os
-import sys
 from dotenv import load_dotenv
 from api.index import handler
 

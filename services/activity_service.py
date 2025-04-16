@@ -1,5 +1,5 @@
-from typing import List, Optional
-from models.data import Activity, Storage
+from typing import List
+from models.data import Activity
 from services.pool_service import _get_storage, _save_storage
 
 def add_activity(pool_name: str, activity: Activity) -> bool:
@@ -57,7 +57,9 @@ def remove_activity(pool_name: str, activity_content: str) -> bool:
     
     return True
 
-def update_activity_selection(pool_name: str, activity_index: int, user_id: int) -> bool:
+def update_activity_selection(
+    pool_name: str, activity_index: int, user_id: int
+) -> bool:
     """Update an activity's selection count and last_selected time"""
     from datetime import datetime
     
