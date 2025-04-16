@@ -17,6 +17,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 )
 
+
 def get_bot_token() -> str:
     """Retrieves and validates the bot token from environment variables."""
     token = os.getenv("BOT_TOKEN")
@@ -25,22 +26,23 @@ def get_bot_token() -> str:
         raise ValueError("BOT_TOKEN not found in environment variables")
     return token
 
+
 def setup_dispatcher() -> Dispatcher:
     """Initializes and configures the dispatcher."""
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
-    
+
     # Register the private chat middleware
     dp.message.middleware(PrivateChatMiddleware())
     dp.callback_query.middleware(PrivateChatMiddleware())
-    
+
     # Register all routers
     dp.include_router(help.router)
     dp.include_router(categories.router)
     dp.include_router(activities.router)
     dp.include_router(selection.router)
     dp.include_router(info.router)
-    
+
     return dp
 
 
@@ -65,4 +67,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logging.info("Bot stopped!") 
+        logging.info("Bot stopped!")
