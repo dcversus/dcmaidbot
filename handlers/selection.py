@@ -1,9 +1,8 @@
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram import Router
+from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from models.data import Activity, Pool
 from services import pool_service, selection_service
 
 router = Router()
@@ -17,7 +16,10 @@ async def cmd_select(message: Message, state: FSMContext):
     user_pools = pool_service.get_pools_by_participant(message.from_user.id)
     
     if not user_pools:
-        await message.answer("Вы не являетесь участником ни одного пула. Сначала создайте или присоединитесь к пулу.")
+        await message.answer(
+            "Вы не являетесь участником ни одного пула. "
+            "Сначала создайте или присоединитесь к пулу."
+        )
         return
     
     valid_pools = []
@@ -26,7 +28,10 @@ async def cmd_select(message: Message, state: FSMContext):
             valid_pools.append(pool)
     
     if not valid_pools:
-        await message.answer("В ваших пулах нет активностей. Сначала добавьте активности с помощью команды /add_activity.")
+        await message.answer(
+            "В ваших пулах нет активностей. "
+            "Сначала добавьте активности с помощью команды /add_activity."
+        )
         return
     
     # Check if pool index was provided with command
@@ -47,9 +52,11 @@ async def cmd_select(message: Message, state: FSMContext):
         pool_list += f"{i+1}. {pool.name} ({activities_count} активностей)\n"
     
     await message.answer(
-        f"Выберите пулы, из которых хотите выбрать активность (введите номера через запятую):\n{pool_list}\n\n"
+        f"Выберите пулы, из которых хотите выбрать активность "
+        f"(введите номера через запятую):\n{pool_list}\n\n"
         "Например: 1,3\n"
-        "Совет: Вы можете использовать команду /select с номером пула (например: /select 2)"
+        "Совет: Вы можете использовать команду /select с номером пула "
+        "(например: /select 2)"
     )
     await state.set_state(ActivitySelection.selecting_pools)
     await state.update_data(valid_pools=valid_pools)
@@ -70,10 +77,15 @@ async def process_direct_selection(message: Message, state: FSMContext, indices:
     await message.answer(f"Выбираю случайную активность из пулов: {pool_names}...")
     
     # Select random activity with penalty logic
-    selection_result = selection_service.select_activity(selected_pools, message.from_user.id)
+    selection_result = selection_service.select_activity(
+        selected_pools, message.from_user.id
+    )
     
     if not selection_result:
-        await message.answer("❌ Не удалось выбрать активность. Возможно, в выбранных пулах нет активностей.")
+        await message.answer(
+            "❌ Не удалось выбрать активность. "
+            "Возможно, в выбранных пулах нет активностей."
+        )
         await state.clear()
         return
     
@@ -112,17 +124,23 @@ async def process_pool_selection(message: Message, state: FSMContext):
     
     # Parse selection
     try:
-        selected_indices = [int(idx.strip()) - 1 for idx in message.text.split(",")]
+        selected_indices = [
+            int(idx.strip()) - 1 for idx in message.text.split(",")
+        ]
         
         # Validate indices
         if not all(0 <= idx < len(valid_pools) for idx in selected_indices):
-            await message.answer("❌ Некорректные номера пулов. Пожалуйста, выберите из списка.")
+            await message.answer(
+                "❌ Некорректные номера пулов. Пожалуйста, выберите из списка."
+            )
             return
         
         await process_direct_selection(message, state, selected_indices)
         
     except ValueError:
-        await message.answer("❌ Пожалуйста, введите номера пулов через запятую (например: 1,3)")
+        await message.answer(
+            "❌ Пожалуйста, введите номера пулов через запятую (например: 1,3)"
+        )
         await state.clear()
 
 # Show penalty information
@@ -135,8 +153,14 @@ async def cmd_penalties(message: Message, state: FSMContext):
         return
     
     response = "📊 <b>Информация о штрафах</b>:\n\n"
-    response += "<i>Штрафы накладываются на создателей активностей, когда их активности выбираются. "
-    response += "Чем выше штраф, тем реже будут выбираться активности этого пользователя в будущем.</i>\n\n"
+    response += (
+        "<i>Штрафы накладываются на создателей активностей, "
+        "когда их активности выбираются. "
+    )
+    response += (
+        "Чем выше штраф, тем реже будут выбираться активности "
+        "этого пользователя в будущем.</i>\n\n"
+    )
     
     for pool in user_pools:
         response += f"<b>Пул: {pool.name}</b>\n"
@@ -145,7 +169,12 @@ async def cmd_penalties(message: Message, state: FSMContext):
             response += "Нет активных штрафов\n\n"
             continue
         
-        for user_id, penalty in sorted(pool.penalties.items(), key=lambda x: x[1], reverse=True):
+        # Sort penalties by value descending
+        sorted_penalties = sorted(
+            pool.penalties.items(), key=lambda x: x[1], reverse=True
+        )
+        
+        for user_id, penalty in sorted_penalties:
             if penalty > 0:
                 # Find username
                 username = "Unknown"

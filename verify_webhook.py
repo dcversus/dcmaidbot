@@ -58,7 +58,9 @@ def main():
     parser.add_argument("--info", action="store_true", help="Get current webhook info")
     parser.add_argument("--set", metavar="URL", help="Set webhook URL")
     parser.add_argument("--delete", action="store_true", help="Delete current webhook")
-    parser.add_argument("--test", metavar="URL", help="Test if webhook URL is accessible")
+    parser.add_argument(
+        "--test", metavar="URL", help="Test if webhook URL is accessible"
+    )
     
     args = parser.parse_args()
     
@@ -82,7 +84,9 @@ def main():
         if "error" in test_result:
             print(f"Warning: Could not access webhook URL: {test_result['error']}")
         else:
-            print(f"Webhook URL is accessible. Status code: {test_result['status_code']}")
+            print(
+                f"Webhook URL is accessible. Status code: {test_result['status_code']}"
+            )
             print(f"Content: {test_result['content']}")
         
         # Ask for confirmation
@@ -91,7 +95,9 @@ def main():
             # If webhook URL doesn't end with "/webhook", suggest adding it
             if not webhook_url.endswith("/webhook"):
                 suggested_url = f"{webhook_url}/webhook"
-                suggestion = input(f"Suggested webhook URL: {suggested_url}. Use this instead? (y/n): ").lower()
+                suggestion = input(
+                    f"Suggested webhook URL: {suggested_url}. Use this instead? (y/n): "
+                ).lower()
                 if suggestion == "y":
                     webhook_url = suggested_url
             
@@ -108,7 +114,9 @@ def main():
     
     # Delete webhook
     if args.delete:
-        confirm = input("Are you sure you want to delete the current webhook? (y/n): ").lower()
+        confirm = input(
+            "Are you sure you want to delete the current webhook? (y/n): "
+        ).lower()
         if confirm == "y":
             result = delete_webhook()
             print("Webhook delete result:")
@@ -124,7 +132,9 @@ def main():
         if "error" in test_result:
             print(f"Error: Could not access webhook URL: {test_result['error']}")
         else:
-            print(f"Webhook URL is accessible. Status code: {test_result['status_code']}")
+            print(
+                f"Webhook URL is accessible. Status code: {test_result['status_code']}"
+            )
             print(f"Content: {test_result['content']}")
 
 if __name__ == "__main__":

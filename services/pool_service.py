@@ -1,8 +1,7 @@
 import os
 import json
-from typing import List, Optional, Dict
+from typing import List, Optional
 from models.data import Pool, Participant, Storage
-from datetime import datetime
 import random
 import string
 import redis
@@ -206,7 +205,7 @@ def get_pools_by_creator(creator_id: int) -> List[Pool]:
     return creator_pools
 
 def is_user_authorized_for_pool(pool_name: str, user_id: int) -> bool:
-    """Check if a user is authorized to invite others to a pool (only the creator can invite)"""
+    """Check if a user is authorized to invite others to a pool (only the creator)"""
     pool = get_pool(pool_name)
     if not pool:
         return False

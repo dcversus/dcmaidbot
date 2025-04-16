@@ -1,7 +1,6 @@
 """
 Simple webhook endpoint for testing Telegram webhooks.
 """
-import json
 import logging
 
 # Configure logging

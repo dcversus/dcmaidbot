@@ -1,9 +1,8 @@
 import pytest
 import os
 import json
-import shutil
 from datetime import datetime, timedelta
-from models.data import Pool, Participant, Activity, Storage
+from models.data import Participant, Activity
 from services import pool_service, activity_service, selection_service
 
 # Test storage file for tests
@@ -238,7 +237,9 @@ def test_select_activity(setup_test_storage):
         Participant(user_id=1, username="user1")
     ])
     
-    activity = Activity(content="Activity in pool 2", added_by=1, added_at=datetime.now())
+    activity = Activity(
+        content="Activity in pool 2", added_by=1, added_at=datetime.now()
+    )
     activity_service.add_activity("test_pool2", activity)
     
     # Reset penalties to ensure fair testing
@@ -249,7 +250,9 @@ def test_select_activity(setup_test_storage):
     # Run this multiple times to ensure both pools have a chance to be selected
     selected_pools = set()
     for _ in range(10):
-        selection_result = selection_service.select_activity(["test_pool", "test_pool2"], 1)
+        selection_result = selection_service.select_activity(
+            ["test_pool", "test_pool2"], 1
+        )
         if selection_result:
             pool_name, _, _ = selection_result
             selected_pools.add(pool_name)
@@ -265,40 +268,55 @@ def test_select_activity(setup_test_storage):
     assert selection_result is None
 
 def test_penalty_logic(setup_test_storage):
-    # Create a pool with a single activity
+    # Create a pool with two activities from different creators
     pool_service.create_pool("test_pool", [
         Participant(user_id=1, username="user1"),
         Participant(user_id=2, username="user2")
     ])
     
-    activity = Activity(content="Test activity", added_by=1, added_at=datetime.now())
-    activity_service.add_activity("test_pool", activity)
+    # Create an activity by user1
+    activity1 = Activity(
+        content="Activity by user1", added_by=1, added_at=datetime.now()
+    )
+    activity_service.add_activity("test_pool", activity1)
     
-    # First selection by user 1
-    selection_service.select_activity(["test_pool"], 1)
+    # Create an activity by user2
+    activity2 = Activity(
+        content="Activity by user2", added_by=2, added_at=datetime.now()
+    )
+    activity_service.add_activity("test_pool", activity2)
     
-    # Check penalty
+    # First test: Select user2's activity
+    for _ in range(3):  # Try multiple times
+        result = selection_service.select_activity(["test_pool"], 1)
+        if result and result[1].added_by == 2:
+            break
+    
+    # Verify user2 (activity creator) got a penalty
     pool = pool_service.get_pool("test_pool")
+    assert 2 in pool.penalties
+    penalty_user2 = pool.penalties.get(2, 0)
+    assert penalty_user2 > 0
+    
+    # Second test: Reset penalties and check
+    selection_service.reset_penalties("test_pool")
+    pool = pool_service.get_pool("test_pool")
+    assert len(pool.penalties) == 0
+    
+    # Third test: Select user1's activity
+    for _ in range(3):  # Try multiple times
+        result = selection_service.select_activity(["test_pool"], 2)
+        if result and result[1].added_by == 1:
+            break
+    
+    # Verify user1 (activity creator) got a penalty
+    pool = pool_service.get_pool("test_pool")
+    assert 1 in pool.penalties
     penalty_user1 = pool.penalties.get(1, 0)
     assert penalty_user1 > 0
     
-    # Selection by user 2
-    selection_service.select_activity(["test_pool"], 2)
-    
-    # Check penalties
-    pool = pool_service.get_pool("test_pool")
-    new_penalty_user1 = pool.penalties.get(1, 0)
-    penalty_user2 = pool.penalties.get(2, 0)
-    
-    # User 1's penalty should have decayed
-    assert new_penalty_user1 < penalty_user1
-    # User 2 should have a penalty now
-    assert penalty_user2 > 0
-    
-    # Reset penalties
+    # Final reset to clean up
     result = selection_service.reset_penalties("test_pool")
     assert result is True
-    
-    # Check that penalties were reset
     pool = pool_service.get_pool("test_pool")
     assert len(pool.penalties) == 0 

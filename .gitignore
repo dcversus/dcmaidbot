@@ -24,3 +24,5 @@ logs/
 # Vercel
 .vercel
 .venv 
+
+storage/

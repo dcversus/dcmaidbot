@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional, Tuple, Dict
 from models.data import Activity, Pool
 from services.pool_service import _get_storage, _save_storage, get_pool
@@ -26,12 +26,14 @@ def _calculate_activity_weights(pool: Pool, user_id: int) -> List[float]:
         # Adjust weight based on selection count
         if total_selections > 0:
             usage_factor = activity.selection_count / total_selections
-            weight *= (1.0 - usage_factor * 0.5)  # Reduce weight by up to 50% based on usage
+            # Reduce weight by up to 50% based on usage
+            weight *= 1.0 - usage_factor * 0.5
         
         # Adjust weight based on recency
         if activity.last_selected:
             days_since_selection = (now - activity.last_selected).days
-            if days_since_selection < 7:  # Reduce weight for recently selected activities
+            # Reduce weight for activities selected in the last 7 days
+            if days_since_selection < 7:
                 recency_factor = 1.0 - ((7 - days_since_selection) / 7)
                 weight *= recency_factor
         
@@ -77,18 +79,23 @@ def _update_penalty(pool: Pool, user_id: int, selected_index: int) -> None:
     for uid in pool.penalties:
         pool.penalties[uid] = max(0, pool.penalties[uid] * PENALTY_DECAY)
 
-def select_activity(pools: List[str], user_id: int) -> Optional[Tuple[str, Activity, int]]:
+def select_activity(
+    pools: List[str], user_id: int
+) -> Optional[Tuple[str, Activity, int]]:
     """
     Select an activity from the given pools for the user
-    Returns a tuple (pool_name, selected_activity, activity_index) or None if selection fails
+    Returns a tuple (pool_name, selected_activity, activity_index) 
+    or None if selection fails
     """
     storage = _get_storage()
     
     valid_pools = []
     for pool_name in pools:
         pool = storage.pools.get(pool_name)
-        if pool and pool.activities and user_id in [p.user_id for p in pool.participants]:
-            valid_pools.append(pool_name)
+        if pool:  # Check if pool exists before accessing attributes
+            user_is_participant = user_id in [p.user_id for p in pool.participants]
+            if pool.activities and user_is_participant:
+                valid_pools.append(pool_name)
     
     if not valid_pools:
         return None

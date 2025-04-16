@@ -5,17 +5,19 @@ A Telegram bot for creating pools of activities with a fair random selection mec
 ## Features
 
 - **Pool Management**: Create, join, exit, and view pools
-- **Activity Management**: Add and list activities within pools
+- **Activity Management**: Add and list activities (including text and images) within pools
 - **Smart Selection**: Fair and random selection of activities with penalty system
 - **Invitation System**: Only pool creators can invite other users to their pools
 - **Penalty System**: Ensures all activities are used equally over time
+- **Media Support**: Add images to activities for richer content
 
 ## Technical Details
 
 - **Language**: Python 3.9+
 - **Framework**: aiogram 3.x (Telegram Bot API)
-- **Storage**: JSON file-based storage
-- **Deployment**: Vercel serverless functions
+- **Linting**: Ruff
+- **Storage**: JSON file-based storage / Redis storage (configurable via `REDIS_URL` env var)
+- **Deployment**: Vercel serverless functions (optional)
 
 ## Project Structure
 
@@ -24,162 +26,171 @@ dcmaidbot/
 ├── api/                  # Vercel serverless functions
 ├── handlers/             # Command and callback handlers
 ├── middlewares/          # Request processing middlewares
-├── models/               # Data models
+├── models/               # Data models (Pydantic)
 ├── services/             # Business logic and utilities
-├── storage/              # Data storage
-├── tests/                # Test files
+├── tests/                # Pytest test files
 ├── .env                  # Environment variables (not in repo)
 ├── .env.example          # Example environment file
 ├── .gitignore            # Git ignore file
 ├── bot.py                # Bot entry point for local development
 ├── requirements.txt      # Python dependencies
+├── ruff.toml             # Ruff linter configuration
+├── package.json          # For Vercel deployment
+├── vercel.json           # Vercel configuration (optional)
 └── README.md             # This file
 ```
 
-## Installation
+## Installation & Setup
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/yourusername/dcmaidbot.git
-   cd dcmaidbot
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/dcmaidbot.git # Replace with your repo URL
+    cd dcmaidbot
+    ```
 
-2. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
 
-3. Create a `.env` file with your bot token:
-   ```
-   BOT_TOKEN=your_telegram_bot_token_here
-   DEBUG=False
-   ```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-4. Run the bot:
-   ```
-   python bot.py
-   ```
+4.  **Set up environment variables:**
+    - Copy `.env.example` to `.env`:
+      ```bash
+      cp .env.example .env
+      ```
+    - Edit `.env` and add your Telegram Bot Token:
+      ```env
+      BOT_TOKEN=your_telegram_bot_token_here
+      # REDIS_URL=redis://user:password@host:port # Optional: Uncomment and set if using Redis
+      ```
+
+## Running the Bot Locally
+
+1.  **Activate the virtual environment** (if not already active):
+    ```bash
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
+
+2.  **Run the bot:**
+    ```bash
+    python bot.py
+    ```
+    The bot will start polling for updates. Data will be saved in `storage/storage.json` by default, or use Redis if `REDIS_URL` is set.
 
 ## Bot Commands
 
 - `/start` - Initialize the bot and show quick guide
 - `/help` - Display help information
 - `/create_pool` - Create a new activity pool
-- `/join_pool` - Join an existing pool with an invite code
-- `/invite` - Generate invite codes for your created pools (only creators can invite)
-- `/exit_pool` - Leave a pool you're participating in
-- `/my_pools` - List all pools you're participating in
-- `/add_activity` - Add a new activity to a pool
+- `/join_pool [код]` - Join an existing pool using an invite code
+- `/invite` - Generate invite codes for pools you created
+- `/exit_pool` - Leave a pool you are participating in
+- `/my_pools` - List all pools you are participating in
+- `/add_activity` - Add a new activity (text or text+image) to a pool
 - `/list_activities` - List all activities in a pool
-- `/select` - Select a random activity from the pool
-- `/pool_info` - Display information about a pool
-- `/penalties` - Show and manage penalties for activities
+- `/remove_activity` - Remove an activity from a pool
+- `/select [номер_пула]` - Select a random activity from one or more pools (specify pool numbers like `1` or `1,3`)
+- `/pool_info [название_пула]` - Display detailed information about a pool
+- `/penalties` - Show penalty information for users in your pools
 
 ## Development
 
-For local development:
+### Running Tests
 
-```
-python bot.py
-```
+1.  Activate the virtual environment:
+    ```bash
+    source venv/bin/activate # On Windows use `venv\Scripts\activate`
+    ```
+2.  Run pytest:
+    ```bash
+    pytest tests/
+    ```
 
-To test the Vercel serverless function locally:
+### Linting
 
-```
-python test_vercel_handler.py
-```
+This project uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
 
-## Vercel Deployment
+1.  Activate the virtual environment:
+    ```bash
+    source venv/bin/activate # On Windows use `venv\Scripts\activate`
+    ```
+2.  Check for linting issues:
+    ```bash
+    ruff check .
+    ```
+3.  Automatically fix fixable issues:
+    ```bash
+    ruff check . --fix
+    ```
+4.  Format code:
+    ```bash
+    ruff format .
+    ```
 
-1. Make sure your `vercel.json` file is correctly configured:
-   ```json
-   {
-     "version": 2,
-     "builds": [
-       { 
-         "src": "api/*.py", 
-         "use": "@vercel/python",
-         "config": {
-           "maxLambdaSize": "15mb",
-           "runtime": "python3.9"
-         }
-       }
-     ],
-     "routes": [
-       { "src": "/", "dest": "/api/index.py" },
-       { "src": "/webhook", "dest": "/api/webhook.py" },
-       { "src": "/(.*)", "dest": "/api/index.py" }
-     ]
-   }
-   ```
+## Vercel Deployment (Optional)
 
-2. Create a Vercel account and install the Vercel CLI:
-   ```
-   npm install -g vercel
-   ```
+This bot can be deployed as a serverless function on Vercel using webhooks.
 
-3. Login to Vercel:
-   ```
-   vercel login
-   ```
+1.  **Install Vercel CLI:**
+    ```bash
+    npm install -g vercel
+    ```
 
-4. Set up your environment variables in the Vercel dashboard:
-   - Go to your project settings
-   - Navigate to "Environment Variables"
-   - Add `BOT_TOKEN=your_telegram_bot_token_here`
+2.  **Login to Vercel:**
+    ```bash
+    vercel login
+    ```
 
-5. Deploy to Vercel:
-   ```
-   vercel
-   ```
+3.  **Configure Environment Variables in Vercel:**
+    - Go to your project settings on the Vercel dashboard.
+    - Navigate to "Environment Variables".
+    - Add `BOT_TOKEN` with your Telegram Bot Token.
+    - Optionally, add `REDIS_URL` if you want to use Redis for storage on Vercel.
 
-6. Verify and set the webhook URL (using the newly deployed URL):
-   ```
-   python verify_webhook.py --test https://your-project.vercel.app/webhook
-   python verify_webhook.py --set https://your-project.vercel.app/webhook
-   ```
+4.  **Deploy:**
+    ```bash
+    vercel
+    ```
+    Vercel will provide you with deployment URLs.
 
-7. Check if the webhook is properly set:
-   ```
-   python verify_webhook.py --info
-   ```
+5.  **Set the Webhook:**
+    Use the `verify_webhook.py` script (remember to activate your venv first) to set the webhook URL provided by Vercel. Make sure to use the `/api/webhook` endpoint.
+    ```bash
+    source venv/bin/activate
+    python verify_webhook.py --set https://your-deployment-url.vercel.app/api/webhook
+    ```
 
-## Troubleshooting Vercel Deployment
+6.  **Verify Webhook:**
+    ```bash
+    python verify_webhook.py --info
+    python verify_webhook.py --test https://your-deployment-url.vercel.app/api/webhook
+    ```
 
-If you encounter issues with your Vercel deployment:
+### Webhook Management Script
 
-1. Check Vercel logs in the Vercel dashboard
-2. Make sure your webhook URL is accessible - use `verify_webhook.py --test URL`
-3. Ensure your bot token is properly set in environment variables
-4. Try using the `/webhook` endpoint specifically (it's a simpler endpoint)
-5. Check your vercel.json configuration to ensure there are no syntax errors
-6. Try visiting your Vercel deployment URL directly in a browser to check if it's accessible
-7. For storage issues, you might need to use a different storage approach for Vercel (like a database)
+The `verify_webhook.py` script helps manage the Telegram webhook:
 
-## Webhook Management
+```bash
+# Activate venv first!
+source venv/bin/activate
 
-The `verify_webhook.py` script provides several useful commands:
-
-```
 # Show current webhook info
 python verify_webhook.py --info
 
 # Test if a webhook URL is accessible
-python verify_webhook.py --test https://your-project.vercel.app/webhook
+python verify_webhook.py --test https://dcmaidbot.vercel.app/webhook
 
 # Set a new webhook URL
-python verify_webhook.py --set https://your-project.vercel.app/webhook
+python verify_webhook.py --set https://dcmaidbot.vercel.app/webhook
 
 # Delete the current webhook
 python verify_webhook.py --delete
-```
-
-## Testing
-
-Run tests with:
-
-```
-pytest tests/
 ```
 
 ## License

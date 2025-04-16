@@ -1,4 +1,3 @@
-import pytest
 from pytest_asyncio import plugin
 import logging
 

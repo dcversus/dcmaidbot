@@ -1,9 +1,9 @@
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from services import pool_service, activity_service, selection_service
+from services import pool_service, activity_service
 
 router = Router()
 
@@ -26,7 +26,9 @@ async def cmd_pool_info(message: Message, state: FSMContext):
             await message.answer("Вы не являетесь участником ни одного пула.")
             return
         
-        pool_list = "\n".join([f"{i+1}. {pool.name}" for i, pool in enumerate(user_pools)])
+        pool_list = "\n".join(
+            [f"{i+1}. {pool.name}" for i, pool in enumerate(user_pools)]
+        )
         
         await message.answer(f"Выберите пул (введите номер):\n{pool_list}")
         await state.set_state(PoolInfo.waiting_for_pool_name)
@@ -54,10 +56,16 @@ async def process_pool_name(message: Message, state: FSMContext):
         if pool and any(p.user_id == message.from_user.id for p in pool.participants):
             await show_pool_info(message, pool_name)
         else:
-            await message.answer("❌ Пул не найден или вы не являетесь его участником. Пожалуйста, попробуйте снова.")
+            await message.answer(
+                "❌ Пул не найден или вы не являетесь его участником. "
+                "Пожалуйста, попробуйте снова."
+            )
     
     except (ValueError, IndexError):
-        await message.answer("❌ Некорректный ввод. Пожалуйста, введите номер пула из списка или его название.")
+        await message.answer(
+            "❌ Некорректный ввод. Пожалуйста, введите номер пула "
+            "из списка или его название."
+        )
     
     await state.clear()
 
@@ -100,12 +108,18 @@ async def show_pool_info(message: Message, pool_name: str):
     
     activities_info = ""
     if activities:
-        top_activities = sorted(activities, key=lambda a: a.selection_count, reverse=True)[:5]
+        # Sort activities by selection count descending and take top 5
+        top_activities = sorted(
+            activities, key=lambda a: a.selection_count, reverse=True
+        )[:5]
         
         if top_activities:
             activities_info = "\n\n<b>Самые популярные активности</b>:\n"
             for i, activity in enumerate(top_activities):
-                activities_info += f"{i+1}. {activity.content} (выбрано: {activity.selection_count})\n"
+                activities_info += (
+                    f"{i+1}. {activity.content} "
+                    f"(выбрано: {activity.selection_count})\n"
+                )
     
     # Prepare response
     response = (
