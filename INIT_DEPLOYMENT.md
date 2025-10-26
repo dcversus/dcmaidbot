@@ -128,7 +128,7 @@ spec:
             secretKeyRef:
               name: dcmaidbot-secrets
               key: admin-1-id
-        - name: ADMIN_2_ID
+        - name: 
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
