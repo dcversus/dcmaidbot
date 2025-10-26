@@ -11,7 +11,7 @@ class Joke(Base):
 
     __tablename__ = "jokes"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     message_id: Mapped[int] = mapped_column(
         BigInteger, nullable=True, comment="Telegram message ID of joke"
     )

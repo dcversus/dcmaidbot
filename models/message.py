@@ -1,7 +1,7 @@
 """Message model for dcmaidbot."""
 
 from datetime import datetime
-from sqlalchemy import BigInteger, String, Text, DateTime, ForeignKey
+from sqlalchemy import BigInteger, String, Text, DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from database import Base
 
@@ -11,9 +11,9 @@ class Message(Base):
 
     __tablename__ = "messages"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("users.id"), nullable=False
+        Integer, ForeignKey("users.id"), nullable=False
     )
     chat_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
     message_id: Mapped[int] = mapped_column(BigInteger, nullable=False)

@@ -23,6 +23,6 @@ logs/
 
 # Vercel
 .vercel
-.venv 
+.venv
 
-storage/
+storage/dcmaidbot_test.db

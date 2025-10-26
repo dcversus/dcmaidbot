@@ -11,7 +11,7 @@ class Memory(Base):
 
     __tablename__ = "memories"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     admin_id: Mapped[int] = mapped_column(
         BigInteger, nullable=False, comment="Admin who created memory"
     )
@@ -48,4 +48,8 @@ class Memory(Base):
     )
 
     def __repr__(self):
-        return f"<Memory(id={self.id}, admin_id={self.admin_id}, prompt='{self.prompt[:50]}...')>"
+        prompt_preview = self.prompt[:50] if self.prompt else ""
+        return (
+            f"<Memory(id={self.id}, admin_id={self.admin_id}, "
+            f"prompt='{prompt_preview}...')>"
+        )

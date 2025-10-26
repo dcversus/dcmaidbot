@@ -9,10 +9,7 @@ load_dotenv()
 
 Base = declarative_base()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL not configured")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./dcmaidbot_test.db")
 
 # Convert postgresql:// to postgresql+asyncpg://
 if DATABASE_URL.startswith("postgresql://"):
@@ -34,7 +31,7 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def get_db() -> AsyncSession:
+async def get_db():  # type: ignore[misc]
     """Get database session."""
     async with AsyncSessionLocal() as session:
         yield session
