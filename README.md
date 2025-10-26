@@ -178,7 +178,18 @@ See [AGENTS.md](AGENTS.md) for detailed architecture, PRPs, and development work
 
 ## License
 
-MIT License
+GNU Affero General Public License v3.0 (AGPL-3.0)
+
+See [LICENSE](LICENSE) for full details.
+
+## Contact
+
+- Email: dcversus@gmail.com
+- Repository: https://github.com/dcversus/dcmaidbot
+
+---
+
+*Nyaa~ Thank you for respecting privacy! 💕*
 
 ## License
 
