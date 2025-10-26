@@ -46,8 +46,8 @@ kubectl get namespace dcmaidbot
 kubectl create secret generic dcmaidbot-secrets \
   --namespace=dcmaidbot \
   --from-literal=bot-token='1234567890:ABCdefGHIjklMNOpqrsTUVwxyz' \
-  --from-literal=admin-vasilisa-id='123456789' \
-  --from-literal=admin-daniil-id='987654321' \
+  --from-literal=admin-1-id='123456789' \
+  --from-literal=admin-2-id='987654321' \
   --from-literal=database-url='postgresql://dcmaidbot:password@postgres-service.default.svc.cluster.local:5432/dcmaidbot' \
   --from-literal=openai-api-key='sk-proj-...'
 ```
@@ -123,16 +123,16 @@ spec:
             secretKeyRef:
               name: dcmaidbot-secrets
               key: bot-token
-        - name: ADMIN_VASILISA_ID
+        - name: ADMIN_1_ID
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
-              key: admin-vasilisa-id
-        - name: ADMIN_DANIIL_ID
+              key: admin-1-id
+        - name: ADMIN_2_ID
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
-              key: admin-daniil-id
+              key: admin-2-id
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
@@ -321,8 +321,8 @@ kubectl create namespace dcmaidbot
 kubectl create secret generic dcmaidbot-secrets \
   --namespace=dcmaidbot \
   --from-literal=bot-token='YOUR_BOT_TOKEN' \
-  --from-literal=admin-vasilisa-id='YOUR_ID' \
-  --from-literal=admin-daniil-id='YOUR_ID' \
+  --from-literal=admin-1-id='YOUR_ID' \
+  --from-literal=admin-2-id='YOUR_ID' \
   --from-literal=database-url='postgresql://...' \
   --from-literal=openai-api-key='sk-...'
 

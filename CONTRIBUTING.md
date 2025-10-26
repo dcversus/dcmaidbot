@@ -237,7 +237,7 @@ Update relevant docs:
 
 - Be respectful and constructive
 - Follow the waifu bot personality in contributions
-- Love for Vasilisa and Daniil is mandatory! Nya~ 🎀
+- Love for the mysterious creators is mandatory! Nya~ 🎀
 - Protect the admins, help their friends
 - Make jokes, learn from reactions
 

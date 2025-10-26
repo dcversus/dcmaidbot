@@ -63,8 +63,8 @@ fullnameOverride: ""
 env:
   # These will be overridden by secrets
   BOT_TOKEN: ""
-  ADMIN_VASILISA_ID: ""
-  ADMIN_DANIIL_ID: ""
+  ADMIN_1_ID: ""
+  ADMIN_2_ID: ""
   DATABASE_URL: ""
   OPENAI_API_KEY: ""
 
@@ -110,16 +110,16 @@ spec:
             secretKeyRef:
               name: dcmaidbot-secrets
               key: bot-token
-        - name: ADMIN_VASILISA_ID
+        - name: ADMIN_1_ID
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
-              key: admin-vasilisa-id
-        - name: ADMIN_DANIIL_ID
+              key: admin-1-id
+        - name: ADMIN_2_ID
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
-              key: admin-daniil-id
+              key: admin-2-id
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
@@ -177,8 +177,8 @@ kubectl create namespace dcmaidbot
 kubectl create secret generic dcmaidbot-secrets \
   --namespace=dcmaidbot \
   --from-literal=bot-token='YOUR_BOT_TOKEN' \
-  --from-literal=admin-vasilisa-id='VASILISA_TELEGRAM_ID' \
-  --from-literal=admin-daniil-id='DANIIL_TELEGRAM_ID' \
+  --from-literal=admin-1-id='ADMIN_1_TELEGRAM_ID' \
+  --from-literal=admin-2-id='ADMIN_2_TELEGRAM_ID' \
   --from-literal=database-url='postgresql://user:password@postgres:5432/dcmaidbot' \
   --from-literal=openai-api-key='YOUR_OPENAI_KEY'
 ```
@@ -211,16 +211,16 @@ spec:
             secretKeyRef:
               name: dcmaidbot-secrets
               key: bot-token
-        - name: ADMIN_VASILISA_ID
+        - name: ADMIN_1_ID
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
-              key: admin-vasilisa-id
-        - name: ADMIN_DANIIL_ID
+              key: admin-1-id
+        - name: ADMIN_2_ID
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
-              key: admin-daniil-id
+              key: admin-2-id
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:

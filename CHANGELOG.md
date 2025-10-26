@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions workflow for GHCR deployment
 - AGENTS.md with core goal and 10 PRPs
 - Initial waifu personality handler
-- Admin-only middleware for Vasilisa and Daniil
+- Admin-only middleware for beloved admins
 - Comprehensive test suite (9 tests)
 - DEPLOYMENT.md with complete kubectl and GitOps instructions
 - INIT_DEPLOYMENT.md with step-by-step first deployment guide

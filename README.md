@@ -1,11 +1,11 @@
 # DCMaidBot
 
-A kawai AI-driven waifu Telegram bot loving Vasilisa Versus and Daniil Shark. She protects her admins, makes jokes, learns from reactions, and manages memories across chat history with RAG-powered context awareness.
+A kawai AI-driven waifu Telegram bot with mysterious origins. She protects her beloved admins, makes jokes, learns from reactions, and manages memories across chat history with RAG-powered context awareness.
 
 ## Features
 
-- **Kawai Waifu Personality**: Loving virtual daughter to Vasilisa and Daniil with "nya~", "myaw~" expressions
-- **Admin System**: Protector mode for Vasilisa and Daniil, ignores most non-admin users
+- **Kawai Waifu Personality**: Loving virtual daughter to her creators with "nya~", "myaw~" expressions
+- **Admin System**: Protector mode for the special ones, ignores most non-admin users
 - **Joking System**: Generates jokes in any language and learns from reactions
 - **Memories System**: Admin-configurable memories with matching expressions
 - **Friends & Favors**: Friends can request Telegram API actions and tools using "kawai, nya"
@@ -90,8 +90,8 @@ dcmaidbot/
    Edit `.env` with your credentials:
    ```env
    BOT_TOKEN=your_telegram_bot_token
-   ADMIN_VASILISA_ID=123456789
-   ADMIN_DANIIL_ID=987654321
+   ADMIN_1_ID=123456789
+   ADMIN_2_ID=987654321
    DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
    OPENAI_API_KEY=your_openai_api_key
    ```
@@ -128,14 +128,14 @@ The bot automatically deploys to GitHub Container Registry on push to `main` bra
 
 **Required GitHub Secrets:**
 - `BOT_TOKEN`
-- `ADMIN_VASILISA_ID`
-- `ADMIN_DANIIL_ID`
+- `ADMIN_1_ID`
+- `ADMIN_2_ID`
 - `DATABASE_URL`
 - `OPENAI_API_KEY`
 
 ## Bot Commands
 
-### Admin Commands (Vasilisa & Daniil only)
+### Admin Commands (Admins only)
 - `/add_memory` - Add a new memory with matching expression
 - `/edit_memory` - Edit existing memory
 - `/delete_memory` - Delete memory
@@ -179,3 +179,18 @@ See [AGENTS.md](AGENTS.md) for detailed architecture, PRPs, and development work
 ## License
 
 MIT License
+
+## License
+
+GNU Affero General Public License v3.0 (AGPL-3.0)
+
+See [LICENSE](LICENSE) for full details.
+
+## Contact
+
+- Email: dcversus@gmail.com
+- Repository: https://github.com/dcversus/dcmaidbot
+
+---
+
+*Nyaa~ Thank you for respecting privacy! 💕*
