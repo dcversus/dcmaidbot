@@ -1,11 +1,12 @@
-from pytest_asyncio import plugin
-import logging
-
-# Silence deprecation warnings
-logging.getLogger("pytest_asyncio").setLevel(logging.ERROR)
+import pytest
 
 
-# Configure pytest-asyncio for the project
 def pytest_configure(config):
-    plugin.LOOP_SCOPE = "function"
-    plugin.DEFAULT_FIXTURE_LOOP_SCOPE = "function"
+    """Configure pytest with asyncio settings."""
+    config.addinivalue_line("markers", "asyncio: mark test as asyncio coroutine")
+
+
+@pytest.fixture(scope="session")
+def asyncio_default_fixture_loop_scope():
+    """Set default fixture loop scope to function."""
+    return "function"

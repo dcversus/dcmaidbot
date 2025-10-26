@@ -5,8 +5,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
-from handlers import categories, activities, selection, info, help
-from middlewares.private_only import PrivateChatMiddleware
+from handlers import waifu
+from middlewares.admin_only import AdminOnlyMiddleware
 
 # Load environment variables first
 load_dotenv()
@@ -27,21 +27,48 @@ def get_bot_token() -> str:
     return token
 
 
+def get_admin_ids() -> list[int]:
+    """Retrieves admin IDs from environment variables (NEVER logs actual IDs)."""
+    admin_ids_str = os.getenv("ADMIN_IDS", "")
+    admins = []
+
+    if not admin_ids_str:
+        logging.warning("No ADMIN_IDS configured. Bot will not respond to anyone.")
+        return admins
+
+    # Parse comma-separated admin IDs
+    for admin_id in admin_ids_str.split(","):
+        admin_id = admin_id.strip()
+        if not admin_id:
+            continue
+        try:
+            admins.append(int(admin_id))
+        except ValueError:
+            # PRIVACY: Never log the actual ID value
+            logging.warning("Invalid admin ID format detected (skipped)")
+
+    if admins:
+        logging.info(f"Loaded {len(admins)} admin(s) from ADMIN_IDS")
+    else:
+        logging.warning("No valid admin IDs found. Bot will not respond.")
+
+    return admins
+
+
 def setup_dispatcher() -> Dispatcher:
     """Initializes and configures the dispatcher."""
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
-    # Register the private chat middleware
-    dp.message.middleware(PrivateChatMiddleware())
-    dp.callback_query.middleware(PrivateChatMiddleware())
+    # Get admin IDs
+    admin_ids = get_admin_ids()
 
-    # Register all routers
-    dp.include_router(help.router)
-    dp.include_router(categories.router)
-    dp.include_router(activities.router)
-    dp.include_router(selection.router)
-    dp.include_router(info.router)
+    # Register the admin-only middleware
+    dp.message.middleware(AdminOnlyMiddleware(admin_ids))
+    dp.callback_query.middleware(AdminOnlyMiddleware(admin_ids))
+
+    # Register waifu router
+    dp.include_router(waifu.router)
 
     return dp
 
