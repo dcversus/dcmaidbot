@@ -240,3 +240,11 @@ When working on this codebase:
    - Pushes to GitHub Container Registry
    - Creates deployment record
 5. **Version bump** → Manual update to \`version.txt\` for next release
+
+
+11. **[PRP-011: Canary Deployment & Sister Bot Communication](PRPs/PRP-011.md)**
+    - dcmaidbot-canary: happy little sister bot for testing
+    - E2E production testing with cron automation
+    - Status page with health checks
+    - 5% canary release in Kubernetes
+    - Inter-bot communication API for summary and tool sharing
