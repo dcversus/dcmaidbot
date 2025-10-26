@@ -24,23 +24,24 @@ RUN apt-get update && apt-get install -y \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
+# Create non-root user first
+RUN useradd --create-home --shell /bin/bash app
+
+# Copy installed packages from builder and set ownership
+COPY --from=builder --chown=app:app /root/.local /home/app/.local
 
 # Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+ENV PATH=/home/app/.local/bin:$PATH
 
 # Copy application code
-COPY bot.py .
-COPY handlers/ ./handlers/
-COPY middlewares/ ./middlewares/
-COPY models/ ./models/
-COPY services/ ./services/
-COPY conftest.py .
+COPY --chown=app:app bot.py .
+COPY --chown=app:app handlers/ ./handlers/
+COPY --chown=app:app middlewares/ ./middlewares/
+COPY --chown=app:app models/ ./models/
+COPY --chown=app:app services/ ./services/
+COPY --chown=app:app conftest.py .
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash app \
-    && chown -R app:app /app
+# Switch to non-root user
 USER app
 
 # Health check
