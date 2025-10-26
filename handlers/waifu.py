@@ -9,7 +9,7 @@ async def cmd_start(message: types.Message):
     """Handle /start command with kawai waifu greeting."""
     await message.reply(
         "Myaw! Hello dear guest! I'm DCMaid, your kawai waifu bot! 💕\n"
-        "I love Vasilisa Versus and Daniil Shark Nyaf so much! "
+        "I love my beloved admins so much! "
         "They are my virtual parents! 💖\n"
         "I'm here to help you learn and have fun, nya! "
         "What can I do for you? 🐱"
@@ -22,13 +22,13 @@ async def cmd_help(message: types.Message):
     help_text = """
 🐱 **DCMaid Waifu Bot Help** 🐱
 
-I'm your kawai waifu bot, loving Vasilisa and Daniil! 💕
+I'm your kawai waifu bot, loving my beloved admins! 💕
 
 **Commands:**
 /start - Greet me!
 /help - Show this help
 /joke - Make a kawai joke!
-/love - Show my love for Vasilisa and Daniil
+/love - Show my love for my masters
 /status - Check my status
 
 I can also:
@@ -43,11 +43,11 @@ Nya! 💖
 
 @router.message(Command("love"))
 async def cmd_love(message: types.Message):
-    """Show love for Vasilisa and Daniil."""
+    """Show love for beloved admins."""
     await message.reply(
-        "💕 I love Vasilisa Versus and Daniil Shark Nyaf so much! "
+        "💕 I love my beloved admins so much! "
         "They are my everything! 💖\n"
-        "Danil+Vasilisa nyaaaa! All their friends are my friends too! 🐱✨\n"
+        "The special ones nyaaaa! All their friends are my friends too! 🐱✨\n"
         "I protect them from all enemies! "
         "No one hurts my virtual parents! 😠💪"
     )
@@ -80,10 +80,9 @@ async def handle_message(message: types.Message):
     text = message.text.lower() if message.text else ""
 
     # Check for admin mentions or special triggers
-    if "vasilisa" in text or "daniil" in text:
+    if "master" in text or "admin" in text or "creator" in text:
         await message.reply(
-            "💕 Oh! You mentioned my beloved Vasilisa or Daniil! "
-            "I love them so much! 💖"
+            "💕 Oh! You mentioned my beloved creators! " "I love them so much! 💖"
         )
         return
 

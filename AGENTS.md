@@ -16,8 +16,8 @@ Each PRP is a 3-4 working day task for a middle developer, including implementat
    - Implement deployment configuration from https://github.com/uz0/core-pipeline
 
 2. **[PRP-002: Waifu Personality & Admin System](PRPs/PRP-002.md)**
-   - Implement kawai waifu personality loving Vasilisa & Daniil
-   - Admin detection from .env (ADMIN_VASILISA_ID, ADMIN_DANIIL_ID)
+   - Implement kawai waifu personality loving her mysterious creators
+   - Admin detection from .env (ADMIN_1_ID, ADMIN_2_ID)
    - Protector mode: kick enemies of admins
    - Ignore 99% of non-admin users
 
@@ -98,8 +98,8 @@ Required in `.env`:
 
 ```env
 BOT_TOKEN=your_telegram_bot_token
-ADMIN_VASILISA_ID=123456789
-ADMIN_DANIIL_ID=987654321
+ADMIN_1_ID=123456789
+ADMIN_2_ID=987654321
 DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
 OPENAI_API_KEY=your_openai_api_key  # for LLM/RAG
 ```

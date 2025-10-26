@@ -29,19 +29,19 @@ def get_bot_token() -> str:
 
 def get_admin_ids() -> list[int]:
     """Retrieves admin IDs from environment variables."""
-    vasilisa_id = os.getenv("ADMIN_VASILISA_ID")
-    daniil_id = os.getenv("ADMIN_DANIIL_ID")
+    admin_1_id = os.getenv("ADMIN_1_ID")
+    admin_2_id = os.getenv("ADMIN_2_ID")
     admins = []
-    if vasilisa_id:
+    if admin_1_id:
         try:
-            admins.append(int(vasilisa_id))
+            admins.append(int(admin_1_id))
         except ValueError:
-            logging.warning(f"Invalid ADMIN_VASILISA_ID: {vasilisa_id}")
-    if daniil_id:
+            logging.warning(f"Invalid ADMIN_1_ID: {admin_1_id}")
+    if admin_2_id:
         try:
-            admins.append(int(daniil_id))
+            admins.append(int(admin_2_id))
         except ValueError:
-            logging.warning(f"Invalid ADMIN_DANIIL_ID: {daniil_id}")
+            logging.warning(f"Invalid ADMIN_2_ID: {admin_2_id}")
     if not admins:
         logging.warning("No admin IDs configured. Bot will not respond to anyone.")
     return admins

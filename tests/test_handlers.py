@@ -50,8 +50,7 @@ async def test_cmd_love(mock_message):
     await waifu.cmd_love(mock_message)
     mock_message.reply.assert_called_once()
     call_args = mock_message.reply.call_args[0][0]
-    assert "Vasilisa" in call_args
-    assert "Daniil" in call_args
+    assert "beloved" in call_args or "admins" in call_args
 
 
 @pytest.mark.asyncio
@@ -66,11 +65,11 @@ async def test_cmd_status(mock_message):
 @pytest.mark.asyncio
 async def test_handle_message_with_admin_mention(mock_message):
     """Test message handler with admin mention."""
-    mock_message.text = "I love Vasilisa!"
+    mock_message.text = "I love my master!"
     await waifu.handle_message(mock_message)
     mock_message.reply.assert_called_once()
     call_args = mock_message.reply.call_args[0][0]
-    assert "Vasilisa" in call_args or "Daniil" in call_args
+    assert "beloved" in call_args or "creators" in call_args
 
 
 @pytest.mark.asyncio
