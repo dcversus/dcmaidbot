@@ -15,11 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial waifu personality handler
 - Admin-only middleware for Vasilisa and Daniil
 - Comprehensive test suite (9 tests)
+- DEPLOYMENT.md with complete kubectl and GitOps instructions
+- Telegram chat import capability in PRP-004
+- CLAUDE.md as symlink to AGENTS.md
+- Version management with version.txt and CHANGELOG.md
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
 - Completely rewrote README.md for waifu bot architecture
 - Updated .env.example with new required variables
+- Deploy workflow reads version.txt and creates GitHub releases
 
 ### Removed
 - All Vercel infrastructure (api/, vercel.json, package.json)
