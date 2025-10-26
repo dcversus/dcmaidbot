@@ -146,7 +146,8 @@ dcmaidbot/
 6. Update PRP progress with comments
 7. Run lint/typecheck/tests
 8. Mark PRP as complete
-9. Move to next PRP
+9. **If PR creates related PRs (e.g., GitOps): Comment with links**
+10. Move to next PRP
 
 Each PRP/*.md contains:
 - Description
@@ -218,6 +219,7 @@ When working on this codebase:
 - **Definition of Done**: Copy DOD from PRP and check each item
 - **CHANGELOG**: Reference to CHANGELOG.md update
 - **Testing**: What tests were added/updated
+- **Related PRs**: Link to PRs in other repos (e.g., GitOps, charts)
 - **Next Steps**: What comes after this PR
 
 ### Code Review Checklist (Reviewer):
@@ -228,6 +230,7 @@ When working on this codebase:
 - [ ] No linter/type errors
 - [ ] PRP progress updated
 - [ ] Documentation updated if needed
+- [ ] Related PRs linked in comments (if applicable)
 
 ### Deployment Flow:
 1. **PR created** → CI runs tests, lint, format checks
