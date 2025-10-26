@@ -32,5 +32,8 @@ USER app
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)"
 
-# Run the bot
-CMD ["python", "-u", "bot.py"]
+# Expose webhook port
+EXPOSE 8080
+
+# Run bot in webhook mode if WEBHOOK_MODE=true, else polling
+CMD ["sh", "-c", "if [ \"$WEBHOOK_MODE\" = \"true\" ]; then python -u bot_webhook.py; else python -u bot.py; fi"]
