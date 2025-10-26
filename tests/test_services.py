@@ -8,7 +8,6 @@ def test_placeholder():
 
 def test_bot_configuration():
     """Test that bot configuration is correct."""
-    import os
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -21,7 +20,6 @@ def test_bot_configuration():
 def test_requirements_installed():
     """Test that all required packages are installed."""
     import aiogram
-    import pytest
     import pydantic
 
     assert aiogram is not None

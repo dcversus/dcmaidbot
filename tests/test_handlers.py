@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 from aiogram.types import Message, User, Chat
 
 from handlers import waifu
