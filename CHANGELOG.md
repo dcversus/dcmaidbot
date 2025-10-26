@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLAUDE.md as symlink to AGENTS.md
 - Version management with version.txt and CHANGELOG.md
 - **PR #15 to uz0/core-charts with Helm charts**
+- **PRP-011: Canary deployment & sister bot communication system**
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry

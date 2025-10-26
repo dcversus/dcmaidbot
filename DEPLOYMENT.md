@@ -5,7 +5,7 @@
 ```
 dcmaidbot (this repo)     uz0/core-charts (GitOps repo)
      ↓                            ↓
-  Docker Build              Helm Charts
+  Docker Build              Helm Charts ✅ PR #15
      ↓                            ↓
 GitHub Container Registry    ArgoCD watches
      ↓                            ↓
@@ -13,14 +13,27 @@ GitHub Container Registry    ArgoCD watches
     dcmaidbot:latest
 ```
 
+**GitOps PR**: https://github.com/uz0/core-charts/pull/15
+
 ## Part 1: Docker Image (Already Configured ✅)
 
 This repo automatically builds and pushes to GHCR when merging to `main`:
 - Registry: `ghcr.io/dcversus/dcmaidbot`
 - Tags: `latest`, `v0.1.0`, `0.1`, `0`
 - Workflow: `.github/workflows/deploy.yml`
+- Status: ✅ Ready to push on merge
 
-## Part 2: GitOps Manifests (For uz0/core-charts repo)
+## Part 2: GitOps Setup (PR Created ✅)
+
+**PR to uz0/core-charts**: https://github.com/uz0/core-charts/pull/15
+
+Helm chart following core-pipeline pattern with:
+- Version tag files (`prod.tag.yaml`, `dev.tag.yaml`)
+- ArgoCD-compatible manifests
+- Secret management
+- Resource limits
+
+## Part 2-OLD: GitOps Manifests Reference (Now in PR #15)
 
 ### Create these files in uz0/core-charts:
 
