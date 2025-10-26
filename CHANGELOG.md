@@ -16,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin-only middleware for Vasilisa and Daniil
 - Comprehensive test suite (9 tests)
 - DEPLOYMENT.md with complete kubectl and GitOps instructions
+- INIT_DEPLOYMENT.md with step-by-step first deployment guide
 - Telegram chat import capability in PRP-004
 - CLAUDE.md as symlink to AGENTS.md
 - Version management with version.txt and CHANGELOG.md
+- **PR #15 to uz0/core-charts with Helm charts**
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
