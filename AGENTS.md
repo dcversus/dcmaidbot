@@ -251,3 +251,56 @@ When working on this codebase:
     - Status page with health checks
     - 5% canary release in Kubernetes
     - Inter-bot communication API for summary and tool sharing
+
+## Infrastructure Workflow
+
+When changes require infrastructure updates (Kubernetes, GitOps, etc.):
+
+### Pattern:
+1. **Main Repo** (dcmaidbot): Code & Docker images
+2. **Infrastructure Repo** (uz0/core-charts): Helm charts & K8s manifests
+3. **Link PRs**: Comment on main PR with infrastructure PR link
+
+### Steps:
+1. Implement feature in main repo
+2. Create infrastructure changes in separate PR to uz0/core-charts
+3. Comment on main PR with link to infrastructure PR
+4. Both PRs reviewed and merged together
+5. Auto-deployment via ArgoCD
+
+### Example:
+- **PR #3** (dcmaidbot): Infrastructure cleanup
+- **PR #15** (core-charts): Add dcmaidbot Helm charts
+- Comment on PR #3: "Related infrastructure PR: uz0/core-charts#15"
+
+This ensures infrastructure changes are tracked and deployed together with code changes.
+
+## Infrastructure Workflow
+
+When changes require infrastructure updates (Kubernetes, GitOps, Helm charts):
+
+### Pattern:
+1. **Main Repo** (dcmaidbot): Code & Docker images
+2. **Infrastructure Repo** (uz0/core-charts): Helm charts & K8s manifests  
+3. **Link PRs**: Comment on main PR with infrastructure PR link
+
+### Steps:
+1. Implement feature in main repo (dcmaidbot)
+2. Create infrastructure changes in separate PR to uz0/core-charts
+3. **Comment on main PR** with link to infrastructure PR
+4. Both PRs reviewed and merged together
+5. Auto-deployment via ArgoCD watches core-charts
+
+### Example:
+- **PR #3** (dcmaidbot): Infrastructure cleanup + Docker
+- **PR #15** (core-charts): Add dcmaidbot Helm charts
+- **Link**: Comment on PR #3: "🚀 GitOps PR: uz0/core-charts#15"
+
+### Why This Matters:
+- Keeps code and infrastructure in sync
+- Reviewers see full picture
+- Prevents orphaned infrastructure
+- Enables proper GitOps workflow
+- ArgoCD auto-deploys after merge
+
+This pattern applies to all infrastructure PRPs (001, 011, etc.).
