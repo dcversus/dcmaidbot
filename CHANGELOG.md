@@ -20,8 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telegram chat import capability in PRP-004
 - CLAUDE.md as symlink to AGENTS.md
 - Version management with version.txt and CHANGELOG.md
-- **PR #15 to uz0/core-charts with Helm charts**
+- **PR #15 to uz0/core-charts with Helm charts** (updated with health probes)
 - **PRP-011: Canary deployment & sister bot communication system**
+- CONTRIBUTING.md with complete contribution guide
+- Infrastructure workflow documentation in AGENTS.md
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
