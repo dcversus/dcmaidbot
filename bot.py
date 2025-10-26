@@ -28,22 +28,30 @@ def get_bot_token() -> str:
 
 
 def get_admin_ids() -> list[int]:
-    """Retrieves admin IDs from environment variables."""
-    admin_1_id = os.getenv("ADMIN_1_ID")
-    admin_2_id = os.getenv("ADMIN_2_ID")
+    """Retrieves admin IDs from environment variables (NEVER logs actual IDs)."""
+    admin_ids_str = os.getenv("ADMIN_IDS", "")
     admins = []
-    if admin_1_id:
+
+    if not admin_ids_str:
+        logging.warning("No ADMIN_IDS configured. Bot will not respond to anyone.")
+        return admins
+
+    # Parse comma-separated admin IDs
+    for admin_id in admin_ids_str.split(","):
+        admin_id = admin_id.strip()
+        if not admin_id:
+            continue
         try:
-            admins.append(int(admin_1_id))
+            admins.append(int(admin_id))
         except ValueError:
-            logging.warning(f"Invalid ADMIN_1_ID: {admin_1_id}")
-    if admin_2_id:
-        try:
-            admins.append(int(admin_2_id))
-        except ValueError:
-            logging.warning(f"Invalid ADMIN_2_ID: {admin_2_id}")
-    if not admins:
-        logging.warning("No admin IDs configured. Bot will not respond to anyone.")
+            # PRIVACY: Never log the actual ID value
+            logging.warning("Invalid admin ID format detected (skipped)")
+
+    if admins:
+        logging.info(f"Loaded {len(admins)} admin(s) from ADMIN_IDS")
+    else:
+        logging.warning("No valid admin IDs found. Bot will not respond.")
+
     return admins
 
 

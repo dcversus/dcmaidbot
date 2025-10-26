@@ -64,7 +64,7 @@ env:
   # These will be overridden by secrets
   BOT_TOKEN: ""
   ADMIN_1_ID: ""
-  ADMIN_2_ID: ""
+  : ""
   DATABASE_URL: ""
   OPENAI_API_KEY: ""
 
@@ -115,7 +115,7 @@ spec:
             secretKeyRef:
               name: dcmaidbot-secrets
               key: admin-1-id
-        - name: ADMIN_2_ID
+        - name: 
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
@@ -216,7 +216,7 @@ spec:
             secretKeyRef:
               name: dcmaidbot-secrets
               key: admin-1-id
-        - name: ADMIN_2_ID
+        - name: 
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets

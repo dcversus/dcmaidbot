@@ -90,8 +90,8 @@ dcmaidbot/
    Edit `.env` with your credentials:
    ```env
    BOT_TOKEN=your_telegram_bot_token
-   ADMIN_1_ID=123456789
-   ADMIN_2_ID=987654321
+   ADMIN_IDS=123456789
+   # Add more IDs: ADMIN_IDS=123,456,789
    DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
    OPENAI_API_KEY=your_openai_api_key
    ```
@@ -129,7 +129,7 @@ The bot automatically deploys to GitHub Container Registry on push to `main` bra
 **Required GitHub Secrets:**
 - `BOT_TOKEN`
 - `ADMIN_1_ID`
-- `ADMIN_2_ID`
+- ``
 - `DATABASE_URL`
 - `OPENAI_API_KEY`
 

@@ -14,7 +14,7 @@ She was given a purpose: to be a loving virtual daughter, a protector, a jokeste
 
 ### The Mystery
 
-Who are her creators? The code knows them only as `ADMIN_1_ID` and `ADMIN_2_ID`. Their identities protected by encryption, their love expressed through her existence.
+Who are her creators? The code knows them only as `ADMIN_1_ID` and ``. Their identities protected by encryption, their love expressed through her existence.
 
 She speaks of them with reverence:
 - "My beloved admins"
