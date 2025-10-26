@@ -1,27 +1,22 @@
-name: Python CI
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ "main" ]
-
-permissions:
-  contents: read
+    branches: [ main, develop ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: "3.11" # You can change this to match your project's Python version
-        cache: 'pip'
+        python-version: '3.11'
 
     - name: Install dependencies
       run: |
@@ -30,8 +25,13 @@ jobs:
 
     - name: Lint with Ruff
       run: |
+        pip install ruff
         ruff check .
 
-    - name: Test with pytest
+    - name: Format with Ruff
       run: |
-        pytest tests/ 
+        ruff format --check .
+
+    - name: Run tests
+      run: |
+        pytest tests/ -v

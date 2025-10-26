@@ -5,8 +5,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
-from handlers import categories, activities, selection, info, help
-from middlewares.private_only import PrivateChatMiddleware
+from handlers import waifu
+from middlewares.admin_only import AdminOnlyMiddleware
 
 # Load environment variables first
 load_dotenv()
@@ -27,21 +27,40 @@ def get_bot_token() -> str:
     return token
 
 
+def get_admin_ids() -> list[int]:
+    """Retrieves admin IDs from environment variables."""
+    vasilisa_id = os.getenv("ADMIN_VASILISA_ID")
+    daniil_id = os.getenv("ADMIN_DANIIL_ID")
+    admins = []
+    if vasilisa_id:
+        try:
+            admins.append(int(vasilisa_id))
+        except ValueError:
+            logging.warning(f"Invalid ADMIN_VASILISA_ID: {vasilisa_id}")
+    if daniil_id:
+        try:
+            admins.append(int(daniil_id))
+        except ValueError:
+            logging.warning(f"Invalid ADMIN_DANIIL_ID: {daniil_id}")
+    if not admins:
+        logging.warning("No admin IDs configured. Bot will not respond to anyone.")
+    return admins
+
+
 def setup_dispatcher() -> Dispatcher:
     """Initializes and configures the dispatcher."""
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
-    # Register the private chat middleware
-    dp.message.middleware(PrivateChatMiddleware())
-    dp.callback_query.middleware(PrivateChatMiddleware())
+    # Get admin IDs
+    admin_ids = get_admin_ids()
 
-    # Register all routers
-    dp.include_router(help.router)
-    dp.include_router(categories.router)
-    dp.include_router(activities.router)
-    dp.include_router(selection.router)
-    dp.include_router(info.router)
+    # Register the admin-only middleware
+    dp.message.middleware(AdminOnlyMiddleware(admin_ids))
+    dp.callback_query.middleware(AdminOnlyMiddleware(admin_ids))
+
+    # Register waifu router
+    dp.include_router(waifu.router)
 
     return dp
 
