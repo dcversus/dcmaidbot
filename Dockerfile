@@ -1,9 +1,9 @@
-# Multi-stage build for smaller production image
-FROM python:3.11-slim as builder
+# Simplified single-stage build for reliability
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install build dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -12,36 +12,20 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# Production stage
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user first
-RUN useradd --create-home --shell /bin/bash app
-
-# Copy installed packages from builder and set ownership
-COPY --from=builder --chown=app:app /root/.local /home/app/.local
-
-# Make sure scripts in .local are usable
-ENV PATH=/home/app/.local/bin:$PATH
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY --chown=app:app bot.py .
-COPY --chown=app:app handlers/ ./handlers/
-COPY --chown=app:app middlewares/ ./middlewares/
-COPY --chown=app:app models/ ./models/
-COPY --chown=app:app services/ ./services/
-COPY --chown=app:app conftest.py .
+COPY bot.py .
+COPY handlers/ ./handlers/
+COPY middlewares/ ./middlewares/
+COPY models/ ./models/
+COPY services/ ./services/
+COPY conftest.py .
 
-# Switch to non-root user
+# Create non-root user and set ownership
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+
 USER app
 
 # Health check
