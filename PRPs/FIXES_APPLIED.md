@@ -75,7 +75,7 @@ After merging to main:
 
 ---
 
-## ⚠️ Fix #3: Dev Environment - PARTIALLY RESOLVED
+## ⚠️ Fix #3: Dev Environment - DOCUMENTED (No PR Created)
 
 ### Problem
 - Dev pod in CrashLoopBackOff (212+ restarts)
@@ -93,9 +93,10 @@ $ kubectl get secret dcmaidbot-secrets -n prod-core -o jsonpath='{.data.bot-toke
 ```
 
 ### Root Cause
-- Dev environment has placeholder/invalid BOT_TOKEN in secret
-- Secret likely managed by ArgoCD/GitOps (auto-syncing prevents manual fixes)
-- Need to fix in core-charts repo or ArgoCD configuration
+- Dev environment has placeholder/invalid BOT_TOKEN in Kubernetes secret
+- Secret likely managed by sealed-secrets or manual kubectl apply (not in core-charts)
+- ArgoCD auto-syncing prevents temporary kubectl fixes
+- **core-charts Helm chart does not define dev secrets** - they're managed externally
 
 ### Attempted Solution
 ```bash
@@ -104,24 +105,40 @@ kubectl patch deployment dcmaidbot-dev -n dev-core -p '{"spec":{"replicas":0}}'
 ```
 
 ### Result
-⚠️ **PARTIAL** - ArgoCD keeps recreating pods
-❌ **Cannot fix via kubectl** - Need GitOps/Helm chart changes
+⚠️ **PARTIAL** - ArgoCD keeps recreating pods from GitOps state
+❌ **Cannot fix via kubectl** - Need secrets management fix
+❌ **No core-charts PR needed** - Secrets not in Helm chart
+
+### Why No core-charts PR?
+1. **Secrets not in Helm chart** - BOT_TOKEN managed externally (sealed-secrets, ArgoCD vault, etc.)
+2. **Canary deployment** - Not defined in charts/dcmaidbot (must be separate ArgoCD app)
+3. **Dev/Prod separation** - Likely using ArgoCD ApplicationSets or overlays
+4. **Need access to**:
+   - Sealed secrets repository or
+   - ArgoCD secret management or
+   - Direct kubectl access with ArgoCD suspend
 
 ### Recommended Solution
-**Option A: Fix Secret in GitOps** (Preferred)
-1. Update sealed secret or ArgoCD config with valid dev BOT_TOKEN
-2. Or use prod token for dev (same bot, different namespace)
+**Option A: Fix Secret in Sealed Secrets Repo** (Most likely)
+1. Find sealed secrets repository
+2. Update dev BOT_TOKEN sealed secret
+3. Apply to cluster
 
-**Option B: Disable Dev Environment** (Temporary)
+**Option B: Direct Secret Update** (If no sealed secrets)
+1. Suspend ArgoCD auto-sync for dcmaidbot-dev
+2. Update secret via kubectl
+3. Re-enable ArgoCD
+
+**Option C: Disable Dev Environment** (Temporary)
 1. Scale dev deployment to 0 in ArgoCD application
-2. Or remove dev overlay from core-charts
+2. Or patch ArgoCD app to set replicaCount=0
 
-**Option C: Create Separate Dev Bot**
+**Option D: Create Separate Dev Bot** (Best long-term)
 1. Create new Telegram bot for development
 2. Update dev secret with new token
 3. Keeps dev and prod fully isolated
 
-**Status**: ⚠️ NEEDS GITOPS FIX (out of scope for kubectl-only fixes)
+**Status**: ⚠️ DOCUMENTED (Needs secrets management access, not a code fix)
 
 ---
 
