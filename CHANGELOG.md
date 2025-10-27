@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated .env.example with new required variables
 - Deploy workflow reads version.txt and creates GitHub releases
 - **Downgraded Python from 3.14-slim to 3.13-slim** (hotfix for pydantic-core build issue)
+
+### Fixed
+- **CRITICAL: Added bot_webhook.py to Docker image** (emergency fix for production crash)
+  - Dockerfile CMD referenced bot_webhook.py but file was not copied
+  - Caused all pods to enter CrashLoopBackOff state
+  - Fixed by adding COPY bot_webhook.py to Dockerfile
 - **Enhanced CONTRIBUTING.md with pre-commit workflow**
   - Automated quality checks before commits
   - Step-by-step setup instructions
