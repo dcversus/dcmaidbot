@@ -10,7 +10,7 @@ Provides:
 
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class StatusService:
@@ -18,7 +18,7 @@ class StatusService:
 
     def __init__(self):
         """Initialize status service with start time."""
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
 
     def get_version_info(self) -> dict:
         """Get version and changelog information.
@@ -44,10 +44,10 @@ class StatusService:
         Returns:
             dict: System information including uptime, Python version, environment
         """
-        uptime = datetime.utcnow() - self.start_time
+        uptime = datetime.now(timezone.utc) - self.start_time
 
         return {
-            "current_time_utc": datetime.utcnow().isoformat(),
+            "current_time_utc": datetime.now(timezone.utc).isoformat(),
             "uptime_seconds": int(uptime.total_seconds()),
             "uptime_human": str(uptime),
             "python_version": sys.version.split()[0],
@@ -106,8 +106,8 @@ class StatusService:
                 return f.read().strip()
         except FileNotFoundError:
             return "unknown"
-        except Exception:
-            return "error"
+        except (IOError, OSError) as e:
+            return f"error: {e}"
 
     def _read_changelog(self, lines: int = 30) -> str:
         """Read recent changelog entries.
@@ -124,8 +124,8 @@ class StatusService:
                 return "".join(changelog_lines[:lines])
         except FileNotFoundError:
             return "Changelog not available"
-        except Exception:
-            return "Error reading changelog"
+        except (IOError, OSError) as e:
+            return f"Error reading changelog: {e}"
 
     def get_health_status(self) -> tuple[bool, dict]:
         """Get health status for Kubernetes probes.

@@ -7,6 +7,7 @@ Provides /version and /health endpoints for:
 - Deployment verification
 """
 
+import html
 from aiohttp import web
 from services.status_service import StatusService
 
@@ -24,9 +25,9 @@ async def version_handler(request: web.Request) -> web.Response:
         web.Response: HTML page with complete status information
     """
     status = await status_service.get_full_status()
-    html = render_status_html(status)
+    html_content = render_status_html(status)
 
-    return web.Response(text=html, content_type="text/html", charset="utf-8")
+    return web.Response(text=html_content, content_type="text/html", charset="utf-8")
 
 
 async def health_handler(request: web.Request) -> web.Response:
@@ -60,6 +61,19 @@ def render_status_html(status: dict) -> str:
     database = status["database"]
     redis = status["redis"]
 
+    # Escape all dynamic content to prevent XSS
+    version = html.escape(version_info["version"])
+    git_commit = html.escape(version_info["git_commit"][:7])
+    image_tag = html.escape(version_info["image_tag"])
+    build_time = html.escape(version_info["build_time"])
+    environment = html.escape(system_info["environment"])
+    pod_name = html.escape(system_info["pod_name"])
+    python_version = html.escape(system_info["python_version"])
+    current_time_utc = html.escape(system_info["current_time_utc"])
+    changelog = html.escape(version_info["changelog"])
+    db_message = html.escape(database.get("message", "Unknown"))
+    redis_message = html.escape(redis.get("message", "Unknown"))
+
     # Format uptime nicely
     uptime_seconds = system_info["uptime_seconds"]
     hours = uptime_seconds // 3600
@@ -90,7 +104,7 @@ def render_status_html(status: dict) -> str:
         else ("status-ok" if redis["connected"] else "status-error")
     )
 
-    html = f"""
+    html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -261,7 +275,7 @@ def render_status_html(status: dict) -> str:
         <h1>💕 dcmaidbot Status</h1>
         <div class="subtitle">
             Nya~ I'm running and healthy! 🎀<br>
-            Version <span class="badge">{version_info["version"]}</span>
+            Version <span class="badge">{version}</span>
         </div>
 
         <!-- Deployment Information -->
@@ -269,27 +283,27 @@ def render_status_html(status: dict) -> str:
             <h2>📦 Deployment Information</h2>
             <div class="info-row">
                 <span class="label">Version:</span>
-                <span class="value">{version_info["version"]}</span>
+                <span class="value">{version}</span>
             </div>
             <div class="info-row">
                 <span class="label">Git Commit:</span>
-                <span class="value"><code>{version_info["git_commit"][:7]}</code></span>
+                <span class="value"><code>{git_commit}</code></span>
             </div>
             <div class="info-row">
                 <span class="label">Image Tag:</span>
-                <span class="value">{version_info["image_tag"]}</span>
+                <span class="value">{image_tag}</span>
             </div>
             <div class="info-row">
                 <span class="label">Build Time:</span>
-                <span class="value">{version_info["build_time"]}</span>
+                <span class="value">{build_time}</span>
             </div>
             <div class="info-row">
                 <span class="label">Environment:</span>
-                <span class="value">{system_info["environment"]}</span>
+                <span class="value">{environment}</span>
             </div>
             <div class="info-row">
                 <span class="label">Pod Name:</span>
-                <span class="value">{system_info["pod_name"]}</span>
+                <span class="value">{pod_name}</span>
             </div>
         </div>
 
@@ -298,7 +312,7 @@ def render_status_html(status: dict) -> str:
             <h2>⏰ System Information</h2>
             <div class="info-row">
                 <span class="label">Current Time (UTC):</span>
-                <span class="value">{system_info["current_time_utc"]}</span>
+                <span class="value">{current_time_utc}</span>
             </div>
             <div class="info-row">
                 <span class="label">Uptime:</span>
@@ -306,7 +320,7 @@ def render_status_html(status: dict) -> str:
             </div>
             <div class="info-row">
                 <span class="label">Python Version:</span>
-                <span class="value">{system_info["python_version"]}</span>
+                <span class="value">{python_version}</span>
             </div>
         </div>
 
@@ -317,7 +331,7 @@ def render_status_html(status: dict) -> str:
                 <div class="info-row">
                     <span class="label">Status:</span>
                     <span class="value {db_status_class}">
-                        {database.get("message", "Unknown")}
+                        {db_message}
                     </span>
                 </div>
             </div>
@@ -327,7 +341,7 @@ def render_status_html(status: dict) -> str:
                 <div class="info-row">
                     <span class="label">Status:</span>
                     <span class="value {redis_status_class}">
-                        {redis.get("message", "Unknown")}
+                        {redis_message}
                     </span>
                 </div>
             </div>
@@ -336,7 +350,7 @@ def render_status_html(status: dict) -> str:
         <!-- Recent Changelog -->
         <div class="section">
             <h2>📜 Recent Changelog</h2>
-            <pre>{version_info["changelog"]}</pre>
+            <pre>{changelog}</pre>
         </div>
 
         <div class="footer">
@@ -347,4 +361,4 @@ def render_status_html(status: dict) -> str:
 </body>
 </html>
 """
-    return html
+    return html_content
