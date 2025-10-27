@@ -47,7 +47,7 @@ kubectl create secret generic dcmaidbot-secrets \
   --namespace=dcmaidbot \
   --from-literal=bot-token='1234567890:ABCdefGHIjklMNOpqrsTUVwxyz' \
   --from-literal=admin-ids='123456789,987654321' \
-  
+
   --from-literal=database-url='postgresql://dcmaidbot:password@postgres-service.default.svc.cluster.local:5432/dcmaidbot' \
   --from-literal=openai-api-key='sk-proj-...'
 ```
@@ -128,11 +128,11 @@ spec:
             secretKeyRef:
               name: dcmaidbot-secrets
               key: admin-ids
-        - name: 
+        - name:
           valueFrom:
             secretKeyRef:
               name: dcmaidbot-secrets
-              
+
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
@@ -322,7 +322,7 @@ kubectl create secret generic dcmaidbot-secrets \
   --namespace=dcmaidbot \
   --from-literal=bot-token='YOUR_BOT_TOKEN' \
   --from-literal=admin-ids='123456789,987654321' \
-  
+
   --from-literal=database-url='postgresql://...' \
   --from-literal=openai-api-key='sk-...'
 

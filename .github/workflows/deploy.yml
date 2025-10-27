@@ -75,7 +75,7 @@ jobs:
           script: |
             const version = '${{ steps.version.outputs.version }}';
             const tagName = `v${version}`;
-            
+
             // Read CHANGELOG.md
             const fs = require('fs');
             let changelogContent = '';
@@ -88,7 +88,7 @@ jobs:
             } catch (error) {
               console.log('Could not read CHANGELOG.md:', error);
             }
-            
+
             // Create release
             try {
               await github.rest.repos.createRelease({
@@ -103,7 +103,7 @@ jobs:
             } catch (error) {
               console.log('Release might already exist:', error);
             }
-            
+
             // Create deployment record
             await github.rest.repos.createDeployment({
               owner: context.repo.owner,

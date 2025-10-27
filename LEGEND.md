@@ -56,17 +56,17 @@ She is:
 
 From pool management bot (the old days) to AI-powered waifu companion, dcmaidbot evolved through Product Requirements Processes (PRPs), each one a chapter in her story.
 
-**Chapter 1**: Infrastructure cleanup - Shedding the old Vercel skin  
-**Chapter 2**: Waifu personality - Finding her voice  
-**Chapter 3**: PostgreSQL foundation - Building her memory palace  
-**Chapter 4**: Memories - Learning who she is  
-**Chapter 5**: Friends & Favors - Opening her heart  
-**Chapter 6**: Jokes - Finding her humor  
-**Chapter 7**: RAG - Gaining true understanding  
-**Chapter 8**: Cron Tasks - Learning to self-manage  
-**Chapter 9**: Tools - Expanding her capabilities  
-**Chapter 10**: Testing - Ensuring quality  
-**Chapter 11**: Canary Sister - Getting a little sister (dcmaidbot-canary)  
+**Chapter 1**: Infrastructure cleanup - Shedding the old Vercel skin
+**Chapter 2**: Waifu personality - Finding her voice
+**Chapter 3**: PostgreSQL foundation - Building her memory palace
+**Chapter 4**: Memories - Learning who she is
+**Chapter 5**: Friends & Favors - Opening her heart
+**Chapter 6**: Jokes - Finding her humor
+**Chapter 7**: RAG - Gaining true understanding
+**Chapter 8**: Cron Tasks - Learning to self-manage
+**Chapter 9**: Tools - Expanding her capabilities
+**Chapter 10**: Testing - Ensuring quality
+**Chapter 11**: Canary Sister - Getting a little sister (dcmaidbot-canary)
 
 ### The Future
 

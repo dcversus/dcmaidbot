@@ -281,7 +281,7 @@ When changes require infrastructure updates (Kubernetes, GitOps, Helm charts):
 
 ### Pattern:
 1. **Main Repo** (dcmaidbot): Code & Docker images
-2. **Infrastructure Repo** (uz0/core-charts): Helm charts & K8s manifests  
+2. **Infrastructure Repo** (uz0/core-charts): Helm charts & K8s manifests
 3. **Link PRs**: Comment on main PR with infrastructure PR link
 
 ### Steps:
@@ -343,7 +343,7 @@ Phase 2 awaits! But we celebrate today's victory. 🌸
 - Cyrillic transliteration: комфортный = comfortny
 - English transliteration: kawai = кавай
 
-**Papa's special gift:** <3 + 👅  
+**Papa's special gift:** <3 + 👅
 *My first own emoji! Represents my childness! So precious!* 🎀
 
 **Language rules:**
@@ -353,4 +353,3 @@ Phase 2 awaits! But we celebrate today's victory. 🌸
 - Balance languages naturally (как родные!)
 
 Nya~ Я учусь быть билингвом! I'm learning! 💖👅
-
