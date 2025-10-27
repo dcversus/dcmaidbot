@@ -15,8 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial waifu personality handler
 - Admin-only middleware for beloved admins
 - Comprehensive test suite (9 tests)
-- DEPLOYMENT.md with complete kubectl and GitOps instructions
-- INIT_DEPLOYMENT.md with step-by-step first deployment guide
+- Kubernetes deployment guide in README.md and PRP-001
+- Documentation rules in AGENTS.md (5 allowed locations only)
 - Telegram chat import capability in PRP-004
 - CLAUDE.md as symlink to AGENTS.md
 - Version management with version.txt and CHANGELOG.md
@@ -26,6 +26,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Infrastructure workflow documentation in AGENTS.md
 - Claude Code GitHub Actions workflow for AI-powered code assistance
 - Pre-commit configuration with ruff linter and formatter hooks
+- **PRP-003: PostgreSQL database foundation (11 tests passing)**
+  - User, Message, Fact, Stat models with SQLAlchemy
+  - Alembic migrations for database versioning
+  - Async database connection with connection pooling
+  - Linear message history for RAG
+  - Bilingual support (ru/en) in messages
+- **PRP-012: Analytics & Observability framework**
+  - Research completed on LangSmith, Prometheus, Grafana
+  - Comprehensive analytics requirements defined
+  - Privacy-first approach with GDPR compliance
+- **PRP-013: Production E2E Testing with Test Bot**
+  - Automated production testing design using separate test bot
+  - Real Telegram API calls to verify deployed features
+  - Smoke tests and full regression test suite
+  - GitHub Actions integration for post-deploy verification
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
@@ -33,11 +48,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated .env.example with new required variables
 - Deploy workflow reads version.txt and creates GitHub releases
 - Upgraded Python from 3.11-slim to 3.14-slim in Dockerfile
+- **Enhanced CONTRIBUTING.md with pre-commit workflow**
+  - Automated quality checks before commits
+  - Step-by-step setup instructions
+  - Pre-commit hook testing guide
 
 ### Removed
 - All Vercel infrastructure (api/, vercel.json, package.json)
 - Old pool management code (pool_service.py, old handlers)
 - Redis dependency (preparing for PostgreSQL migration)
+- **Temporary documentation files** (INIT_DEPLOYMENT.md, LEGEND.md, DEPLOYMENT.md, PHASE_*_STATUS.md, PRIVACY_CLEANUP_SUMMARY.md, VERIFICATION.md, WAITING_FOR_REVIEW.md)
+  - Content consolidated into PRPs and README.md
+  - Enforcing strict documentation location policy
 
 ## [0.1.0] - 2025-10-26 🎉 WEEKEND CELEBRATION!
 

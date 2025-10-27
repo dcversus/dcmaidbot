@@ -23,6 +23,34 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Debug - Environment Info
+      run: |
+        echo "=== Python Version ==="
+        python --version
+        echo ""
+        echo "=== Ruff Version ==="
+        ruff --version
+        echo ""
+        echo "=== File Info ==="
+        file handlers/waifu.py
+        echo ""
+        echo "=== Git Info ==="
+        git log -1 --oneline
+        echo ""
+        echo "=== handlers/waifu.py first 20 lines ==="
+        head -20 handlers/waifu.py
+        echo ""
+        echo "=== handlers/waifu.py line endings ==="
+        od -c handlers/waifu.py | head -5
+
+    - name: Debug - Format Check on Single File
+      run: |
+        echo "=== Checking handlers/waifu.py specifically ==="
+        ruff format --check handlers/waifu.py || echo "FAILED"
+        echo ""
+        echo "=== Showing what ruff would change ==="
+        ruff format --diff handlers/waifu.py || true
+
     - name: Lint with Ruff
       run: |
         ruff check .
