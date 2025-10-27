@@ -2,7 +2,6 @@
 DCMaidBot - Webhook Mode
 Kawai waifu bot with webhook support for production deployment.
 """
-import asyncio
 import logging
 import os
 from aiohttp import web
@@ -133,7 +132,9 @@ def main():
     app.on_shutdown.append(lambda app: on_shutdown(bot))
     
     # Run web server
-    logging.info(f"Starting webhook server on {webhook_config['host']}:{webhook_config['port']}")
+    host = webhook_config["host"]
+    port = webhook_config["port"]
+    logging.info(f"Starting webhook server on {host}:{port}")
     web.run_app(
         app,
         host=webhook_config["host"],

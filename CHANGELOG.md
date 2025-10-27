@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PRP-011: Canary deployment & sister bot communication system**
 - CONTRIBUTING.md with complete contribution guide
 - Infrastructure workflow documentation in AGENTS.md
+- Claude Code GitHub Actions workflow for AI-powered code assistance
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
