@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Step-by-step setup instructions
   - Pre-commit hook testing guide
 
+### Fixed
+- **CRITICAL: Added bot_webhook.py to Docker image** (emergency fix for production crash)
+  - Dockerfile CMD referenced bot_webhook.py but file was not copied
+  - Caused all pods to enter CrashLoopBackOff state
+  - Fixed by adding COPY bot_webhook.py to Dockerfile
+
 ### Removed
 - All Vercel infrastructure (api/, vercel.json, package.json)
 - Old pool management code (pool_service.py, old handlers)
