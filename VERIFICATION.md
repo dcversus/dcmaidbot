@@ -158,7 +158,7 @@ As admin, test:
 **CRITICAL CHECKS:**
 
 ❌ Bot should NEVER mention admin names
-❌ Bot should NEVER log admin IDs  
+❌ Bot should NEVER log admin IDs
 ❌ Bot should NEVER expose personal information
 ✅ Bot uses "beloved", "admins", "masters" only
 
