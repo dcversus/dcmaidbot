@@ -17,6 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY bot.py .
 COPY bot_webhook.py .
+COPY database.py .
+COPY alembic.ini .
+COPY alembic/ ./alembic/
 COPY handlers/ ./handlers/
 COPY middlewares/ ./middlewares/
 COPY models/ ./models/
