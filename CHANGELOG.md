@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CONTRIBUTING.md with complete contribution guide
 - Infrastructure workflow documentation in AGENTS.md
 - Claude Code GitHub Actions workflow for AI-powered code assistance
+- Pre-commit configuration with ruff linter and formatter hooks
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
