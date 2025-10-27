@@ -69,6 +69,26 @@ Each PRP is a 3-4 working day task for a middle developer, including implementat
     - Mock Telegram API for testing
     - CI/CD integration for automated testing
 
+11. **[PRP-011: Canary Deployment & Sister Bot Communication](PRPs/PRP-011.md)**
+    - dcmaidbot-canary: happy little sister bot for testing
+    - E2E production testing with cron automation
+    - Status page with health checks
+    - 5% canary release in Kubernetes
+    - Inter-bot communication API for summary and tool sharing
+
+12. **[PRP-012: Analytics & Observability Framework](PRPs/PRP-012.md)**
+    - LangSmith + Prometheus + Grafana integration
+    - Privacy-first approach with GDPR compliance
+    - Message tracking, performance monitoring
+    - User analytics and bot health metrics
+
+13. **[PRP-013: Production E2E Testing with Test Bot](PRPs/PRP-013.md)**
+    - Automated production testing using separate test bot
+    - Real Telegram API calls to verify deployed features
+    - Smoke tests after each deploy
+    - Full regression test suite
+    - GitHub Actions integration for automated testing
+
 ## Development Commands
 
 ```bash

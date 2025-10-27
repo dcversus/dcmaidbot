@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Research completed on LangSmith, Prometheus, Grafana
   - Comprehensive analytics requirements defined
   - Privacy-first approach with GDPR compliance
+- **PRP-013: Production E2E Testing with Test Bot**
+  - Automated production testing design using separate test bot
+  - Real Telegram API calls to verify deployed features
+  - Smoke tests and full regression test suite
+  - GitHub Actions integration for post-deploy verification
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
