@@ -33,7 +33,7 @@ def get_bot_token() -> str:
 def get_admin_ids() -> list[int]:
     """Retrieves admin IDs (NEVER logs actual IDs)."""
     admin_ids_str = os.getenv("ADMIN_IDS", "")
-    admins = []
+    admins: list[int] = []
 
     if not admin_ids_str:
         logging.warning("No ADMIN_IDS configured")
@@ -133,9 +133,9 @@ def main():
     app.on_shutdown.append(lambda app: on_shutdown(bot))
 
     # Run web server
-    host = webhook_config["host"]
-    port = webhook_config["port"]
-    logging.info(f"Starting webhook server on {host}:{port}")
+    logging.info(
+        f"Starting webhook server on {webhook_config['host']}:{webhook_config['port']}"
+    )
     web.run_app(
         app,
         host=webhook_config["host"],

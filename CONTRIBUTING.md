@@ -18,6 +18,9 @@ cd dcmaidbot
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Install pre-commit hooks (IMPORTANT!)
+pre-commit install
 ```
 
 ### Step 2: Create .env File
@@ -70,20 +73,45 @@ Implements: PRP-004
 
 ### Code Quality
 
-Before committing:
+**Pre-commit hooks will automatically run before each commit!**
+
+The following checks run automatically via pre-commit:
+- ✅ Ruff linting (with auto-fix)
+- ✅ Ruff formatting
+- ✅ Type checking with mypy
+- ✅ Trailing whitespace removal
+- ✅ End-of-file fixing
+- ✅ YAML validation
+- ✅ Large file detection
+- ✅ Merge conflict detection
+- ✅ Private key detection
+- ✅ All tests (unit + e2e)
+
+**Manual run (optional):**
 
 ```bash
-# Lint
-ruff check .
+# Run all pre-commit hooks manually
+pre-commit run --all-files
 
-# Format
-ruff format .
-
-# Tests
-pytest tests/ -v
+# Or run individual checks:
+ruff check .          # Lint
+ruff format .         # Format
+pytest tests/ -v      # Tests
+mypy bot.py           # Type check
 ```
 
-All checks must pass!
+**If pre-commit fails:**
+- Fix the issues shown in the output
+- Stage your changes: `git add .`
+- Commit again: `git commit -m "..."`
+- Pre-commit will run again automatically
+
+**To skip pre-commit (NOT RECOMMENDED):**
+```bash
+git commit --no-verify -m "..."
+```
+
+All checks must pass before PR approval!
 
 ## Pull Request Process
 

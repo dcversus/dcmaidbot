@@ -69,6 +69,26 @@ Each PRP is a 3-4 working day task for a middle developer, including implementat
     - Mock Telegram API for testing
     - CI/CD integration for automated testing
 
+11. **[PRP-011: Canary Deployment & Sister Bot Communication](PRPs/PRP-011.md)**
+    - dcmaidbot-canary: happy little sister bot for testing
+    - E2E production testing with cron automation
+    - Status page with health checks
+    - 5% canary release in Kubernetes
+    - Inter-bot communication API for summary and tool sharing
+
+12. **[PRP-012: Analytics & Observability Framework](PRPs/PRP-012.md)**
+    - LangSmith + Prometheus + Grafana integration
+    - Privacy-first approach with GDPR compliance
+    - Message tracking, performance monitoring
+    - User analytics and bot health metrics
+
+13. **[PRP-013: Production E2E Testing with Test Bot](PRPs/PRP-013.md)**
+    - Automated production testing using separate test bot
+    - Real Telegram API calls to verify deployed features
+    - Smoke tests after each deploy
+    - Full regression test suite
+    - GitHub Actions integration for automated testing
+
 ## Development Commands
 
 ```bash
@@ -202,6 +222,30 @@ When working on this codebase:
 - Redis dependency from requirements.txt
 \`\`\`
 
+## Documentation Rules
+
+### CRITICAL: Documentation Location Policy
+
+**ONLY these locations are allowed for documentation:**
+1. **PRPs/*.md** - Product Requirements Processes and technical specifications
+2. **README.md** - Project overview, quick start, and deployment guide
+3. **CONTRIBUTING.md** - Contribution guidelines
+4. **CHANGELOG.md** - Version history and changes
+5. **AGENTS.md** - Architecture, workflow, and agent instructions
+
+**FORBIDDEN:**
+- ❌ **NO temporary documentation files** in root directory
+- ❌ **NO status files** (PHASE_*_STATUS.md, WAITING_FOR_REVIEW.md, etc.)
+- ❌ **NO deployment guides** outside PRPs/README (INIT_DEPLOYMENT.md, DEPLOYMENT.md, VERIFICATION.md, etc.)
+- ❌ **NO legend/story files** (LEGEND.md, etc.)
+
+**Rule**: If documentation doesn't fit in the 5 allowed locations above, it should be:
+1. Added to relevant PRP (technical/implementation details)
+2. Added to README (user-facing guides)
+3. **NOT** created as a new root-level file
+
+**Enforcement**: PRs with new root-level .md files (except the 5 allowed) will be rejected.
+
 ## Code Review Process
 
 ### Before Submitting PR:
@@ -209,8 +253,9 @@ When working on this codebase:
 2. ✅ Linting clean (\`ruff check .\`)
 3. ✅ Formatting applied (\`ruff format .\`)
 4. ✅ **CHANGELOG.md updated in [Unreleased] section**
-5. ✅ PRP progress updated with checkboxes
-6. ✅ Definition of Done (DOD) criteria met
+5. ✅ **NO temporary .md files in root** (only allowed: README, CHANGELOG, CONTRIBUTING, AGENTS, CLAUDE.md symlink)
+6. ✅ PRP progress updated with checkboxes
+7. ✅ Definition of Done (DOD) criteria met
 
 ### PR Description Must Include:
 - **PRP Number**: e.g., "PRP-003"

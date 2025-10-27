@@ -25,4 +25,5 @@ logs/
 .vercel
 .venv
 
+# Storage
 storage/

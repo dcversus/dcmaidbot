@@ -122,16 +122,54 @@ docker tag dcmaidbot:latest ghcr.io/dcversus/dcmaidbot:latest
 docker push ghcr.io/dcversus/dcmaidbot:latest
 ```
 
-## GitHub Actions Deployment
+## Kubernetes Deployment
 
-The bot automatically deploys to GitHub Container Registry on push to `main` branch via `.github/workflows/deploy.yml`.
+### Prerequisites
+- Kubernetes cluster with kubectl configured
+- ArgoCD for GitOps (recommended)
 
-**Required GitHub Secrets:**
-- `BOT_TOKEN`
-- `ADMIN_1_ID`
-- ``
-- `DATABASE_URL`
-- `OPENAI_API_KEY`
+### Quick Deployment
+
+1. **Create namespace and secrets:**
+```bash
+kubectl create namespace dcmaidbot
+kubectl create secret generic dcmaidbot-secrets \
+  --namespace=dcmaidbot \
+  --from-literal=bot-token='YOUR_BOT_TOKEN' \
+  --from-literal=admin-ids='123456789,987654321' \
+  --from-literal=database-url='postgresql://user:password@postgres:5432/dcmaidbot' \
+  --from-literal=openai-api-key='sk-...'
+```
+
+2. **Deploy via GitOps (Recommended):**
+   - GitOps repository: https://github.com/uz0/core-charts
+   - Chart location: `charts/dcmaidbot/`
+   - ArgoCD automatically syncs and deploys
+
+3. **Update version:**
+```bash
+# In uz0/core-charts repo
+cd charts/dcmaidbot
+echo 'image:
+  tag: "0.2.0"' > prod.tag.yaml
+git commit -am "Update dcmaidbot to v0.2.0"
+git push
+```
+
+### Monitoring
+
+```bash
+# Check status
+kubectl get pods -n dcmaidbot
+kubectl logs -n dcmaidbot -l app=dcmaidbot -f
+
+# Restart
+kubectl rollout restart deployment/dcmaidbot -n dcmaidbot
+```
+
+## CI/CD
+
+The bot automatically builds and pushes to GitHub Container Registry (`ghcr.io/dcversus/dcmaidbot`) on push to `main` branch.
 
 ## Bot Commands
 
@@ -176,20 +214,9 @@ mypy bot.py
 
 See [AGENTS.md](AGENTS.md) for detailed architecture, PRPs, and development workflow.
 
-## License
+## Contributing
 
-GNU Affero General Public License v3.0 (AGPL-3.0)
-
-See [LICENSE](LICENSE) for full details.
-
-## Contact
-
-- Email: dcversus@gmail.com
-- Repository: https://github.com/dcversus/dcmaidbot
-
----
-
-*Nyaa~ Thank you for respecting privacy! 💕*
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## License
 
