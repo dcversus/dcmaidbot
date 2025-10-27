@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completely rewrote README.md for waifu bot architecture
 - Updated .env.example with new required variables
 - Deploy workflow reads version.txt and creates GitHub releases
-- Upgraded Python from 3.11-slim to 3.14-slim in Dockerfile
+- **Downgraded Python from 3.14-slim to 3.13-slim** (hotfix for pydantic-core build issue)
 - **Enhanced CONTRIBUTING.md with pre-commit workflow**
   - Automated quality checks before commits
   - Step-by-step setup instructions
