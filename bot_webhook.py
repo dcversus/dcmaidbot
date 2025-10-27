@@ -33,7 +33,7 @@ def get_bot_token() -> str:
 def get_admin_ids() -> list[int]:
     """Retrieves admin IDs (NEVER logs actual IDs)."""
     admin_ids_str = os.getenv("ADMIN_IDS", "")
-    admins = []
+    admins: list[int] = []
 
     if not admin_ids_str:
         logging.warning("No ADMIN_IDS configured")

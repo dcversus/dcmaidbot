@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Any, Awaitable
+from typing import Callable, Dict, Any, Awaitable, Union
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 
@@ -10,8 +10,10 @@ class AdminOnlyMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Message | CallbackQuery, Dict[str, Any]], Awaitable[Any]],
-        event: Message | CallbackQuery,
+        handler: Callable[
+            [Union[Message, CallbackQuery], Dict[str, Any]], Awaitable[Any]
+        ],
+        event: Union[Message, CallbackQuery],
         data: Dict[str, Any],
     ) -> Any:
         # Allow if user is admin

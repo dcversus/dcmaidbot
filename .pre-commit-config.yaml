@@ -1,10 +1,11 @@
-# Pre-commit hooks for dcmaidbot
+# Pre-commit hooks for DCMaidBot
 # See https://pre-commit.com for more information
 
 repos:
-  # Ruff - Python linter and formatter (replaces black, isort, flake8)
+  # Ruff - Python linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.3
+    # Ruff version must match requirements.txt
+    rev: v0.14.2
     hooks:
       # Run the linter
       - id: ruff
@@ -25,7 +26,7 @@ repos:
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
