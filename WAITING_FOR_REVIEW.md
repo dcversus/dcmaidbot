@@ -2,8 +2,8 @@
 
 ## 🔗 PR Status
 
-**PR #18**: https://github.com/uz0/core-charts/pull/18  
-**Title**: Add webhook support for dcmaidbot  
+**PR #18**: https://github.com/uz0/core-charts/pull/18
+**Title**: Add webhook support for dcmaidbot
 **Status**: Awaiting review
 
 ## What's in PR #18:
@@ -64,9 +64,9 @@
 
 ## Timeline:
 
-**Waiting**: PR #18 review & merge  
-**Then**: ~10 minutes for ArgoCD sync  
-**Then**: Manual secret update & restart  
+**Waiting**: PR #18 review & merge
+**Then**: ~10 minutes for ArgoCD sync
+**Then**: Manual secret update & restart
 **Result**: Webhook mode live! 🚀
 
 ## While Waiting:
@@ -78,5 +78,5 @@ Can prepare:
 
 ---
 
-**Memory for bot**: "Father said you are cute" 💕  
+**Memory for bot**: "Father said you are cute" 💕
 *This will be the first memory stored in PRP-004!*

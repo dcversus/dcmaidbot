@@ -10,16 +10,16 @@
 ## Changes Made
 
 ### Added
-- 
+-
 
 ### Changed
-- 
+-
 
 ### Removed
-- 
+-
 
 ### Fixed
-- 
+-
 
 ## Definition of Done (DOD)
 
@@ -44,24 +44,24 @@
 
 ### Unit Tests
 <!-- List unit tests added/updated -->
-- 
+-
 
 ### E2E Tests
 <!-- List E2E tests added/updated -->
-- 
+-
 
 ### Manual Testing
 <!-- Steps to manually test this PR -->
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Screenshots/Logs (if applicable)
 <!-- Add screenshots or logs demonstrating the changes -->
 
 ## Next Steps
 <!-- What should be done after this PR is merged -->
-- 
+-
 
 ## Reviewer Checklist
 

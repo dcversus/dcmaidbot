@@ -64,7 +64,7 @@ Successfully removed ALL mentions of personal names from the dcmaidbot repositor
 
 ### 10. **tests/test_handlers.py**
 - `test_cmd_love`: Changed assertions from checking "Vasilisa" and "Daniil" → checking "beloved" or "admins"
-- `test_handle_message_with_admin_mention`: 
+- `test_handle_message_with_admin_mention`:
   - Test input: "I love Vasilisa!" → "I love my master!"
   - Assertions: "Vasilisa" or "Daniil" → "beloved" or "creators"
 
