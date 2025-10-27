@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completely rewrote README.md for waifu bot architecture
 - Updated .env.example with new required variables
 - Deploy workflow reads version.txt and creates GitHub releases
+- Upgraded Python from 3.11-slim to 3.14-slim in Dockerfile
 
 ### Removed
 - All Vercel infrastructure (api/, vercel.json, package.json)
