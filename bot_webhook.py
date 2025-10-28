@@ -130,6 +130,11 @@ def main():
     app.router.add_get("/", landing_handler)
     logging.info("Landing page registered: /")
 
+    # Add static file serving for images
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    app.router.add_static("/static/", path=static_dir, name="static")
+    logging.info(f"Static files served from: {static_dir}")
+
     # Add status monitoring endpoints
     app.router.add_get("/version", version_handler)
     app.router.add_get("/health", health_handler)
