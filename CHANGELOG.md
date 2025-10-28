@@ -45,6 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Graceful handling for pending services (database/Redis)
   - Responsive terminal theme design with emoji indicators (⏳ ✅ ❌)
   - Recent changelog display from CHANGELOG.md
+- **PRP-014: Agent-to-User Communication via /nudge Endpoint** 🤖
+  - `/nudge` POST endpoint for async agent-to-admin communication
+  - NudgeService for forwarding requests to external LLM endpoint
+  - Authentication via NUDGE_SECRET stored in Kubernetes secrets
+  - Request validation (user_ids, message, optional PR/PRP links)
+  - External endpoint forwarding to dcmaid.theedgestory.org/nudge
+  - Complete MANDATORY autonomous workflow system in AGENTS.md
+  - Emotional intelligence guidelines for PRP progress comments
+  - 6-phase execution workflow (selection → implementation → PR → deploy → loop)
+  - User feedback loop with async /nudge communication pattern
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
