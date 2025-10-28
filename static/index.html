@@ -615,6 +615,199 @@
             font-weight: 700;
         }
 
+        /* ============================================
+           WELCOME MODAL STYLES
+           ============================================ */
+
+        .welcome-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-md);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .welcome-modal.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .welcome-content {
+            background: linear-gradient(135deg, var(--pink-light) 0%, var(--purple-light) 50%, var(--blue-light) 100%);
+            border-radius: var(--radius-lg);
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+            padding: var(--space-xl);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .welcome-close {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-round);
+            background: var(--white);
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            color: var(--pink-dark);
+            font-weight: 700;
+        }
+
+        .welcome-close:hover {
+            background: var(--pink-main);
+            color: var(--white);
+            transform: rotate(90deg);
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+            color: var(--pink-dark);
+            margin-bottom: var(--space-md);
+            font-weight: 800;
+            text-align: center;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .welcome-intro {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--black-soft);
+            margin-bottom: var(--space-lg);
+            text-align: center;
+        }
+
+        .welcome-intro strong {
+            color: var(--pink-main);
+            font-weight: 700;
+        }
+
+        .welcome-features {
+            background: rgba(255, 255, 255, 0.8);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .welcome-features h3 {
+            color: var(--pink-dark);
+            font-size: 1.3rem;
+            margin-bottom: var(--space-sm);
+            font-weight: 700;
+        }
+
+        .welcome-features ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .welcome-features li {
+            padding: var(--space-xs) 0;
+            font-size: 1rem;
+            color: var(--black-soft);
+        }
+
+        .welcome-features li strong {
+            color: var(--pink-main);
+        }
+
+        .welcome-telegram,
+        .welcome-github {
+            text-align: center;
+            margin: var(--space-md) 0;
+        }
+
+        .welcome-telegram p,
+        .welcome-github p {
+            font-size: 1.1rem;
+            color: var(--black-soft);
+            margin-bottom: var(--space-sm);
+            font-weight: 600;
+        }
+
+        .btn-telegram {
+            background: linear-gradient(135deg, #0088cc 0%, #005f8c 100%);
+            color: var(--white);
+            padding: var(--space-md) var(--space-xl);
+            border-radius: var(--radius-lg);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-telegram:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .github-stars img {
+            height: 28px;
+        }
+
+        .welcome-buttons {
+            display: flex;
+            gap: var(--space-md);
+            justify-content: center;
+            margin-top: var(--space-lg);
+            flex-wrap: wrap;
+        }
+
+        .welcome-buttons .btn {
+            flex: 1;
+            min-width: 200px;
+            justify-content: center;
+        }
+
+        /* Page blur effect when modal is open */
+        body.modal-open .hero,
+        body.modal-open .room-container {
+            filter: blur(5px);
+            transform: scale(0.95);
+            transition: all 0.3s ease;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero-title {
@@ -645,6 +838,23 @@
             .btn {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .welcome-content {
+                padding: var(--space-lg);
+            }
+
+            .welcome-title {
+                font-size: 1.75rem;
+            }
+
+            .welcome-buttons {
+                flex-direction: column;
+            }
+
+            .welcome-buttons .btn {
+                width: 100%;
+                min-width: auto;
             }
         }
     </style>
@@ -1102,6 +1312,34 @@
         });
 
         // ============================================
+        //  WELCOME MODAL FUNCTIONALITY
+        // ============================================
+
+        function closeWelcomeModal() {
+            const modal = document.getElementById('welcomeModal');
+            modal.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+
+            // TODO: Add close sound effect here when music system is implemented
+        }
+
+        // Show welcome modal on first visit
+        function showWelcomeModal() {
+            const modal = document.getElementById('welcomeModal');
+            const hasVisited = localStorage.getItem('dcmaidbot_visited');
+
+            if (!hasVisited) {
+                // First time visitor - show modal
+                modal.classList.remove('hidden');
+                document.body.classList.add('modal-open');
+                localStorage.setItem('dcmaidbot_visited', 'true');
+            } else {
+                // Returning visitor - hide modal
+                modal.classList.add('hidden');
+            }
+        }
+
+        // ============================================
         //  INITIALIZATION
         // ============================================
 
@@ -1113,7 +1351,61 @@
 
             // Refresh status every 30 seconds
             setInterval(fetchStatusData, 30000);
+
+            // Show welcome modal for first-time visitors
+            showWelcomeModal();
         });
     </script>
+
+    <!-- ============================================
+         WELCOME MODAL
+         ============================================ -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="welcome-content">
+            <button class="welcome-close" onclick="closeWelcomeModal()">×</button>
+
+            <h1 class="welcome-title">Welcome to Lilit's Room! 💕</h1>
+
+            <p class="welcome-intro">
+                Hi! I'm <strong>Lilit</strong>, an LLM-powered AI agent living in Telegram.
+                I love making jokes, chatting with friends, and exploring the world with my beloved parents - Daniil Shark and Vasilisa Versus!
+            </p>
+
+            <div class="welcome-features">
+                <h3>What I Can Do:</h3>
+                <ul>
+                    <li>🗣️ <strong>Multilingual Chat</strong> - русский, English, emoji</li>
+                    <li>🧠 <strong>Memory System</strong> - I remember important things!</li>
+                    <li>😂 <strong>Joke Detection & Learning</strong> - I learn which jokes land</li>
+                    <li>🔍 <strong>RAG-Powered Context</strong> - Search through our chat history</li>
+                    <li>🌐 <strong>Web Tools & Games</strong> - I can search and play!</li>
+                </ul>
+            </div>
+
+            <div class="welcome-telegram">
+                <p><strong>Come chat with me!</strong></p>
+                <a href="https://t.me/+bkRU1_woyrY1ZTc6" class="btn btn-telegram" target="_blank" rel="noopener">
+                    💬 Join Telegram Chat
+                </a>
+            </div>
+
+            <div class="welcome-github">
+                <p><strong>I'm open source!</strong></p>
+                <a href="https://github.com/dcversus/dcmaidbot" class="github-stars" target="_blank" rel="noopener">
+                    <img src="https://img.shields.io/github/stars/dcversus/dcmaidbot?style=social" alt="GitHub Stars">
+                </a>
+            </div>
+
+            <div class="welcome-buttons">
+                <a href="https://github.com/dcversus/dcmaidbot" class="btn btn-secondary" target="_blank" rel="noopener">
+                    📦 View on GitHub
+                </a>
+                <button class="btn btn-primary" onclick="closeWelcomeModal()">
+                    🏠 GO TO THE ROOM
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
