@@ -11,14 +11,23 @@ Provides:
 import os
 import sys
 from datetime import datetime, timezone
+from typing import Optional
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 class StatusService:
     """Service for retrieving bot status and health information."""
 
-    def __init__(self):
-        """Initialize status service with start time."""
+    def __init__(self, db_engine: Optional[AsyncEngine] = None):
+        """Initialize status service with start time.
+
+        Args:
+            db_engine: Optional database engine for health checks
+        """
         self.start_time = datetime.now(timezone.utc)
+        self.db_engine = db_engine
 
     def get_version_info(self) -> dict:
         """Get version and changelog information.
@@ -62,12 +71,29 @@ class StatusService:
         Returns:
             dict: Database connection status and basic stats
         """
-        # Placeholder - will be implemented when database is set up (PRP-003/005)
-        return {
-            "connected": False,
-            "status": "not_implemented",
-            "message": "Database integration pending (PRP-003/005)",
-        }
+        if not self.db_engine:
+            return {
+                "connected": False,
+                "status": "not_configured",
+                "message": "Database engine not initialized",
+            }
+
+        try:
+            # Test database connection with a simple query
+            async with self.db_engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+
+            return {
+                "connected": True,
+                "status": "healthy",
+                "message": "PostgreSQL connected",
+            }
+        except Exception as e:
+            return {
+                "connected": False,
+                "status": "error",
+                "message": f"Database connection failed: {str(e)[:100]}",
+            }
 
     async def get_redis_status(self) -> dict:
         """Get Redis connection and cache status.
@@ -75,12 +101,29 @@ class StatusService:
         Returns:
             dict: Redis connection status and basic stats
         """
-        # Placeholder - will be implemented when Redis is deployed (PRP-001)
-        return {
-            "connected": False,
-            "status": "not_implemented",
-            "message": "Redis integration pending (PRP-001)",
-        }
+        try:
+            from services.redis_service import redis_service
+
+            if redis_service.redis:
+                # Test Redis connection
+                await redis_service.redis.ping()
+                return {
+                    "connected": True,
+                    "status": "healthy",
+                    "message": "Redis connected",
+                }
+            else:
+                return {
+                    "connected": False,
+                    "status": "not_configured",
+                    "message": "Redis not configured (optional)",
+                }
+        except Exception as e:
+            return {
+                "connected": False,
+                "status": "error",
+                "message": f"Redis connection failed: {str(e)[:100]}",
+            }
 
     async def get_full_status(self) -> dict:
         """Get complete status information.
@@ -127,15 +170,43 @@ class StatusService:
         except (IOError, OSError) as e:
             return f"Error reading changelog: {e}"
 
-    def get_health_status(self) -> tuple[bool, dict]:
+    async def get_health_status(self) -> tuple[bool, dict]:
         """Get health status for Kubernetes probes.
 
         Returns:
             tuple: (is_healthy: bool, status_details: dict)
         """
-        # For now, always healthy if service is running
-        # Will check database/Redis when implemented
-        return True, {
-            "status": "healthy",
-            "checks": {"bot": "ok", "database": "pending", "redis": "pending"},
+        # Check database and Redis status
+        db_status = await self.get_database_status()
+        redis_status = await self.get_redis_status()
+
+        # Determine check statuses
+        db_check = (
+            "ok"
+            if db_status["connected"]
+            else "unavailable"
+            if db_status["status"] == "not_configured"
+            else "error"
+        )
+        redis_check = (
+            "ok"
+            if redis_status["connected"]
+            else "unavailable"
+            if redis_status["status"] == "not_configured"
+            else "error"
+        )
+
+        # Bot is healthy if it's running and either:
+        # - Database is connected, or
+        # - Database is not configured (optional)
+        # Redis is always optional
+        is_healthy = db_check in ["ok", "unavailable"]
+
+        return is_healthy, {
+            "status": "healthy" if is_healthy else "unhealthy",
+            "checks": {
+                "bot": "ok",
+                "database": db_check,
+                "redis": redis_check,
+            },
         }

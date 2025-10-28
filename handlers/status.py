@@ -11,8 +11,14 @@ import html
 from aiohttp import web
 from services.status_service import StatusService
 
-# Global status service instance
-status_service = StatusService()
+# Initialize status service with database engine
+try:
+    from database import engine
+
+    status_service = StatusService(db_engine=engine)
+except ImportError:
+    # Fallback if database module not available
+    status_service = StatusService()
 
 
 async def version_handler(request: web.Request) -> web.Response:
@@ -39,7 +45,7 @@ async def health_handler(request: web.Request) -> web.Response:
     Returns:
         web.Response: JSON response with health status
     """
-    is_healthy, health_details = status_service.get_health_status()
+    is_healthy, health_details = await status_service.get_health_status()
 
     if is_healthy:
         return web.json_response(health_details, status=200)

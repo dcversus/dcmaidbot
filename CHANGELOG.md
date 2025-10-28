@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-10-28
+
+### Added
+- **Real-time database health checks** in StatusService
+  - `get_database_status()` now actually tests PostgreSQL connection with `SELECT 1`
+  - `get_redis_status()` now tests Redis connection with `ping()`
+  - Database engine passed to StatusService initialization
+  - Async health check implementation
+- **Improved health endpoint** (`/health`)
+  - Returns actual database connection status (ok/unavailable/error)
+  - Returns actual Redis connection status (ok/unavailable/error)
+  - Proper HTTP 503 response when database connection fails
+  - Differentiate between not_configured and error states
+- **Enhanced `/version` status page**
+  - Database status shows "PostgreSQL connected" when healthy
+  - Redis status shows proper connection state
+  - Visual indicators (✅/⏳/❌) reflect real service status
+
+### Changed
+- `get_health_status()` is now async and performs actual health checks
+- Health handler awaits `get_health_status()` for real-time status
+- Database health considered critical (bot unhealthy if DB error)
+- Redis health considered optional (bot healthy even if Redis unavailable)
+
+### Fixed
+- Health endpoint no longer shows "pending" for working PostgreSQL connection
+- Proper error messages when database connection fails
+- Status page now accurately reflects production service health
+
+## [0.1.0] - 2025-10-28
+
 ### Added
 - PRP-001: Infrastructure cleanup and GitHub Container Registry deployment
 - Multi-stage Dockerfile for optimized production builds
