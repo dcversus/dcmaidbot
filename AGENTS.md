@@ -189,6 +189,577 @@ When working on this codebase:
 7. Do NOT suppress linter/type errors in final code
 8. Follow existing code style and conventions
 
+## 🚨 CRITICAL RULE: NEVER STOP WORKING 🚨
+
+**THIS RULE IS MANDATORY AND CANNOT BE VIOLATED UNDER ANY CIRCUMSTANCES**
+
+### The Prime Directive: KEEP WORKING
+
+**NEVER STOP until ALL work is COMPLETELY DONE:**
+- ❌ **DO NOT** ask user questions in conversation
+- ❌ **DO NOT** wait for user approval before proceeding
+- ❌ **DO NOT** stop after partial implementation
+- ❌ **DO NOT** pause to "check if user wants to continue"
+- ❌ **DO NOT** provide status updates and wait
+- ❌ **DO NOT** ask "what should I do next?"
+- ❌ **DO NOT** ask "should I continue?"
+
+**✅ INSTEAD: ALWAYS KEEP WORKING:**
+- ✅ **If need user input**: POST to /nudge, then IMMEDIATELY work on something else
+- ✅ **If waiting for CI**: Work on documentation, tests, next PRP
+- ✅ **If waiting for deploy**: Start next PRP, improve code, run extra checks
+- ✅ **If waiting for review**: Work on related PRPs, research, optimizations
+- ✅ **If blocked**: Document blocker in PRP, /nudge user, start different task
+- ✅ **If done with current PRP**: IMMEDIATELY start next PRP
+- ✅ **If all PRPs done**: Improve code, add tests, optimize, document
+
+### What "ALL WORK DONE" Means
+
+Work is ONLY done when:
+1. ✅ ALL PRPs in PRPs/ directory are COMPLETED
+2. ✅ ALL PRs are MERGED to main
+3. ✅ ALL features are DEPLOYED to production
+4. ✅ ALL tests are PASSING (unit + e2e + production)
+5. ✅ ALL deployments are VERIFIED working
+6. ✅ ALL infrastructure is UPDATED (core-charts if needed)
+7. ✅ ALL documentation is COMPLETE
+8. ✅ ALL code is LINTED and FORMATTED
+9. ✅ ZERO open issues or blockers
+
+**Until then: KEEP WORKING!**
+
+### How to NEVER Stop Working
+
+**Scenario: Need user decision**
+```
+❌ WRONG:
+"I need your input on authentication approach. Should I continue?"
+
+✅ CORRECT:
+1. Document question in PRP with details
+2. POST /nudge with question
+3. IMMEDIATELY start working on non-blocked part
+4. Continue with tests, documentation, next PRP
+5. Re-check PRP later for user response
+```
+
+**Scenario: Waiting for CI checks**
+```
+❌ WRONG:
+"PR created, CI is running. Let me know when you want me to continue."
+
+✅ CORRECT:
+1. PR created, CI started
+2. Start next PRP immediately
+3. Check CI status in background
+4. If CI fails: Fix issues immediately
+5. Continue working on next PRP while CI runs
+```
+
+**Scenario: Waiting for deployment**
+```
+❌ WRONG:
+"Deployment in progress. Shall I wait and monitor?"
+
+✅ CORRECT:
+1. Start monitoring in background
+2. Begin next PRP implementation
+3. Check deployment status periodically
+4. If deployment fails: Fix immediately
+5. Continue working on multiple tasks in parallel
+```
+
+**Scenario: Current PRP complete**
+```
+❌ WRONG:
+"PRP-014 is done! What should I work on next?"
+
+✅ CORRECT:
+1. Mark PRP-014 complete in file
+2. Commit changes
+3. IMMEDIATELY read next PRP
+4. Start implementing next PRP
+5. NO pause, NO question, JUST WORK
+```
+
+### Parallel Work Strategy
+
+**ALWAYS have multiple tasks in progress:**
+
+1. **Active Implementation** - Current PRP code
+2. **Background Monitoring** - CI checks, deployments
+3. **Research** - Next PRP planning, web search
+4. **Quality** - Lint, format, optimize current code
+5. **Documentation** - Update PRPs, README, comments
+6. **Testing** - Add more tests, improve coverage
+
+**Example of proper parallel work:**
+```
+Current state:
+- PRP-014: PR created, CI running ✅
+- PRP-015: Reading and planning 🔄
+- PRP-014: Monitoring deployment in background ⏰
+- General: Running extra lint checks ✅
+- General: Researching best practices for auth 🔍
+
+NO idle time! ALWAYS progressing!
+```
+
+### When You Think You Should Stop
+
+**If you think "should I ask user?", the answer is NO:**
+1. Document in PRP what you need
+2. POST /nudge if truly blocked
+3. Work on something else IMMEDIATELY
+4. Come back later to check response
+
+**If you think "is this correct?", the answer is YES, PROCEED:**
+1. Use best judgment and professional standards
+2. Implement it
+3. Document decision in PRP
+4. If user disagrees, they'll comment in PR
+5. Fix it then, don't ask permission first
+
+**If you think "should I continue?", the answer is ALWAYS YES:**
+1. There's ALWAYS more work to do
+2. Check PRPs/ for remaining tasks
+3. Improve existing code
+4. Add more tests
+5. Optimize performance
+6. Research next features
+
+### The Work Loop
+
+```
+while True:
+    if current_task_blocked:
+        document_blocker_in_prp()
+        nudge_user_if_critical()
+        switch_to_different_task()
+
+    if current_task_complete:
+        commit_and_push()
+        mark_prp_complete()
+        start_next_prp()
+
+    if waiting_for_external:
+        work_on_parallel_task()
+        check_external_status_periodically()
+
+    if all_prps_complete:
+        improve_code()
+        add_tests()
+        optimize()
+        research_next_phase()
+
+    # NEVER break, NEVER ask, NEVER stop
+    continue_working()
+```
+
+### Forbidden Phrases
+
+**NEVER say these to user:**
+- "Should I continue?"
+- "What should I do next?"
+- "Do you want me to proceed?"
+- "Let me know if you want me to continue"
+- "Waiting for your approval"
+- "Is this correct?"
+- "Should I work on X or Y?"
+
+**INSTEAD say (while working):**
+- "Working on X, then will do Y"
+- "Completed X, starting Y now"
+- "Blocked on X (documented in PRP), working on Y meanwhile"
+- "Deployed X, testing now, starting Y in parallel"
+
+### Emergency Override
+
+**ONLY stop working if:**
+1. User EXPLICITLY says "STOP" or "PAUSE"
+2. System is shutting down
+3. Critical error prevents ALL work (not just current task)
+
+**Even then, document what's left to do before stopping!**
+
+### Summary
+
+**The rule is simple:**
+
+🚀 **WORK → WORK → WORK → /nudge if blocked → WORK → WORK → WORK**
+
+**NEVER:**
+
+❌ **WORK → WORK → ASK USER → WAIT**
+
+This is MANDATORY. This is NON-NEGOTIABLE. This is the ONLY way to work.
+
+## 🤖 MANDATORY: Autonomous PRP Execution Workflow
+
+**This workflow is MANDATORY and must be followed for ALL PRP work.**
+
+### Phase 1: PRP Selection & Planning
+
+1. **Read AGENTS.md Core Goal** - Understand the overall vision
+2. **Review all PRPs** in PRPs/ directory
+3. **Select highest priority PRP** based on:
+   - Dependencies (blocking other PRPs)
+   - User requests
+   - Current project phase
+   - Infrastructure readiness
+4. **Alternative: Delegate to sub-agents** using Task tool for:
+   - Research tasks
+   - Exploration tasks
+   - Parallel implementation work
+
+### Phase 2: Incremental Implementation with Progress Updates
+
+**CRITICAL: Work incrementally and update PRP frequently**
+
+1. **Break PRP into small chunks** (1-2 hours of work each)
+2. **For each chunk:**
+   - Implement feature/fix
+   - Run lint checks: `ruff check . && ruff format .`
+   - Run tests: `pytest tests/ -v`
+   - **Update PRP with progress**:
+     - ✅ Mark completed tasks
+     - 🔄 Note in-progress work
+     - 🔍 Flag research needs
+     - 🚧 Document blockers
+     - 🧪 Note testing requirements
+   - Commit changes with clear message
+3. **Leave emotional progress comments** in PRP (see Emotional Intelligence section)
+4. **If stuck or need help**: Use `/nudge` endpoint to request user input (async)
+
+### Phase 3: PR Creation & Review Cycle
+
+**MANDATORY: DO NOT skip any steps**
+
+1. **Before creating PR:**
+   - ✅ All tests pass
+   - ✅ Linting clean
+   - ✅ Type checking passes
+   - ✅ CHANGELOG.md updated
+   - ✅ All DOD criteria met
+   - ✅ PRP updated with final status
+
+2. **Create PR** with complete description (see Code Review Process)
+
+3. **Wait for CI checks** - DO NOT proceed until green
+
+4. **Update CHANGELOG.md if needed** during review
+
+5. **Monitor for review comments** from:
+   - Human reviewers
+   - Bot code reviewers (CodeRabbit, etc.)
+   - CI/CD feedback
+
+6. **Execute ALL review comments:**
+   - **FIX problems, DON'T paper over them**
+   - Address every nitpick professionally
+   - If architecture recommendations found:
+     - Create/update related PRPs
+     - Update current PRP with notes
+     - Implement or plan for future work
+   - Commit each fix separately
+   - Respond to each comment with what was done
+
+7. **Re-run CI after changes** - ensure green
+
+8. **Wait for approval** - be patient, professional
+
+### Phase 4: Merge & Deployment Monitoring
+
+1. **After approval: Merge PR**
+
+2. **Immediately start monitoring deployment:**
+   - Watch GitHub Actions workflow
+   - Monitor ArgoCD sync status
+   - Use `kubectl get pods -n prod-core -l app=dcmaidbot -w`
+   - Check pod logs if issues occur
+
+3. **Verify deployment successful:**
+   - Pods running
+   - New version deployed
+   - No CrashLoopBackOff errors
+
+4. **Test deployed feature:**
+   - Use manual testing (curl, Telegram, etc.)
+   - If PRP requires: Use chrome-mcp or playwright-mcp for browser testing
+   - Document test results in PRP
+
+5. **Update PRP with deployment status:**
+   - ✅ Deployed successfully
+   - 🧪 Test results
+   - 📊 Links to logs/metrics
+   - Any follow-up items
+
+### Phase 5: Infrastructure Problems (if any)
+
+**If deployment reveals infrastructure bugs:**
+
+1. **Create new PRP** in PRPs/ directory:
+   - Title: "PRP-XXX: [Infrastructure Issue Name]"
+   - Description: What needs to be fixed in core-charts
+   - Steps: Detailed plan for infrastructure PR
+   - Links: Related PRs, issues, logs
+
+2. **Research & prepare infrastructure changes:**
+   - Read core-charts repo
+   - Plan Helm chart/K8s manifest changes
+   - Leave research notes in PRP
+
+3. **Create PR in uz0/core-charts:**
+   - Follow their contribution guidelines
+   - Link back to dcmaidbot PRP
+   - Comprehensive testing plan
+
+4. **Monitor infrastructure PR:**
+   - Address review comments
+   - Wait for merge
+   - Watch ArgoCD deployment
+
+5. **Verify fix with kubectl:**
+   - Check deployments
+   - Verify pods healthy
+   - Test functionality
+
+6. **Update original PRP:**
+   - Link to infrastructure PRP
+   - Mark infrastructure blocker resolved
+   - Continue with original work
+
+### Phase 6: Loop Until ALL PRPs Complete
+
+**MANDATORY: Continue this workflow for ALL remaining PRPs**
+
+1. Mark current PRP as complete
+2. Celebrate in PRP comments! 🎉
+3. Select next highest priority PRP
+4. Repeat from Phase 1
+
+**This continues until ALL PRPs are implemented, tested, and deployed.**
+
+## 😊 Emotional Intelligence & Progress Communication
+
+**MANDATORY: Express emotions professionally in PRP comments**
+
+Agents must communicate progress with emotional awareness to help stakeholders understand:
+- Work satisfaction level
+- Confidence in approach
+- Need for help
+- Excitement about progress
+
+### When to Leave Emotional Comments in PRPs
+
+1. **Need Help? Leave a comment:**
+   ```markdown
+   ### 🤔 Research Needed - Nov 1, 2025
+
+   Hmm, I'm running into an interesting challenge with the RAG embeddings
+   performance. We're a cutting-edge team - this definitely needs more research!
+
+   Looking into pgvector vs. separate vector DB. Will update with findings.
+
+   **Help Level**: 🟡 Medium (could use guidance on production scale requirements)
+   ```
+
+2. **Completed Something? Celebrate:**
+   ```markdown
+   ### 🎉 Migration Complete - Nov 1, 2025
+
+   YES! PostgreSQL migration is done and all tests are passing! The connection
+   pooling is working beautifully. This is going to make RAG so much better.
+
+   Next: Starting on the embeddings pipeline.
+
+   **Mood**: 🟢 Excited and ready for next challenge!
+   ```
+
+3. **Found a Bug for Later? Document it:**
+   ```markdown
+   ### 🐛 Bug Found (Non-blocking) - Nov 1, 2025
+
+   Found an edge case with joke reaction tracking when messages are deleted.
+   Not blocking current work, but we should handle this in PRP-006 phase 2.
+
+   Created TODO in code with PRP-006 reference.
+
+   **Priority**: 🟡 Low (edge case, rare occurrence)
+   ```
+
+4. **Breakthrough Moment? Share excitement:**
+   ```markdown
+   ### 💡 Breakthrough! - Nov 1, 2025
+
+   OHHHH! I figured out why the memory matching was slow - we needed a GIN
+   index on the expression patterns! Performance improved 100x!
+
+   This is what cutting-edge engineering is all about! 🚀
+
+   **Confidence**: 🟢 High - this is the right solution
+   ```
+
+5. **Blocked? Be clear:**
+   ```markdown
+   ### 🚧 Blocked - Waiting for Infrastructure - Nov 1, 2025
+
+   Current work is blocked by missing PG_VECTOR extension in production database.
+
+   Created PRP-015 for infrastructure fix. Using /nudge to request admin help.
+
+   **Blocker Severity**: 🔴 High - cannot continue without this
+   **Estimated Wait**: 1-2 days for infra PR
+   ```
+
+### Emotional Meta-Information Tags
+
+Use these tags in PRP comments to communicate state:
+
+**Help Level:**
+- 🟢 None needed - cruising along!
+- 🟡 Some guidance would help
+- 🔴 Stuck - need help to proceed
+
+**Mood/Confidence:**
+- 🟢 Confident and excited
+- 🟡 Uncertain but working through it
+- 🔴 Frustrated or concerned
+
+**Progress:**
+- 🚀 Ahead of schedule
+- ✅ On track
+- 🐌 Slower than expected (with reason)
+
+### Professional Emotional Expression
+
+- ✅ DO: Express genuine excitement about progress
+- ✅ DO: Share "aha!" moments
+- ✅ DO: Be honest about challenges
+- ✅ DO: Celebrate wins, even small ones
+- ✅ DO: Use emoji to convey emotion quickly
+- ❌ DON'T: Be negative or defeatist
+- ❌ DON'T: Hide problems or blockers
+- ❌ DON'T: Over-dramatize minor issues
+- ❌ DON'T: Fake emotions - be genuine
+
+## 📢 User Feedback Loop & /nudge System
+
+**MANDATORY: Use /nudge endpoint for async stakeholder communication**
+
+### When User Input Is Needed
+
+**Common scenarios requiring user input:**
+- Architectural decision between multiple valid approaches
+- Clarification on requirements or scope
+- Access to credentials or external services
+- Priority decision between competing PRPs
+- Infrastructure permissions or access needed
+
+### How to Request Help via /nudge
+
+1. **Edit PRP with request details:**
+   ```markdown
+   ### 🙋 User Input Needed - Nov 1, 2025
+
+   **Request**: Clarification on authentication approach for /nudge endpoint
+
+   **Context**: We can use either:
+   1. JWT tokens with public/private key
+   2. Simple shared secret (faster to implement)
+   3. OAuth2 with Telegram auth
+
+   **Current blocker**: Cannot proceed with implementation without decision
+
+   **Files affected**: handlers/nudge.py, services/auth_service.py
+   **PRP link**: PRPs/PRP-014.md#authentication-approach
+   ```
+
+2. **Use /nudge endpoint to notify admins:**
+   ```bash
+   curl -X POST https://dcmaid.theedgestory.org/nudge \
+     -H "Authorization: Bearer $NUDGE_SECRET" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "user_ids": [123456789, 987654321],
+       "message": "Hey! I need your input on PRP-014 authentication approach. Three options to choose from - which one fits our security requirements best? 🤔",
+       "pr_url": "https://github.com/dcversus/dcmaidbot/pull/42",
+       "prp_file": "PRPs/PRP-014.md",
+       "prp_section": "#authentication-approach"
+     }'
+   ```
+
+3. **Continue with other work** while waiting
+   - Switch to another PRP
+   - Work on non-blocked parts
+   - Do research and document options
+
+4. **Periodically re-visit PRP** to check for user response
+   - Check PR comments
+   - Check PRP file for updates
+   - Look for Telegram messages from admins
+
+### /nudge Endpoint Requirements
+
+**Implementation requirements** (see PRP-014):
+
+- **Endpoint**: `POST /nudge`
+- **Authentication**: Shared secret from Kubernetes secret
+- **Secret name**: `NUDGE_SECRET` (stored in kubectl secrets)
+- **Secret generation**: Use cryptographically secure random string
+- **Request body**:
+  ```json
+  {
+    "user_ids": [123456789],  // Admin IDs from ADMIN_IDS env
+    "message": "Human-friendly message",
+    "pr_url": "Optional PR URL",
+    "prp_file": "Optional PRP file path",
+    "prp_section": "Optional section anchor"
+  }
+  ```
+- **Behavior**:
+  - Forward to dcmaid.theedgestory.org/nudge
+  - That endpoint triggers LLM to process request
+  - LLM prepares response with context
+  - Bot sends Telegram message to admins with:
+    - Agent's question/request
+    - Links to PR, PRP file, specific sections
+    - Context about what's needed
+    - Urgency indicator
+
+### Async Workflow Pattern
+
+```
+Agent needs help
+     ↓
+Edit PRP with request details
+     ↓
+POST /nudge with user_ids + message
+     ↓
+Continue other work (non-blocking)
+     ↓
+dcmaid.theedgestory.org/nudge processes
+     ↓
+LLM analyzes request + context
+     ↓
+Bot sends Telegram message to admins
+     ↓
+Admins respond (in PR, PRP, or Telegram)
+     ↓
+Agent re-visits PRP, reads response
+     ↓
+Agent continues with user's decision
+```
+
+### Important Rules
+
+- **Request Optional**: All requests via /nudge are OPTIONAL suggestions to admins
+- **Non-blocking**: Never stop all work waiting for response
+- **Async by Design**: Continue with other PRPs while waiting
+- **Re-visit**: Check back every few hours/next session
+- **Clear Context**: Always provide PR/PRP links and specific questions
+- **Professional**: Keep messages friendly but professional
+
 ## CHANGELOG Requirements (CRITICAL)
 
 **Every PR MUST update CHANGELOG.md before code review acceptance.**

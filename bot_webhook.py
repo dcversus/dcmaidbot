@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 from handlers import waifu
 from handlers.status import version_handler, health_handler
+from handlers.nudge import nudge_handler
 from middlewares.admin_only import AdminOnlyMiddleware
 
 load_dotenv()
@@ -128,6 +129,10 @@ def main():
     app.router.add_get("/version", version_handler)
     app.router.add_get("/health", health_handler)
     logging.info("Status endpoints registered: /version, /health")
+
+    # Add agent communication endpoint
+    app.router.add_post("/nudge", nudge_handler)
+    logging.info("Agent communication endpoint registered: /nudge")
 
     # Setup application
     setup_application(app, dp, bot=bot)
