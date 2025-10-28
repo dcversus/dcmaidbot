@@ -782,10 +782,6 @@
             box-shadow: var(--shadow-lg);
         }
 
-        .github-stars img {
-            height: 28px;
-        }
-
         .welcome-buttons {
             display: flex;
             gap: var(--space-md);
@@ -1391,9 +1387,7 @@
 
             <div class="welcome-github">
                 <p><strong>I'm open source!</strong></p>
-                <a href="https://github.com/dcversus/dcmaidbot" class="github-stars" target="_blank" rel="noopener">
-                    <img src="https://img.shields.io/github/stars/dcversus/dcmaidbot?style=social" alt="GitHub Stars">
-                </a>
+                <a class="github-button" href="https://github.com/dcversus/dcmaidbot" data-size="large" data-show-count="true" aria-label="Star dcversus/dcmaidbot on GitHub">Star</a>
             </div>
 
             <div class="welcome-buttons">
@@ -1406,6 +1400,9 @@
             </div>
         </div>
     </div>
+
+    <!-- GitHub Buttons Script -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 </body>
 </html>
