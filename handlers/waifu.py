@@ -1,7 +1,17 @@
+import os
 from aiogram import Router, types
 from aiogram.filters import Command
 
+from database import AsyncSessionLocal
+from services.llm_service import get_llm_service
+from services.lesson_service import LessonService
+
 router = Router()
+
+# Load admin IDs
+ADMIN_IDS = set(
+    int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()
+)
 
 
 @router.message(Command("start"))
@@ -76,28 +86,44 @@ async def cmd_joke(message: types.Message):
 
 @router.message()
 async def handle_message(message: types.Message):
-    """Handle regular messages with waifu personality."""
-    text = message.text.lower() if message.text else ""
-
-    # Check for admin mentions or special triggers
-    if "master" in text or "admin" in text or "creator" in text:
-        await message.reply(
-            "💕 Oh! You mentioned my beloved creators! I love them so much! 💖"
-        )
+    """Handle regular messages with LLM-powered waifu personality."""
+    if not message.text:
         return
 
-    # Simple response for other messages
-    responses = [
-        "Nya! That's interesting! 💕",
-        "Kawai! Tell me more! 🐱",
-        "Myaw! I love chatting with you! 💖",
-        "That's so cool! Nya! ✨",
-    ]
+    # Only respond to admins or mentions
+    is_admin = message.from_user.id in ADMIN_IDS
+    if not is_admin:
+        # Ignore non-admins (99% of users)
+        return
 
-    # For now, respond to all messages from admins
-    import random
+    # Prepare context
+    user_info = {
+        "username": message.from_user.username or message.from_user.first_name,
+        "telegram_id": message.from_user.id,
+    }
+    chat_info = {
+        "type": message.chat.type,
+        "chat_id": message.chat.id,
+    }
 
-    await message.reply(random.choice(responses))
+    # Get lessons from database
+    async with AsyncSessionLocal() as session:
+        lesson_service = LessonService(session)
+        lessons = await lesson_service.get_all_lessons()
+
+    # Get LLM response
+    try:
+        llm_service = get_llm_service()
+        response_text = await llm_service.get_response(
+            user_message=message.text,
+            user_info=user_info,
+            chat_info=chat_info,
+            lessons=lessons,
+        )
+        await message.reply(response_text)
+    except Exception as e:
+        # Fallback to simple response if LLM fails
+        await message.reply(f"Myaw~ Something went wrong! 😿\n\nError: {str(e)}")
 
 
 # Protector functionality (to be implemented)

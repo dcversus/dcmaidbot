@@ -68,11 +68,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Decorative widgets: Cactus, The Edge Story ad, future GameBoy Pong placeholder
   - Modal system for interactive storytelling
   - Complete PRP-015 documentation with 11-day implementation plan
+- **PRP-002: LLM Agent Framework with BASE_PROMPT & LESSONS** 🤖💡
+  - OpenAI GPT-4o-mini integration for intelligent bot responses
+  - BASE_PROMPT system: Configurable personality from config/base_prompt.txt
+  - LESSONS system: Admin-only secret instructions injected into every LLM call
+  - Redis caching for lessons (3600s TTL)
+  - PostgreSQL persistence for lessons with Alembic migration
+  - Admin commands: /view_lessons, /add_lesson, /edit_lesson, /remove_lesson, /reorder_lesson
+  - LLM service with OpenAI function calling support
+  - Tool registry framework for extensible bot capabilities
+  - Lesson model with order, active status, timestamps
+  - Automatic lesson injection in all LLM responses
+  - Bilingual support (русский + English) in LLM context
+  - Unit tests for LLM service and lesson service (14 tests)
+  - E2E tests for LLM integration with lessons (2 tests)
+  - Redis service with graceful fallback (bot works without Redis)
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
 - Completely rewrote README.md for waifu bot architecture
-- Updated .env.example with new required variables
+- Updated .env.example with new required variables (added REDIS_URL)
+- **PRP-002: Transformed bot into intelligent LLM-powered agent**
+  - Waifu handler now uses LLM service for all non-command messages
+  - Only responds to admins (99% ignore rule enforced)
+  - Lessons automatically loaded from database and injected into context
+  - Redis connection initialized on bot startup
 - Deploy workflow reads version.txt and creates GitHub releases
 - **Downgraded Python from 3.14-slim to 3.13-slim** (hotfix for pydantic-core build issue)
 - **Enhanced CONTRIBUTING.md with pre-commit workflow**

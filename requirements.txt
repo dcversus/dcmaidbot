@@ -16,10 +16,14 @@ aiosqlite>=0.20.0
 psycopg2-binary>=2.9.0
 greenlet>=3.0.0
 
-# AI/ML (Phase 2: PRP-006, PRP-007)
+# AI/ML (PRP-002, PRP-006, PRP-007)
 openai>=1.0.0
 pgvector>=0.2.0
 sentence-transformers>=2.2.0
+
+# Redis (PRP-002: LESSONS cache)
+redis>=5.0.0
+aioredis>=2.0.0
 
 # Scheduling (PRP-008)
 apscheduler>=3.10.0
