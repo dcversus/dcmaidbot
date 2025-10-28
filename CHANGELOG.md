@@ -55,6 +55,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Emotional intelligence guidelines for PRP progress comments
   - 6-phase execution workflow (selection → implementation → PR → deploy → loop)
   - User feedback loop with async /nudge communication pattern
+- **PRP-015: Lilit's Room - Interactive Chibi Anime Landing Page** 💕
+  - Beautiful kawaii landing page served at `/` (root path)
+  - Serious hero section with GitHub links and installation guide
+  - Interactive widget grid representing Lilit's room (top-down view)
+  - Live widgets: Real-time clock, version display, uptime, service status
+  - Visual novel-style changelog stories (click widgets to read)
+  - Funny backstories for each release (The Birth, The Little Sister, The Seed)
+  - Chibi anime aesthetic with pastel colors and cute animations
+  - Responsive grid layout with hover effects and smooth transitions
+  - Service status widgets: Redis (paper desk), PostgreSQL (bookshelf), Bot (smartphone)
+  - Decorative widgets: Cactus, The Edge Story ad, future GameBoy Pong placeholder
+  - Modal system for interactive storytelling
+  - Complete PRP-015 documentation with 11-day implementation plan
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
@@ -70,6 +83,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - bot_webhook.py: Register /version and /health monitoring endpoints
   - Dockerfile: Accept GIT_COMMIT, IMAGE_TAG, BUILD_TIME build args as ENV vars
   - deploy.yml: Pass build metadata to Docker during CI/CD
+- **PRP-015: Moved main landing page from `/version` to `/`**
+  - Old status page still available at `/version` for monitoring
+  - New kawaii landing page is now the main entry point
+  - Dockerfile updated to include static/ directory for assets
 
 ### Fixed
 - **CRITICAL: Added bot_webhook.py to Docker image** (emergency fix for production crash)

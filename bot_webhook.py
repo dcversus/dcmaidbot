@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from handlers import waifu
 from handlers.status import version_handler, health_handler
 from handlers.nudge import nudge_handler
+from handlers.landing import landing_handler
 from middlewares.admin_only import AdminOnlyMiddleware
 
 load_dotenv()
@@ -124,6 +125,10 @@ def main():
         secret_token=webhook_config["secret"],
     )
     webhook_handler.register(app, path=webhook_config["path"])
+
+    # Add landing page (root path)
+    app.router.add_get("/", landing_handler)
+    logging.info("Landing page registered: /")
 
     # Add status monitoring endpoints
     app.router.add_get("/version", version_handler)

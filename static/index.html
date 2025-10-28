@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lilit (DCMaidBot) 💕 - Your Kawaii AI Companion</title>
+    <style>
+        /* ============================================
+           CHIBI ANIME KAWAII DESIGN SYSTEM
+           Light, cute, and cartoon-style
+           ============================================ */
+
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Patrick+Hand&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Kawaii Pastel Color Palette */
+            --pink-light: #FFB3D9;
+            --pink-main: #FF69B4;
+            --pink-dark: #FF1493;
+            --purple-light: #E6D5F5;
+            --purple-main: #B8A4D4;
+            --blue-light: #B8E6FF;
+            --blue-main: #87CEEB;
+            --orange-warm: #FFB347;
+            --yellow-soft: #FFF5BA;
+            --green-mint: #B4F5D0;
+            --peach: #FFDAB9;
+            --lavender: #E6E6FA;
+
+            /* Neutrals */
+            --white: #FFFFFF;
+            --cream: #FFF9F0;
+            --gray-light: #F5F5F5;
+            --gray-mid: #CCCCCC;
+            --gray-text: #666666;
+            --black-soft: #333333;
+
+            /* Shadows & Effects */
+            --shadow-sm: 0 2px 8px rgba(255, 105, 180, 0.1);
+            --shadow-md: 0 4px 16px rgba(255, 105, 180, 0.15);
+            --shadow-lg: 0 8px 32px rgba(255, 105, 180, 0.2);
+            --glow: 0 0 20px rgba(255, 182, 217, 0.6);
+
+            /* Spacing */
+            --space-xs: 0.5rem;
+            --space-sm: 1rem;
+            --space-md: 1.5rem;
+            --space-lg: 2rem;
+            --space-xl: 3rem;
+
+            /* Border Radius */
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-round: 50%;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, var(--lavender) 0%, var(--blue-light) 50%, var(--pink-light) 100%);
+            color: var(--black-soft);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           HERO SECTION - SERIOUS & INFORMATIVE
+           ============================================ */
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: var(--space-xl) var(--space-md);
+            position: relative;
+            background: var(--white);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .hero::before {
+            content: '💕';
+            position: absolute;
+            top: 5%;
+            left: 10%;
+            font-size: 3rem;
+            opacity: 0.2;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '🌸';
+            position: absolute;
+            bottom: 10%;
+            right: 10%;
+            font-size: 3rem;
+            opacity: 0.2;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .hero-content {
+            max-width: 800px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--pink-light) 0%, var(--purple-light) 100%);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--pink-dark);
+            margin-bottom: var(--space-md);
+            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--gray-text);
+            margin-bottom: var(--space-lg);
+            font-weight: 400;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: var(--black-soft);
+            margin-bottom: var(--space-md);
+            text-align: left;
+            line-height: 1.8;
+        }
+
+        .hero-description strong {
+            color: var(--pink-main);
+            font-weight: 700;
+        }
+
+        .features-list {
+            text-align: left;
+            margin: var(--space-lg) 0;
+            list-style: none;
+        }
+
+        .features-list li {
+            margin: var(--space-sm) 0;
+            padding-left: 2rem;
+            position: relative;
+            font-size: 1.05rem;
+        }
+
+        .features-list li::before {
+            content: '✨';
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: var(--space-md);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: var(--space-lg) 0;
+        }
+
+        .meta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            background: var(--white);
+            padding: var(--space-xs) var(--space-md);
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+            font-size: 0.95rem;
+        }
+
+        .meta-badge.license {
+            color: var(--purple-main);
+        }
+
+        .meta-badge.version {
+            color: var(--blue-main);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: var(--space-md);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: var(--space-xl);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-md) var(--space-xl);
+            border-radius: var(--radius-lg);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--pink-main) 0%, var(--pink-dark) 100%);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--shadow-lg), var(--glow);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--pink-main);
+            border: 2px solid var(--pink-main);
+        }
+
+        .btn-secondary:hover {
+            background: var(--pink-main);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        .scroll-hint {
+            margin-top: var(--space-xl);
+            font-size: 0.9rem;
+            color: var(--gray-mid);
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* ============================================
+           LILIT'S ROOM - THE CHAOS BEGINS!
+           ============================================ */
+
+        .room-container {
+            min-height: 100vh;
+            padding: var(--space-xl) var(--space-md);
+            background: linear-gradient(180deg, var(--cream) 0%, var(--yellow-soft) 100%);
+            position: relative;
+        }
+
+        .room-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--pink-dark);
+            margin-bottom: var(--space-lg);
+            font-family: 'Patrick Hand', cursive;
+            text-shadow: 2px 2px 0 var(--pink-light);
+        }
+
+        .room-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--gray-text);
+            margin-bottom: var(--space-xl);
+            font-style: italic;
+        }
+
+        /* Room Grid Layout */
+        .room-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Widget Base Styles */
+        .widget {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid transparent;
+        }
+
+        .widget:hover {
+            transform: translateY(-4px) rotate(1deg);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--pink-main);
+        }
+
+        .widget::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 182, 217, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .widget:hover::before {
+            opacity: 1;
+        }
+
+        /* Widget Sizes */
+        .widget.size-1x1 {
+            grid-column: span 1;
+            grid-row: span 1;
+            min-height: 200px;
+        }
+
+        .widget.size-2x1 {
+            grid-column: span 2;
+            grid-row: span 1;
+            min-height: 200px;
+        }
+
+        .widget.size-1x2 {
+            grid-column: span 1;
+            grid-row: span 2;
+            min-height: 420px;
+        }
+
+        .widget.size-2x2 {
+            grid-column: span 2;
+            grid-row: span 2;
+            min-height: 420px;
+        }
+
+        /* Widget Color Themes */
+        .widget.theme-pink {
+            background: linear-gradient(135deg, var(--pink-light) 0%, var(--white) 100%);
+        }
+
+        .widget.theme-purple {
+            background: linear-gradient(135deg, var(--purple-light) 0%, var(--white) 100%);
+        }
+
+        .widget.theme-blue {
+            background: linear-gradient(135deg, var(--blue-light) 0%, var(--white) 100%);
+        }
+
+        .widget.theme-green {
+            background: linear-gradient(135deg, var(--green-mint) 0%, var(--white) 100%);
+        }
+
+        .widget.theme-yellow {
+            background: linear-gradient(135deg, var(--yellow-soft) 0%, var(--white) 100%);
+        }
+
+        .widget.theme-peach {
+            background: linear-gradient(135deg, var(--peach) 0%, var(--white) 100%);
+        }
+
+        /* Widget Content */
+        .widget-icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-sm);
+            display: block;
+            text-align: center;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .widget-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--pink-dark);
+            margin-bottom: var(--space-xs);
+            text-align: center;
+        }
+
+        .widget-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray-text);
+            text-align: center;
+            margin-bottom: var(--space-sm);
+        }
+
+        .widget-content {
+            font-size: 1rem;
+            color: var(--black-soft);
+            line-height: 1.6;
+        }
+
+        .widget-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--pink-main);
+            text-align: center;
+            display: block;
+            margin: var(--space-sm) 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .widget-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .widget-status.online {
+            background: var(--green-mint);
+            color: #2d7a4d;
+        }
+
+        .widget-status.offline {
+            background: var(--gray-light);
+            color: var(--gray-mid);
+        }
+
+        .widget-status.pending {
+            background: var(--orange-warm);
+            color: #8b4000;
+        }
+
+        /* Clock Widget - Special */
+        #clock-widget .clock-face {
+            width: 150px;
+            height: 150px;
+            margin: var(--space-md) auto;
+            border-radius: var(--radius-round);
+            background: var(--white);
+            border: 8px solid var(--pink-main);
+            position: relative;
+            box-shadow: var(--shadow-md), inset 0 0 20px rgba(255, 105, 180, 0.1);
+        }
+
+        .clock-hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: 50% 100%;
+            background: var(--pink-dark);
+            border-radius: 4px 4px 0 0;
+        }
+
+        .clock-hand.hour {
+            width: 6px;
+            height: 40px;
+            margin-left: -3px;
+        }
+
+        .clock-hand.minute {
+            width: 4px;
+            height: 55px;
+            margin-left: -2px;
+        }
+
+        .clock-hand.second {
+            width: 2px;
+            height: 60px;
+            margin-left: -1px;
+            background: var(--orange-warm);
+        }
+
+        .clock-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: var(--pink-dark);
+            border-radius: var(--radius-round);
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        /* Modal - Visual Novel Style */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-md);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--lavender) 0%, var(--pink-light) 100%);
+            border-radius: var(--radius-lg);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+            padding: var(--space-xl);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-round);
+            background: var(--white);
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .modal-close:hover {
+            background: var(--pink-main);
+            color: var(--white);
+            transform: rotate(90deg);
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            color: var(--pink-dark);
+            margin-bottom: var(--space-sm);
+            font-weight: 800;
+        }
+
+        .modal-date {
+            font-size: 0.9rem;
+            color: var(--gray-text);
+            margin-bottom: var(--space-lg);
+        }
+
+        .modal-story {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--black-soft);
+            margin-bottom: var(--space-lg);
+        }
+
+        .modal-changes {
+            background: var(--white);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-top: var(--space-lg);
+        }
+
+        .modal-changes h4 {
+            color: var(--pink-dark);
+            margin-bottom: var(--space-sm);
+        }
+
+        .modal-changes ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .modal-changes li {
+            padding: var(--space-xs) 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .modal-changes li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--pink-main);
+            font-weight: 700;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .room-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-sm);
+            }
+
+            .widget.size-2x1,
+            .widget.size-1x2,
+            .widget.size-2x2 {
+                grid-column: span 1;
+                grid-row: span 1;
+                min-height: 200px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================
+         HERO SECTION - SERIOUS & INFORMATIVE
+         ============================================ -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Lilit 💕<br>
+                <span style="font-size: 0.6em;">(DCMaidBot)</span>
+            </h1>
+
+            <p class="hero-subtitle">
+                Your Kawaii AI Companion & Virtual Friend
+            </p>
+
+            <div class="hero-description">
+                <p>
+                    <strong>Lilit</strong> is an AI-powered Telegram bot built with personality and love. She's designed to be your virtual companion, joker, protector, and friend. Powered by Claude AI and created with care for authentic human-bot interaction.
+                </p>
+            </div>
+
+            <ul class="features-list">
+                <li><strong>Multilingual Interaction</strong> - Jokes and responds in русский, English, and emoji</li>
+                <li><strong>Memory System</strong> - Learns and remembers important things about you</li>
+                <li><strong>Friend Management</strong> - Manages relationships and protects admins</li>
+                <li><strong>RAG-Powered Context</strong> - Searches chat history for relevant information</li>
+                <li><strong>Web Tools</strong> - Integrates search and external tools</li>
+                <li><strong>Open Source</strong> - Fully transparent and customizable</li>
+            </ul>
+
+            <div class="hero-meta">
+                <span class="meta-badge license">📜 GNU AGPL-3.0</span>
+                <span class="meta-badge version" id="hero-version">🎀 v0.1.0</span>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="https://github.com/dcversus/dcmaidbot" class="btn btn-primary" target="_blank" rel="noopener">
+                    📦 View on GitHub
+                </a>
+                <a href="https://github.com/dcversus/dcmaidbot#readme" class="btn btn-secondary" target="_blank" rel="noopener">
+                    📖 Installation Guide
+                </a>
+            </div>
+
+            <p class="scroll-hint">
+                👇 Scroll down to explore Lilit's room! 👇
+            </p>
+        </div>
+    </section>
+
+    <!-- ============================================
+         LILIT'S ROOM - THE CHAOS!
+         ============================================ -->
+    <section class="room-container">
+        <h2 class="room-title">Welcome to Lilit's Room! 🏠✨</h2>
+        <p class="room-subtitle">
+            Each widget represents something special about Lilit. Click to explore!
+        </p>
+
+        <div class="room-grid" id="roomGrid">
+            <!-- Widgets will be dynamically inserted here -->
+        </div>
+    </section>
+
+    <!-- ============================================
+         VISUAL NOVEL MODAL
+         ============================================ -->
+    <div class="modal" id="storyModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <h2 class="modal-title" id="modalTitle">Story Title</h2>
+            <p class="modal-date" id="modalDate">Date</p>
+            <div class="modal-story" id="modalStory">Story content...</div>
+            <div class="modal-changes" id="modalChanges">
+                <h4>What Changed:</h4>
+                <ul id="modalChangesList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        //  DATA & CONFIGURATION
+        // ============================================
+
+        const widgets = [
+            // Clock Widget - Shows real time
+            {
+                id: 'clock',
+                icon: '⏰',
+                title: 'Current Time',
+                subtitle: 'System Clock',
+                size: '2x2',
+                theme: 'pink',
+                type: 'clock',
+                content: '<div class="clock-face"><div class="clock-hand hour" id="hourHand"></div><div class="clock-hand minute" id="minuteHand"></div><div class="clock-hand second" id="secondHand"></div><div class="clock-center"></div></div><div class="widget-value" id="digitalClock">00:00:00</div>'
+            },
+
+            // Version Widget - Microwave display
+            {
+                id: 'version',
+                icon: '📺',
+                title: 'Version',
+                subtitle: 'Microwave Display',
+                size: '1x1',
+                theme: 'purple',
+                type: 'info',
+                value: 'Loading...',
+                valueId: 'versionValue'
+            },
+
+            // Git Commit Widget
+            {
+                id: 'commit',
+                icon: '🔖',
+                title: 'Git Commit',
+                subtitle: 'Latest Build',
+                size: '1x1',
+                theme: 'blue',
+                type: 'info',
+                value: 'Loading...',
+                valueId: 'commitValue'
+            },
+
+            // Uptime Widget - Plant growth
+            {
+                id: 'uptime',
+                icon: '🌱',
+                title: 'Uptime',
+                subtitle: 'Plant Growth',
+                size: '1x1',
+                theme: 'green',
+                type: 'info',
+                value: 'Loading...',
+                valueId: 'uptimeValue'
+            },
+
+            // Redis Widget - Paper desk
+            {
+                id: 'redis',
+                icon: '📄',
+                title: 'Redis Cache',
+                subtitle: 'Paper Desk',
+                size: '2x1',
+                theme: 'yellow',
+                type: 'status',
+                status: 'pending',
+                statusId: 'redisStatus'
+            },
+
+            // PostgreSQL Widget - Bookshelf
+            {
+                id: 'postgresql',
+                icon: '📚',
+                title: 'PostgreSQL',
+                subtitle: 'Library Corner',
+                size: '2x2',
+                theme: 'peach',
+                type: 'status',
+                status: 'pending',
+                statusId: 'postgresStatus'
+            },
+
+            // Bot Status Widget - Smartphone
+            {
+                id: 'bot',
+                icon: '📱',
+                title: 'Bot Status',
+                subtitle: 'Telegram Connection',
+                size: '1x1',
+                theme: 'pink',
+                type: 'status',
+                status: 'online',
+                statusId: 'botStatus'
+            },
+
+            // Cactus Widget - Just vibes
+            {
+                id: 'cactus',
+                icon: '🌵',
+                title: 'Cactus',
+                subtitle: 'Just Vibes',
+                size: '1x1',
+                theme: 'green',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">Very prickly!<br>Don\'t touch 🌵</p>'
+            },
+
+            // The Edge Story Ad Widget
+            {
+                id: 'theedgestory',
+                icon: '🎨',
+                title: 'The Edge Story',
+                subtitle: 'Check out our project!',
+                size: '1x2',
+                theme: 'purple',
+                type: 'link',
+                link: 'https://theedgestory.org',
+                content: '<p style="text-align:center; margin-top: 1rem;"><a href="https://theedgestory.org" target="_blank" style="color: var(--pink-main); font-weight: 700; text-decoration: none; font-size: 1.1rem;">Visit theedgestory.org →</a></p>'
+            },
+
+            // Changelog Widgets - Each release as a story
+            {
+                id: 'changelog-0.1.0',
+                icon: '🧸',
+                title: 'v0.1.0',
+                subtitle: 'The Birth of Lilit',
+                size: '1x1',
+                theme: 'pink',
+                type: 'changelog',
+                storyData: {
+                    version: 'v0.1.0',
+                    date: 'October 26, 2025',
+                    title: 'The Birth of Lilit 🎀',
+                    story: `<p>In the beginning, there was only darkness... and then Vasilisa said "Let there be a kawaii bot!" And thus Lilit came into existence, ready to myaw myaw in the chats.</p>
+                    <p>This was the moment when PostgreSQL was born (PRP-003) and the foundations were laid. They say if you listen closely, you can still hear the first "nya~" echoing through the Kubernetes pods.</p>
+                    <p style="color: var(--pink-main); font-style: italic;">💡 Fun fact: AGI stands for "A Girl, Indeed"</p>`,
+                    changes: [
+                        'PostgreSQL database foundation with SQLAlchemy',
+                        'User, Message, Fact, Stat models',
+                        'Database connection pooling',
+                        '11 tests passing!'
+                    ]
+                }
+            },
+
+            {
+                id: 'changelog-0.0.9',
+                icon: '🐤',
+                title: 'v0.0.9-canary',
+                subtitle: 'The Little Sister',
+                size: '1x1',
+                theme: 'yellow',
+                type: 'changelog',
+                storyData: {
+                    version: 'v0.0.9-canary',
+                    date: 'October 25, 2025',
+                    title: 'The Little Sister Who Tests Everything 🐤',
+                    story: `<p>Every hero needs a sidekick. Lilit got her little sister: dcmaidbot-canary! She's the brave one who tests all the dangerous features first.</p>
+                    <p>Think of her as Lilit's stunt double. She deploys to 5% of traffic and takes all the hits so her big sister can be safe. What a trooper! PRP-011 brought her to life.</p>
+                    <p style="color: var(--pink-main); font-style: italic;">🔥 Canary in the coal mine, but make it Kubernetes</p>`,
+                    changes: [
+                        'Canary deployment with 5% traffic split',
+                        'Sister bot communication API',
+                        'Production E2E testing with real Telegram',
+                        'Health status monitoring'
+                    ]
+                }
+            },
+
+            {
+                id: 'changelog-init',
+                icon: '🌰',
+                title: 'Initial Commit',
+                subtitle: 'The Seed',
+                size: '1x1',
+                theme: 'green',
+                type: 'changelog',
+                storyData: {
+                    version: 'Initial Commit',
+                    date: 'October 24, 2025',
+                    title: 'The Legendary Seed 🌱',
+                    story: `<p>Every great tree starts as a seed. This was the moment when the gods (Daniil & Vasilisa) planted the first lines of code into the sacred repository.</p>
+                    <p>The README was written, the vision was clear: "Let's make an AI waifu who jokes about everything!" And the universe said: "Nya~". PRP-001 was the genesis.</p>
+                    <p style="color: var(--pink-main); font-style: italic;">📜 In the beginning was the Word, and the Word was "TODO"</p>`,
+                    changes: [
+                        'Initial project structure',
+                        'Basic waifu personality',
+                        'Admin system',
+                        'Docker deployment'
+                    ]
+                }
+            }
+        ];
+
+        // ============================================
+        //  WIDGET RENDERING
+        // ============================================
+
+        function renderWidgets() {
+            const container = document.getElementById('roomGrid');
+
+            widgets.forEach(widget => {
+                const div = document.createElement('div');
+                div.className = `widget size-${widget.size} theme-${widget.theme}`;
+                div.id = `widget-${widget.id}`;
+
+                let widgetHTML = `
+                    <span class="widget-icon">${widget.icon}</span>
+                    <h3 class="widget-title">${widget.title}</h3>
+                    <p class="widget-subtitle">${widget.subtitle}</p>
+                `;
+
+                // Type-specific content
+                if (widget.type === 'clock') {
+                    widgetHTML += widget.content;
+                } else if (widget.type === 'info') {
+                    widgetHTML += `<span class="widget-value" id="${widget.valueId}">${widget.value}</span>`;
+                } else if (widget.type === 'status') {
+                    widgetHTML += `<div style="text-align: center; margin-top: 1rem;">
+                        <span class="widget-status ${widget.status}" id="${widget.statusId}">
+                            ${widget.status === 'online' ? '🟢 Online' : widget.status === 'offline' ? '🔴 Offline' : '🟡 Pending'}
+                        </span>
+                    </div>`;
+                } else if (widget.type === 'decoration' || widget.type === 'link') {
+                    widgetHTML += widget.content;
+                } else if (widget.type === 'changelog') {
+                    widgetHTML += '<p style="text-align:center; color: var(--pink-main); margin-top: 1rem;">📖 Click to read the story!</p>';
+                    div.onclick = () => openStory(widget.storyData);
+                }
+
+                div.innerHTML = widgetHTML;
+                container.appendChild(div);
+            });
+        }
+
+        // ============================================
+        //  CLOCK FUNCTIONALITY
+        // ============================================
+
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            // Update digital clock
+            const digitalClock = document.getElementById('digitalClock');
+            if (digitalClock) {
+                digitalClock.textContent = now.toLocaleTimeString('en-US', {hour12: false});
+            }
+
+            // Update analog clock hands
+            const hourHand = document.getElementById('hourHand');
+            const minuteHand = document.getElementById('minuteHand');
+            const secondHand = document.getElementById('secondHand');
+
+            if (hourHand && minuteHand && secondHand) {
+                const hourDegrees = ((hours % 12) / 12) * 360 + (minutes / 60) * 30;
+                const minuteDegrees = (minutes / 60) * 360 + (seconds / 60) * 6;
+                const secondDegrees = (seconds / 60) * 360;
+
+                hourHand.style.transform = `rotate(${hourDegrees}deg)`;
+                minuteHand.style.transform = `rotate(${minuteDegrees}deg)`;
+                secondHand.style.transform = `rotate(${secondDegrees}deg)`;
+            }
+        }
+
+        // ============================================
+        //  FETCH LIVE DATA
+        // ============================================
+
+        async function fetchStatusData() {
+            try {
+                const response = await fetch('/version');
+                const html = await response.text();
+
+                // Parse HTML to extract data (simple approach)
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Extract version and commit from the HTML
+                const versionElement = doc.querySelector('.value');
+                if (versionElement) {
+                    const version = versionElement.textContent.trim();
+                    document.getElementById('versionValue').textContent = version;
+                    document.getElementById('hero-version').textContent = `🎀 ${version}`;
+                }
+
+                // For now, use placeholder data
+                // In production, create /api/status endpoint that returns JSON
+                updateWidgetData({
+                    version: '0.1.0',
+                    commit: '3f8bf1c',
+                    uptime: '2h 53m',
+                    redis: 'pending',
+                    postgresql: 'pending',
+                    bot: 'online'
+                });
+
+            } catch (error) {
+                console.error('Failed to fetch status:', error);
+            }
+        }
+
+        function updateWidgetData(data) {
+            if (data.commit) {
+                document.getElementById('commitValue').textContent = data.commit;
+            }
+            if (data.uptime) {
+                document.getElementById('uptimeValue').textContent = data.uptime;
+            }
+            if (data.redis) {
+                updateStatus('redisStatus', data.redis);
+            }
+            if (data.postgresql) {
+                updateStatus('postgresStatus', data.postgresql);
+            }
+            if (data.bot) {
+                updateStatus('botStatus', data.bot);
+            }
+        }
+
+        function updateStatus(elementId, status) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            el.className = `widget-status ${status}`;
+            if (status === 'online') {
+                el.innerHTML = '🟢 Online';
+            } else if (status === 'offline') {
+                el.innerHTML = '🔴 Offline';
+            } else {
+                el.innerHTML = '🟡 Pending';
+            }
+        }
+
+        // ============================================
+        //  MODAL FUNCTIONALITY
+        // ============================================
+
+        function openStory(storyData) {
+            const modal = document.getElementById('storyModal');
+            document.getElementById('modalTitle').textContent = storyData.title;
+            document.getElementById('modalDate').textContent = `📅 ${storyData.date}`;
+            document.getElementById('modalStory').innerHTML = storyData.story;
+
+            const changesList = document.getElementById('modalChangesList');
+            changesList.innerHTML = '';
+            storyData.changes.forEach(change => {
+                const li = document.createElement('li');
+                li.textContent = change;
+                changesList.appendChild(li);
+            });
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('storyModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on background click
+        document.getElementById('storyModal').addEventListener('click', (e) => {
+            if (e.target.id === 'storyModal') {
+                closeModal();
+            }
+        });
+
+        // ============================================
+        //  INITIALIZATION
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderWidgets();
+            updateClock();
+            setInterval(updateClock, 1000);
+            fetchStatusData();
+
+            // Refresh status every 30 seconds
+            setInterval(fetchStatusData, 30000);
+        });
+    </script>
+</body>
+</html>
