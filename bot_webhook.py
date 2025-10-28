@@ -11,6 +11,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from dotenv import load_dotenv
 
 from handlers import waifu
+from handlers.status import version_handler, health_handler
 from middlewares.admin_only import AdminOnlyMiddleware
 
 load_dotenv()
@@ -122,6 +123,11 @@ def main():
         secret_token=webhook_config["secret"],
     )
     webhook_handler.register(app, path=webhook_config["path"])
+
+    # Add status monitoring endpoints
+    app.router.add_get("/version", version_handler)
+    app.router.add_get("/health", health_handler)
+    logging.info("Status endpoints registered: /version, /health")
 
     # Setup application
     setup_application(app, dp, bot=bot)
