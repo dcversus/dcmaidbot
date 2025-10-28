@@ -457,6 +457,41 @@
             color: #8b4000;
         }
 
+        /* Widget Click Actions - Cursor & Hover Effects */
+        .widget.clickable {
+            cursor: pointer;
+        }
+
+        .widget.clickable:hover {
+            box-shadow: var(--shadow-lg), 0 0 15px rgba(255, 105, 180, 0.3);
+        }
+
+        /* Widget Animations */
+        @keyframes grow {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.08) rotate(-3deg); }
+            50% { transform: scale(1.15) rotate(3deg); }
+            75% { transform: scale(1.08) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .widget.animate-grow {
+            animation: grow 0.6s ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: var(--shadow-md);
+            }
+            50% {
+                box-shadow: var(--shadow-lg), 0 0 25px rgba(255, 105, 180, 0.5);
+            }
+        }
+
+        .widget.animate-pulse {
+            animation: pulse-glow 1s ease-in-out;
+        }
+
         /* Clock Widget - Special */
         #clock-widget .clock-face {
             width: 150px;
@@ -526,6 +561,90 @@
 
         .modal.active {
             display: flex;
+        }
+
+        /* Status Modal - For Redis/PostgreSQL */
+        .status-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-md);
+        }
+
+        .status-modal.active {
+            display: flex;
+        }
+
+        .status-modal-content {
+            background: linear-gradient(135deg, var(--blue-light) 0%, var(--white) 100%);
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: 100%;
+            padding: var(--space-xl);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+            text-align: center;
+        }
+
+        .status-modal-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-md);
+            display: block;
+        }
+
+        .status-modal-title {
+            font-size: 2rem;
+            color: var(--pink-dark);
+            margin-bottom: var(--space-sm);
+            font-weight: 800;
+        }
+
+        .status-modal-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: var(--space-md) 0;
+        }
+
+        .status-modal-description {
+            font-size: 1.1rem;
+            color: var(--black-soft);
+            line-height: 1.6;
+            margin-bottom: var(--space-lg);
+        }
+
+        .status-modal-button {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-md) var(--space-xl);
+            background: linear-gradient(135deg, var(--pink-main) 0%, var(--pink-dark) 100%);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+            border: none;
+            cursor: pointer;
+            margin: var(--space-xs);
+        }
+
+        .status-modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
 
         .modal-content {
@@ -1381,11 +1500,67 @@
                     widgetHTML += widget.content;
                 } else if (widget.type === 'changelog') {
                     widgetHTML += '<p style="text-align:center; color: var(--pink-main); margin-top: 1rem;">📖 Click to read the story!</p>';
-                    div.onclick = () => openStory(widget.storyData);
                 }
 
                 div.innerHTML = widgetHTML;
                 container.appendChild(div);
+
+                // ============================================
+                // PHASE 1C: WIDGET CLICK ACTIONS
+                // ============================================
+
+                // Add clickable class for interactive widgets
+                const clickableWidgets = ['version', 'commit', 'uptime', 'redis', 'postgresql', 'bot'];
+                if (clickableWidgets.includes(widget.id) || widget.type === 'changelog') {
+                    div.classList.add('clickable');
+                }
+
+                // Add click handlers based on widget.id
+                if (widget.id === 'version') {
+                    div.onclick = () => {
+                        playSound('sound-click');
+                        window.open('https://github.com/dcversus/dcmaidbot/blob/main/CHANGELOG.md', '_blank');
+                    };
+                } else if (widget.id === 'commit') {
+                    div.onclick = () => {
+                        playSound('sound-click');
+                        const commitHash = document.getElementById('commitValue').textContent.trim();
+                        if (commitHash && commitHash !== 'Loading...') {
+                            window.open(`https://github.com/dcversus/dcmaidbot/commit/${commitHash}`, '_blank');
+                        }
+                    };
+                } else if (widget.id === 'uptime') {
+                    div.onclick = () => {
+                        playSound('sound-cactus'); // Funny sound for plant growth!
+                        animateWidget(widget.id, 'animate-grow');
+                        // Show cute tooltip
+                        showTooltip(div, '🌱 The plant is growing! 🌸');
+                    };
+                } else if (widget.id === 'redis') {
+                    div.onclick = () => {
+                        playSound('sound-status');
+                        const statusEl = document.getElementById('redisStatus');
+                        const status = statusEl ? statusEl.textContent : '🟡 Pending';
+                        showStatusModal('Redis Cache', '📄', status, 'Redis is used for caching and quick data access. It stores temporary data for fast retrieval.');
+                    };
+                } else if (widget.id === 'postgresql') {
+                    div.onclick = () => {
+                        playSound('sound-status');
+                        const statusEl = document.getElementById('postgresStatus');
+                        const status = statusEl ? statusEl.textContent : '🟡 Pending';
+                        showStatusModal('PostgreSQL Database', '📚', status, 'PostgreSQL stores all persistent data including user information, messages, memories, and chat history.');
+                    };
+                } else if (widget.id === 'bot') {
+                    div.onclick = () => {
+                        playSound('sound-status');
+                        window.open('https://t.me/dcmaidbot', '_blank');
+                    };
+                } else if (widget.type === 'changelog') {
+                    div.onclick = () => {
+                        playSound('sound-click');
+                        openStory(widget.storyData);
+                    };
+                }
             });
         }
 
@@ -1488,6 +1663,139 @@
             } else {
                 el.innerHTML = '🟡 Pending';
             }
+        }
+
+        // ============================================
+        //  WIDGET HELPER FUNCTIONS (PHASE 1C)
+        // ============================================
+
+        // Animate a widget with a CSS animation class
+        function animateWidget(widgetId, animationClass) {
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (!widget) return;
+
+            // Add animation class
+            widget.classList.add(animationClass);
+
+            // Remove class after animation completes
+            setTimeout(() => {
+                widget.classList.remove(animationClass);
+            }, 600);
+        }
+
+        // Show a tooltip message above a widget
+        function showTooltip(element, message) {
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.textContent = message;
+            tooltip.style.cssText = `
+                position: absolute;
+                top: -50px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, var(--pink-main) 0%, var(--pink-dark) 100%);
+                color: white;
+                padding: 0.75rem 1.5rem;
+                border-radius: 12px;
+                font-size: 1rem;
+                font-weight: 700;
+                white-space: nowrap;
+                z-index: 1000;
+                box-shadow: 0 4px 16px rgba(255, 105, 180, 0.4);
+                animation: tooltipFadeIn 0.3s ease;
+                pointer-events: none;
+            `;
+
+            // Add CSS animation for tooltip
+            if (!document.getElementById('tooltip-animation-style')) {
+                const style = document.createElement('style');
+                style.id = 'tooltip-animation-style';
+                style.textContent = `
+                    @keyframes tooltipFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: translateX(-50%) translateY(-10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateX(-50%) translateY(0);
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Position tooltip relative to widget
+            element.style.position = 'relative';
+            element.appendChild(tooltip);
+
+            // Remove tooltip after 2 seconds
+            setTimeout(() => {
+                tooltip.style.opacity = '0';
+                tooltip.style.transform = 'translateX(-50%) translateY(-10px)';
+                tooltip.style.transition = 'all 0.3s ease';
+                setTimeout(() => {
+                    tooltip.remove();
+                }, 300);
+            }, 2000);
+        }
+
+        // Show status modal for Redis/PostgreSQL
+        function showStatusModal(title, icon, status, description) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('statusModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'statusModal';
+                modal.className = 'status-modal';
+                modal.innerHTML = `
+                    <div class="status-modal-content">
+                        <button class="modal-close" onclick="closeStatusModal()">×</button>
+                        <span class="status-modal-icon" id="statusModalIcon"></span>
+                        <h2 class="status-modal-title" id="statusModalTitle"></h2>
+                        <div id="statusModalStatus"></div>
+                        <p class="status-modal-description" id="statusModalDescription"></p>
+                        <a href="https://status.theedgestory.org/" target="_blank" class="status-modal-button">
+                            🔗 View Full Status Page
+                        </a>
+                        <button class="status-modal-button" onclick="closeStatusModal()">
+                            ✨ Close
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target.id === 'statusModal') {
+                        closeStatusModal();
+                    }
+                });
+            }
+
+            // Update modal content
+            document.getElementById('statusModalIcon').textContent = icon;
+            document.getElementById('statusModalTitle').textContent = title;
+            document.getElementById('statusModalDescription').textContent = description;
+
+            // Update status badge
+            const statusContainer = document.getElementById('statusModalStatus');
+            const statusClass = status.includes('Online') ? 'online' : status.includes('Offline') ? 'offline' : 'pending';
+            statusContainer.innerHTML = `<span class="widget-status ${statusClass} status-modal-status">${status}</span>`;
+
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close status modal
+        function closeStatusModal() {
+            const modal = document.getElementById('statusModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            playSound('sound-pop');
         }
 
         // ============================================

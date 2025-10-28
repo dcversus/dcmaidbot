@@ -48,6 +48,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PRP-014: Agent-to-User Communication via /nudge Endpoint** 🤖
   - `/nudge` POST endpoint for async agent-to-admin communication
   - NudgeService for forwarding requests to external LLM endpoint
+- **PRP-016: Multi-Room Interactive House Exploration - Phase 1** 🎮
+  - Welcome Modal with first-visit greeting and GitHub Stars widget
+  - Complete music system architecture with BGM player and sound effects
+  - Music toggle button (top-right, fixed position)
+  - 6 contextual sound effects (hover, click, tick-tock, cactus, status, pop)
+  - Interactive widget click actions:
+    - Version widget → CHANGELOG.md navigation
+    - Commit widget → GitHub commit page navigation
+    - Uptime widget → Grow animation + tooltip
+    - Redis/PostgreSQL widgets → Status modal with external links
+    - Bot Status widget → Telegram bot link
+  - Status modal system for service information display
+  - Widget animations (grow, pulse-glow, fade-in)
+  - Dynamic tooltip system
+  - Audio placeholders with comprehensive sourcing documentation
+  - localStorage persistence for user music preference
   - Authentication via NUDGE_SECRET stored in Kubernetes secrets
   - Request validation (user_ids, message, optional PR/PRP links)
   - External endpoint forwarding to dcmaid.theedgestory.org/nudge
