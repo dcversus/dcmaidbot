@@ -53,6 +53,8 @@ README.md
 AGENTS.md
 PRPs/
 *.md
+# BUT include CHANGELOG.md (needed for status page)
+!CHANGELOG.md
 
 # Environment files
 .env
