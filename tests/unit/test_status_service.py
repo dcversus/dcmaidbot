@@ -46,7 +46,7 @@ def test_get_system_info():
 
 @pytest.mark.asyncio
 async def test_get_database_status():
-    """Test database status returns placeholder."""
+    """Test database status returns not_configured when no engine."""
     service = StatusService()
     status = await service.get_database_status()
 
@@ -54,14 +54,14 @@ async def test_get_database_status():
     assert "status" in status
     assert "message" in status
 
-    # Should be not implemented currently
+    # Should be not_configured when no database engine provided
     assert status["connected"] is False
-    assert status["status"] == "not_implemented"
+    assert status["status"] == "not_configured"
 
 
 @pytest.mark.asyncio
 async def test_get_redis_status():
-    """Test Redis status returns placeholder."""
+    """Test Redis status returns not_configured when not available."""
     service = StatusService()
     status = await service.get_redis_status()
 
@@ -69,9 +69,9 @@ async def test_get_redis_status():
     assert "status" in status
     assert "message" in status
 
-    # Should be not implemented currently
+    # Should be not_configured when Redis not available
     assert status["connected"] is False
-    assert status["status"] == "not_implemented"
+    assert status["status"] == "not_configured"
 
 
 @pytest.mark.asyncio
@@ -92,17 +92,18 @@ async def test_get_full_status():
     assert "connected" in status["redis"]
 
 
-def test_health_status_always_healthy():
-    """Test health check returns healthy when services pending."""
+@pytest.mark.asyncio
+async def test_health_status_always_healthy():
+    """Test health check returns healthy when services not configured."""
     service = StatusService()
-    is_healthy, details = service.get_health_status()
+    is_healthy, details = await service.get_health_status()
 
     assert is_healthy is True
     assert details["status"] == "healthy"
     assert "checks" in details
     assert details["checks"]["bot"] == "ok"
-    assert details["checks"]["database"] == "pending"
-    assert details["checks"]["redis"] == "pending"
+    assert details["checks"]["database"] == "unavailable"
+    assert details["checks"]["redis"] == "unavailable"
 
 
 def test_read_version_file_returns_string():
