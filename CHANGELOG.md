@@ -36,11 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Research completed on LangSmith, Prometheus, Grafana
   - Comprehensive analytics requirements defined
   - Privacy-first approach with GDPR compliance
-- **PRP-013: Production E2E Testing with Test Bot**
-  - Automated production testing design using separate test bot
-  - Real Telegram API calls to verify deployed features
-  - Smoke tests and full regression test suite
-  - GitHub Actions integration for post-deploy verification
+- **PRP-013: Status & Monitoring Dashboard** ✨
+  - `/version` endpoint with beautiful kawai HTML status page
+  - `/health` endpoint for Kubernetes liveness/readiness probes
+  - Build metadata pipeline: GitHub Actions → Docker → ENV vars
+  - Version, git commit, image tag, and build timestamp tracking
+  - System runtime info: uptime, Python version, environment, pod name
+  - Graceful handling for pending services (database/Redis)
+  - Responsive terminal theme design with emoji indicators (⏳ ✅ ❌)
+  - Recent changelog display from CHANGELOG.md
 
 ### Changed
 - Migrated from Vercel to GitHub Container Registry
@@ -52,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automated quality checks before commits
   - Step-by-step setup instructions
   - Pre-commit hook testing guide
+- **PRP-013: Enhanced deployment pipeline with metadata tracking**
+  - bot_webhook.py: Register /version and /health monitoring endpoints
+  - Dockerfile: Accept GIT_COMMIT, IMAGE_TAG, BUILD_TIME build args as ENV vars
+  - deploy.yml: Pass build metadata to Docker during CI/CD
 
 ### Fixed
 - **CRITICAL: Added bot_webhook.py to Docker image** (emergency fix for production crash)
