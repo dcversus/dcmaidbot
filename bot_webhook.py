@@ -11,10 +11,12 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from dotenv import load_dotenv
 
 from handlers import waifu
+from handlers import admin_lessons
 from handlers.status import version_handler, health_handler
 from handlers.nudge import nudge_handler
 from handlers.landing import landing_handler
 from middlewares.admin_only import AdminOnlyMiddleware
+from services.redis_service import redis_service
 
 load_dotenv()
 
@@ -78,13 +80,18 @@ def setup_dispatcher() -> Dispatcher:
     dp.message.middleware(AdminOnlyMiddleware(admin_ids))
     dp.callback_query.middleware(AdminOnlyMiddleware(admin_ids))
 
-    dp.include_router(waifu.router)
+    # Register routers
+    dp.include_router(admin_lessons.router)  # Admin commands first
+    dp.include_router(waifu.router)  # General handlers last
 
     return dp
 
 
 async def on_startup(bot: Bot, webhook_url: str, secret: str):
     """Set webhook on startup."""
+    # Connect to Redis
+    await redis_service.connect()
+
     await bot.set_webhook(
         url=webhook_url,
         secret_token=secret,
@@ -95,6 +102,9 @@ async def on_startup(bot: Bot, webhook_url: str, secret: str):
 
 async def on_shutdown(bot: Bot):
     """Cleanup on shutdown."""
+    # Disconnect from Redis
+    await redis_service.disconnect()
+
     await bot.delete_webhook()
     logging.info("Webhook deleted")
 
