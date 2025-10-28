@@ -82,7 +82,7 @@ async def handle_message(message: types.Message):
     # Check for admin mentions or special triggers
     if "master" in text or "admin" in text or "creator" in text:
         await message.reply(
-            "💕 Oh! You mentioned my beloved creators! " "I love them so much! 💖"
+            "💕 Oh! You mentioned my beloved creators! I love them so much! 💖"
         )
         return
 
