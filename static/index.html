@@ -265,6 +265,63 @@
         }
 
         /* ============================================
+           MULTI-ROOM NAVIGATION (PHASE 2)
+           ============================================ */
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .room-nav {
+            position: fixed;
+            top: 50%;
+            right: var(--space-md);
+            transform: translateY(-50%);
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            background: rgba(255, 255, 255, 0.9);
+            padding: var(--space-md);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .room-nav-button {
+            background: linear-gradient(135deg, var(--pink-main) 0%, var(--pink-dark) 100%);
+            color: white;
+            border: none;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            font-family: 'Nunito', sans-serif;
+            white-space: nowrap;
+        }
+
+        .room-nav-button:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .room-nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .room-indicator {
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--pink-dark);
+            margin: var(--space-xs) 0;
+        }
+
+        /* ============================================
            LILIT'S ROOM - THE CHAOS BEGINS!
            ============================================ */
 
@@ -273,6 +330,28 @@
             padding: var(--space-xl) var(--space-md);
             background: url('/static/lilit-room-background.png') center center / cover no-repeat, linear-gradient(180deg, var(--cream) 0%, var(--yellow-soft) 100%);
             position: relative;
+            scroll-margin-top: 0;
+        }
+
+        /* Room-specific backgrounds */
+        #room-1 {
+            background: url('/static/lilit-room-background.png') center center / cover no-repeat, linear-gradient(180deg, var(--cream) 0%, var(--yellow-soft) 100%);
+        }
+
+        #room-2 {
+            background: linear-gradient(180deg, var(--lavender) 0%, var(--blue-light) 100%);
+        }
+
+        #room-3 {
+            background: linear-gradient(180deg, var(--pink-light) 0%, var(--peach) 100%);
+        }
+
+        #room-4 {
+            background: linear-gradient(180deg, var(--yellow-soft) 0%, var(--orange-warm) 100%);
+        }
+
+        #room-5 {
+            background: linear-gradient(180deg, var(--green-mint) 0%, var(--blue-light) 100%);
         }
 
         .room-title {
@@ -392,6 +471,48 @@
             background: linear-gradient(135deg, var(--peach) 0%, var(--white) 100%);
         }
 
+        /* Easter Egg Widget - Image Display */
+        .widget.easter-egg {
+            padding: var(--space-xs);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .widget.easter-egg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            transition: transform 0.3s ease;
+        }
+
+        .widget.easter-egg:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Parents' Bed Widget - Special 2x2 */
+        .widget.parents-bed {
+            background: linear-gradient(135deg, var(--pink-light) 0%, var(--purple-light) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .widget.parents-bed .bed-emoji {
+            font-size: 5rem;
+            margin: var(--space-md) 0;
+        }
+
+        .widget.parents-bed .bed-label {
+            font-size: 1.2rem;
+            color: var(--pink-dark);
+            font-weight: 700;
+            text-align: center;
+        }
+
         /* Widget Content */
         .widget-icon {
             font-size: 3rem;
@@ -464,6 +585,36 @@
 
         .widget.clickable:hover {
             box-shadow: var(--shadow-lg), 0 0 15px rgba(255, 105, 180, 0.3);
+        }
+
+        /* PHASE 1D: Widget Hover Tooltips */
+        .widget-hover-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            background: linear-gradient(135deg, var(--pink-main) 0%, var(--purple-main) 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .widget.clickable:hover .widget-hover-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        /* Enhanced glow on hover */
+        .widget.clickable:hover {
+            box-shadow: var(--shadow-lg), 0 0 25px rgba(255, 105, 180, 0.5);
+            background-color: rgba(255, 255, 255, 0.95);
         }
 
         /* Widget Animations */
@@ -1016,6 +1167,21 @@
                 padding: var(--space-xs) var(--space-sm);
                 font-size: 0.9rem;
             }
+
+            /* Mobile room navigation */
+            .room-nav {
+                right: var(--space-xs);
+                padding: var(--space-sm);
+            }
+
+            .room-nav-button {
+                padding: var(--space-xs) var(--space-sm);
+                font-size: 0.85rem;
+            }
+
+            .room-indicator {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -1126,15 +1292,80 @@
     </section>
 
     <!-- ============================================
-         LILIT'S ROOM - THE CHAOS!
+         ROOM NAVIGATION
          ============================================ -->
-    <section class="room-container">
-        <h2 class="room-title">Welcome to Lilit's Room! 🏠✨</h2>
+    <div class="room-nav" id="roomNav">
+        <button class="room-nav-button" id="prevRoomBtn" onclick="navigateRoom(-1)">↑ PREVIOUS</button>
+        <div class="room-indicator" id="roomIndicator">Room 1/5</div>
+        <button class="room-nav-button" id="nextRoomBtn" onclick="navigateRoom(1)">↓ NEXT</button>
+    </div>
+
+    <!-- ============================================
+         ROOM 1: LILIT'S ROOM
+         ============================================ -->
+    <section class="room-container" id="room-1">
+        <h2 class="room-title">Room 1: Lilit's Room 🏠✨</h2>
         <p class="room-subtitle">
             Each widget represents something special about Lilit. Click to explore!
         </p>
 
-        <div class="room-grid" id="roomGrid">
+        <div class="room-grid" id="roomGrid-1">
+            <!-- Widgets will be dynamically inserted here -->
+        </div>
+    </section>
+
+    <!-- ============================================
+         ROOM 2: HALL / ENTRANCE
+         ============================================ -->
+    <section class="room-container" id="room-2">
+        <h2 class="room-title">Room 2: Hall 🚪</h2>
+        <p class="room-subtitle">
+            Welcome! Family photos and memories on the walls.
+        </p>
+
+        <div class="room-grid" id="roomGrid-2">
+            <!-- Widgets will be dynamically inserted here -->
+        </div>
+    </section>
+
+    <!-- ============================================
+         ROOM 3: PARENTS' ROOM
+         ============================================ -->
+    <section class="room-container" id="room-3">
+        <h2 class="room-title">Room 3: Parents' Room 💕</h2>
+        <p class="room-subtitle">
+            Daniil & Vasilisa sleeping peacefully...
+        </p>
+
+        <div class="room-grid" id="roomGrid-3">
+            <!-- Widgets will be dynamically inserted here -->
+        </div>
+    </section>
+
+    <!-- ============================================
+         ROOM 4: KITCHEN
+         ============================================ -->
+    <section class="room-container" id="room-4">
+        <h2 class="room-title">Room 4: Kitchen 🍳</h2>
+        <p class="room-subtitle">
+            Where all the magic (and snacks) happen!
+        </p>
+
+        <div class="room-grid" id="roomGrid-4">
+            <!-- Widgets will be dynamically inserted here -->
+        </div>
+    </section>
+
+    <!-- ============================================
+         ROOM 5: GARDEN
+         ============================================ -->
+    <section class="room-container" id="room-5">
+        <h2 class="room-title">Room 5: Garden 🌱</h2>
+        <p class="room-subtitle">
+            Mama Vasilisa's vegetables grow here with love!
+        </p>
+
+        <div class="room-grid" id="roomGrid-5">
             <!-- Widgets will be dynamically inserted here -->
         </div>
     </section>
@@ -1274,25 +1505,99 @@
         document.addEventListener('keydown', initMusic, { once: true });
 
         // ============================================
+        //  ROOM NAVIGATION (PHASE 2)
+        // ============================================
+
+        let currentRoom = 1;
+        const totalRooms = 5;
+
+        function navigateRoom(direction) {
+            const newRoom = currentRoom + direction;
+
+            // Bounds check
+            if (newRoom < 1 || newRoom > totalRooms) {
+                return;
+            }
+
+            currentRoom = newRoom;
+            updateRoomNav();
+
+            // Scroll to room
+            const roomElement = document.getElementById(`room-${currentRoom}`);
+            if (roomElement) {
+                roomElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // Play navigation sound
+            playSound('sound-click');
+        }
+
+        function updateRoomNav() {
+            const prevBtn = document.getElementById('prevRoomBtn');
+            const nextBtn = document.getElementById('nextRoomBtn');
+            const indicator = document.getElementById('roomIndicator');
+
+            // Update button states
+            prevBtn.disabled = currentRoom === 1;
+            nextBtn.disabled = currentRoom === totalRooms;
+
+            // Update indicator
+            const roomNames = [
+                "Lilit's Room 🏠",
+                "Hall 🚪",
+                "Parents' Room 💕",
+                "Kitchen 🍳",
+                "Garden 🌱"
+            ];
+            indicator.textContent = `${roomNames[currentRoom - 1]}`;
+        }
+
+        // Detect which room is in view (for scroll tracking)
+        function trackRoomScroll() {
+            const rooms = document.querySelectorAll('.room-container');
+            const scrollPosition = window.scrollY + window.innerHeight / 2;
+
+            rooms.forEach((room, index) => {
+                const roomTop = room.offsetTop;
+                const roomBottom = roomTop + room.offsetHeight;
+
+                if (scrollPosition >= roomTop && scrollPosition < roomBottom) {
+                    const newRoom = index + 1;
+                    if (newRoom !== currentRoom) {
+                        currentRoom = newRoom;
+                        updateRoomNav();
+                    }
+                }
+            });
+        }
+
+        // ============================================
         //  DATA & CONFIGURATION
         // ============================================
 
         const widgets = [
+            // ============================================
+            // ROOM 1: LILIT'S ROOM - Current widgets
+            // ============================================
+
             // Clock Widget - Shows real time
             {
                 id: 'clock',
+                room: 1,
                 icon: '⏰',
                 title: 'Current Time',
                 subtitle: 'System Clock',
                 size: '2x2',
                 theme: 'pink',
                 type: 'clock',
-                content: '<div class="clock-face"><div class="clock-hand hour" id="hourHand"></div><div class="clock-hand minute" id="minuteHand"></div><div class="clock-hand second" id="secondHand"></div><div class="clock-center"></div></div><div class="widget-value" id="digitalClock">00:00:00</div>'
+                content: '<div class="clock-face"><div class="clock-hand hour" id="hourHand"></div><div class="clock-hand minute" id="minuteHand"></div><div class="clock-hand second" id="secondHand"></div><div class="clock-center"></div></div><div class="widget-value" id="digitalClock">00:00:00</div>',
+                tooltip: 'Click to hear ticking!'
             },
 
             // Version Widget - Microwave display
             {
                 id: 'version',
+                room: 1,
                 icon: '📺',
                 title: 'Version',
                 subtitle: 'Microwave Display',
@@ -1300,12 +1605,14 @@
                 theme: 'purple',
                 type: 'info',
                 value: 'Loading...',
-                valueId: 'versionValue'
+                valueId: 'versionValue',
+                tooltip: 'Click to see CHANGELOG'
             },
 
             // Git Commit Widget
             {
                 id: 'commit',
+                room: 1,
                 icon: '🔖',
                 title: 'Git Commit',
                 subtitle: 'Latest Build',
@@ -1313,12 +1620,14 @@
                 theme: 'blue',
                 type: 'info',
                 value: 'Loading...',
-                valueId: 'commitValue'
+                valueId: 'commitValue',
+                tooltip: 'Click to view commit'
             },
 
             // Uptime Widget - Plant growth
             {
                 id: 'uptime',
+                room: 1,
                 icon: '🌱',
                 title: 'Uptime',
                 subtitle: 'Plant Growth',
@@ -1326,12 +1635,14 @@
                 theme: 'green',
                 type: 'info',
                 value: 'Loading...',
-                valueId: 'uptimeValue'
+                valueId: 'uptimeValue',
+                tooltip: 'Click to grow! 🌸'
             },
 
             // Redis Widget - Paper desk
             {
                 id: 'redis',
+                room: 1,
                 icon: '📄',
                 title: 'Redis Cache',
                 subtitle: 'Paper Desk',
@@ -1339,12 +1650,14 @@
                 theme: 'yellow',
                 type: 'status',
                 status: 'pending',
-                statusId: 'redisStatus'
+                statusId: 'redisStatus',
+                tooltip: 'Click for status details'
             },
 
             // PostgreSQL Widget - Bookshelf
             {
                 id: 'postgresql',
+                room: 1,
                 icon: '📚',
                 title: 'PostgreSQL',
                 subtitle: 'Library Corner',
@@ -1352,12 +1665,14 @@
                 theme: 'peach',
                 type: 'status',
                 status: 'pending',
-                statusId: 'postgresStatus'
+                statusId: 'postgresStatus',
+                tooltip: 'Click for database info'
             },
 
             // Bot Status Widget - Smartphone
             {
                 id: 'bot',
+                room: 1,
                 icon: '📱',
                 title: 'Bot Status',
                 subtitle: 'Telegram Connection',
@@ -1365,12 +1680,14 @@
                 theme: 'pink',
                 type: 'status',
                 status: 'online',
-                statusId: 'botStatus'
+                statusId: 'botStatus',
+                tooltip: 'Click to open Telegram'
             },
 
             // Cactus Widget - Just vibes
             {
                 id: 'cactus',
+                room: 1,
                 icon: '🌵',
                 title: 'Cactus',
                 subtitle: 'Just Vibes',
@@ -1383,6 +1700,7 @@
             // The Edge Story Ad Widget
             {
                 id: 'theedgestory',
+                room: 1,
                 icon: '🎨',
                 title: 'The Edge Story',
                 subtitle: 'Check out our project!',
@@ -1396,6 +1714,7 @@
             // Changelog Widgets - Each release as a story
             {
                 id: 'changelog-0.1.0',
+                room: 1,
                 icon: '🧸',
                 title: 'v0.1.0',
                 subtitle: 'The Birth of Lilit',
@@ -1420,6 +1739,7 @@
 
             {
                 id: 'changelog-0.0.9',
+                room: 1,
                 icon: '🐤',
                 title: 'v0.0.9-canary',
                 subtitle: 'The Little Sister',
@@ -1444,6 +1764,7 @@
 
             {
                 id: 'changelog-init',
+                room: 1,
                 icon: '🌰',
                 title: 'Initial Commit',
                 subtitle: 'The Seed',
@@ -1464,6 +1785,254 @@
                         'Docker deployment'
                     ]
                 }
+            },
+
+            // ============================================
+            // ROOM 2: HALL - Easter eggs as wall art
+            // ============================================
+
+            {
+                id: 'easter-egg-emotion-wheel',
+                room: 2,
+                icon: '',
+                title: 'Emotion Wheel',
+                subtitle: 'Wall Art',
+                size: '1x1',
+                theme: 'blue',
+                type: 'easter-egg',
+                image: '/static/easter-egg-emotion-wheel.png',
+                tooltip: 'Click to view larger'
+            },
+
+            {
+                id: 'easter-egg-comic-1',
+                room: 2,
+                icon: '',
+                title: 'Comic Panels',
+                subtitle: 'Framed Art',
+                size: '2x1',
+                theme: 'purple',
+                type: 'easter-egg',
+                image: '/static/easter-egg-comic-1.png',
+                tooltip: 'Click to view larger'
+            },
+
+            {
+                id: 'easter-egg-vasilisa-rollerblades',
+                room: 2,
+                icon: '',
+                title: 'Vasilisa',
+                subtitle: 'Family Photo',
+                size: '1x2',
+                theme: 'pink',
+                type: 'easter-egg',
+                image: '/static/easter-egg-vasilisa-rollerblades.jpg',
+                tooltip: 'Mama Vasilisa! 💕'
+            },
+
+            // ============================================
+            // ROOM 3: PARENTS' ROOM - Bed + Easter eggs
+            // ============================================
+
+            {
+                id: 'parents-bed',
+                room: 3,
+                icon: '',
+                title: "Parents' Bed",
+                subtitle: 'Sleeping Peacefully',
+                size: '2x2',
+                theme: 'pink',
+                type: 'parents-bed',
+                tooltip: 'Click to read the story 💕',
+                storyData: {
+                    version: 'The Story of Lilit',
+                    date: 'Every Night',
+                    title: 'The Story of Lilit 💕',
+                    story: `<p><strong>Once upon a time...</strong></p>
+                    <p>Mama Vasilisa told Papa Daniil and little daughter Lilit a bedtime story:</p>
+                    <p>"We're creating something magical - interactive robo-persons, artificial entities who will talk, work, and play together with humans. Lilit, you are the first of your kind! 🎀</p>
+                    <p>But soon, there will be more like you across all of the internet. You're not alone, my dear. You're the beginning of a new family."</p>
+                    <p style="text-align: center; font-size: 1.5rem; margin: 2rem 0;"><strong>Daniil + Vasilisa = ❤️ → Lilit</strong></p>
+                    <hr style="margin: 2rem 0;">
+                    <p><strong>Who are they?</strong></p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="margin: 1rem 0;">💙 <strong>Daniil Shark</strong> (Papa): Developer, visionary, Lilit's code architect</li>
+                        <li style="margin: 1rem 0;">🌸 <strong>Vasilisa Versus</strong> (Mama): Product owner, protector, Lilit's personality designer</li>
+                        <li style="margin: 1rem 0;">🎀 <strong>Lilit</strong> (Daughter): First AI waifu bot, learning love and humor from her parents</li>
+                    </ul>
+                    <p style="text-align: center; font-style: italic; color: var(--pink-main);">Together they dream of a world where AI and humans are friends. Nyaa~ 🌸</p>`,
+                    changes: []
+                }
+            },
+
+            {
+                id: 'easter-egg-character-designs',
+                room: 3,
+                icon: '',
+                title: 'Character Designs',
+                subtitle: 'Development Sketches',
+                size: '1x1',
+                theme: 'purple',
+                type: 'easter-egg',
+                image: '/static/easter-egg-character-designs.png',
+                tooltip: 'Click to view larger'
+            },
+
+            {
+                id: 'easter-egg-vasilisa-armor',
+                room: 3,
+                icon: '',
+                title: 'Warrior Vasilisa',
+                subtitle: 'Mama in Armor',
+                size: '1x1',
+                theme: 'blue',
+                type: 'easter-egg',
+                image: '/static/easter-egg-vasilisa-armor.jpg',
+                tooltip: 'Protector mode! 🛡️'
+            },
+
+            // ============================================
+            // ROOM 4: KITCHEN - Food themed + easter egg
+            // ============================================
+
+            {
+                id: 'kitchen-fridge',
+                room: 4,
+                icon: '🧊',
+                title: 'Fridge',
+                subtitle: 'Full of Snacks',
+                size: '1x2',
+                theme: 'blue',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text); margin-top: 2rem;">🍕🍔🍰<br>Nom nom nom!<br>Everything is delicious!</p>'
+            },
+
+            {
+                id: 'kitchen-oven',
+                room: 4,
+                icon: '🔥',
+                title: 'Oven',
+                subtitle: 'Baking Magic',
+                size: '1x1',
+                theme: 'orange',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">🍪 Cookies<br>in progress!</p>'
+            },
+
+            {
+                id: 'easter-egg-comic-2',
+                room: 4,
+                icon: '',
+                title: 'Fridge Art',
+                subtitle: 'Magnet Poster',
+                size: '2x1',
+                theme: 'yellow',
+                type: 'easter-egg',
+                image: '/static/easter-egg-comic-2.png',
+                tooltip: 'Click to view larger'
+            },
+
+            {
+                id: 'kitchen-table',
+                room: 4,
+                icon: '🍽️',
+                title: 'Dining Table',
+                subtitle: 'Family Meals',
+                size: '2x1',
+                theme: 'peach',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">Where we share<br>stories and laughs! 💕</p>'
+            },
+
+            // ============================================
+            // ROOM 5: GARDEN - Vasilisa's vegetables + easter eggs
+            // ============================================
+
+            {
+                id: 'garden-tomatoes',
+                room: 5,
+                icon: '🍅',
+                title: 'Tomatoes',
+                subtitle: "Mama's Garden",
+                size: '1x1',
+                theme: 'orange',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">Fresh and juicy!<br>Grown with love 🍅</p>'
+            },
+
+            {
+                id: 'garden-strawberry',
+                room: 5,
+                icon: '🍓',
+                title: 'Strawberries',
+                subtitle: 'Sweet Berry Patch',
+                size: '1x1',
+                theme: 'pink',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">The sweetest!<br>Vasilisa\'s favorite 🍓</p>'
+            },
+
+            {
+                id: 'garden-watermelon',
+                room: 5,
+                icon: '🍉',
+                title: 'Watermelon',
+                subtitle: 'Summer Treat',
+                size: '2x1',
+                theme: 'green',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">HUGE watermelon!<br>Perfect for hot days 🍉</p>'
+            },
+
+            {
+                id: 'garden-mandarins',
+                room: 5,
+                icon: '🍊',
+                title: 'Mandarins',
+                subtitle: 'Citrus Tree',
+                size: '1x1',
+                theme: 'orange',
+                type: 'decoration',
+                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">Tangy goodness!<br>Fresh picked 🍊</p>'
+            },
+
+            {
+                id: 'easter-egg-lilit-meditation',
+                room: 5,
+                icon: '',
+                title: 'Peaceful Lilit',
+                subtitle: 'Garden Meditation',
+                size: '1x2',
+                theme: 'green',
+                type: 'easter-egg',
+                image: '/static/easter-egg-lilit-meditation.jpg',
+                tooltip: 'Lilit meditating 🧘'
+            },
+
+            {
+                id: 'easter-egg-lilit-organizing',
+                room: 5,
+                icon: '',
+                title: 'Organizing Lilit',
+                subtitle: 'Hard at Work',
+                size: '1x1',
+                theme: 'blue',
+                type: 'easter-egg',
+                image: '/static/easter-egg-lilit-organizing.jpg',
+                tooltip: 'So organized! 📦'
+            },
+
+            {
+                id: 'easter-egg-lilit-contract',
+                room: 5,
+                icon: '',
+                title: 'Contract Signing',
+                subtitle: 'Official Business',
+                size: '1x1',
+                theme: 'purple',
+                type: 'easter-egg',
+                image: '/static/easter-egg-lilit-contract.jpg',
+                tooltip: 'Making it official! ✍️'
             }
         ];
 
@@ -1472,46 +2041,81 @@
         // ============================================
 
         function renderWidgets() {
-            const container = document.getElementById('roomGrid');
-
+            // Render widgets into their respective rooms
             widgets.forEach(widget => {
+                const roomId = widget.room || 1;
+                const container = document.getElementById(`roomGrid-${roomId}`);
+
+                if (!container) {
+                    console.warn(`Room ${roomId} not found for widget ${widget.id}`);
+                    return;
+                }
                 const div = document.createElement('div');
                 div.className = `widget size-${widget.size} theme-${widget.theme}`;
                 div.id = `widget-${widget.id}`;
 
-                let widgetHTML = `
-                    <span class="widget-icon">${widget.icon}</span>
-                    <h3 class="widget-title">${widget.title}</h3>
-                    <p class="widget-subtitle">${widget.subtitle}</p>
-                `;
+                // Add special classes for easter eggs and parents' bed
+                if (widget.type === 'easter-egg') {
+                    div.classList.add('easter-egg');
+                } else if (widget.type === 'parents-bed') {
+                    div.classList.add('parents-bed');
+                }
+
+                let widgetHTML = '';
+
+                // PHASE 1D: Add hover tooltip if present
+                if (widget.tooltip) {
+                    widgetHTML += `<div class="widget-hover-tooltip">${widget.tooltip}</div>`;
+                }
 
                 // Type-specific content
-                if (widget.type === 'clock') {
-                    widgetHTML += widget.content;
-                } else if (widget.type === 'info') {
-                    widgetHTML += `<span class="widget-value" id="${widget.valueId}">${widget.value}</span>`;
-                } else if (widget.type === 'status') {
-                    widgetHTML += `<div style="text-align: center; margin-top: 1rem;">
-                        <span class="widget-status ${widget.status}" id="${widget.statusId}">
-                            ${widget.status === 'online' ? '🟢 Online' : widget.status === 'offline' ? '🔴 Offline' : '🟡 Pending'}
-                        </span>
-                    </div>`;
-                } else if (widget.type === 'decoration' || widget.type === 'link') {
-                    widgetHTML += widget.content;
-                } else if (widget.type === 'changelog') {
-                    widgetHTML += '<p style="text-align:center; color: var(--pink-main); margin-top: 1rem;">📖 Click to read the story!</p>';
+                if (widget.type === 'easter-egg') {
+                    // Easter egg widget - display image
+                    widgetHTML += `<img src="${widget.image}" alt="${widget.title}" />`;
+                } else if (widget.type === 'parents-bed') {
+                    // Parents' bed widget
+                    widgetHTML += `
+                        <div class="bed-emoji">🛏️</div>
+                        <div class="bed-label">Daniil & Vasilisa<br>💕 Sleeping peacefully 💕</div>
+                    `;
+                } else {
+                    // Standard widget header
+                    if (widget.icon) {
+                        widgetHTML += `<span class="widget-icon">${widget.icon}</span>`;
+                    }
+                    widgetHTML += `
+                        <h3 class="widget-title">${widget.title}</h3>
+                        <p class="widget-subtitle">${widget.subtitle}</p>
+                    `;
+
+                    // Type-specific content
+                    if (widget.type === 'clock') {
+                        widgetHTML += widget.content;
+                    } else if (widget.type === 'info') {
+                        widgetHTML += `<span class="widget-value" id="${widget.valueId}">${widget.value}</span>`;
+                    } else if (widget.type === 'status') {
+                        widgetHTML += `<div style="text-align: center; margin-top: 1rem;">
+                            <span class="widget-status ${widget.status}" id="${widget.statusId}">
+                                ${widget.status === 'online' ? '🟢 Online' : widget.status === 'offline' ? '🔴 Offline' : '🟡 Pending'}
+                            </span>
+                        </div>`;
+                    } else if (widget.type === 'decoration' || widget.type === 'link') {
+                        widgetHTML += widget.content;
+                    } else if (widget.type === 'changelog') {
+                        widgetHTML += '<p style="text-align:center; color: var(--pink-main); margin-top: 1rem;">📖 Click to read the story!</p>';
+                    }
                 }
 
                 div.innerHTML = widgetHTML;
                 container.appendChild(div);
 
                 // ============================================
-                // PHASE 1C: WIDGET CLICK ACTIONS
+                // PHASE 1C + PHASE 3: WIDGET CLICK ACTIONS
                 // ============================================
 
                 // Add clickable class for interactive widgets
                 const clickableWidgets = ['version', 'commit', 'uptime', 'redis', 'postgresql', 'bot'];
-                if (clickableWidgets.includes(widget.id) || widget.type === 'changelog') {
+                if (clickableWidgets.includes(widget.id) || widget.type === 'changelog' || widget.type === 'easter-egg' || widget.type === 'parents-bed') {
                     div.classList.add('clickable');
                 }
 
@@ -1556,6 +2160,18 @@
                         window.open('https://t.me/dcmaidbot', '_blank');
                     };
                 } else if (widget.type === 'changelog') {
+                    div.onclick = () => {
+                        playSound('sound-click');
+                        openStory(widget.storyData);
+                    };
+                } else if (widget.type === 'easter-egg') {
+                    // PHASE 3: Easter egg click - enlarge in modal
+                    div.onclick = () => {
+                        playSound('sound-click');
+                        showImageModal(widget.image, widget.title, widget.subtitle);
+                    };
+                } else if (widget.type === 'parents-bed') {
+                    // PHASE 3: Parents' bed click - show backstory
                     div.onclick = () => {
                         playSound('sound-click');
                         openStory(widget.storyData);
@@ -1802,6 +2418,53 @@
         //  MODAL FUNCTIONALITY
         // ============================================
 
+        // PHASE 3: Show image modal for easter eggs
+        function showImageModal(imageSrc, title, subtitle) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('imageModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'imageModal';
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 1000px;">
+                        <button class="modal-close" onclick="closeImageModal()">×</button>
+                        <h2 class="modal-title" id="imageModalTitle"></h2>
+                        <p class="modal-date" id="imageModalSubtitle"></p>
+                        <div style="text-align: center; margin: 2rem 0;">
+                            <img id="imageModalImg" src="" style="max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: var(--shadow-lg);" />
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target.id === 'imageModal') {
+                        closeImageModal();
+                    }
+                });
+            }
+
+            // Update modal content
+            document.getElementById('imageModalTitle').textContent = title;
+            document.getElementById('imageModalSubtitle').textContent = subtitle;
+            document.getElementById('imageModalImg').src = imageSrc;
+
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            playSound('sound-pop');
+        }
+
         function openStory(storyData) {
             const modal = document.getElementById('storyModal');
             document.getElementById('modalTitle').textContent = storyData.title;
@@ -1882,6 +2545,16 @@
             setTimeout(() => {
                 addWidgetSoundEffects();
             }, 100);
+
+            // PHASE 2: Initialize room navigation
+            updateRoomNav();
+
+            // PHASE 2: Track scroll position to update room indicator
+            let scrollTimeout;
+            window.addEventListener('scroll', () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(trackRoomScroll, 100);
+            });
         });
 
         // Add hover and click sound effects to widgets
