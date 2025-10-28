@@ -804,6 +804,44 @@
             transition: all 0.3s ease;
         }
 
+        /* ============================================
+           MUSIC TOGGLE BUTTON
+           ============================================ */
+
+        .music-toggle {
+            position: fixed;
+            top: var(--space-md);
+            right: var(--space-md);
+            z-index: 9999;
+            background: linear-gradient(135deg, var(--pink-main) 0%, var(--pink-dark) 100%);
+            color: var(--white);
+            border: none;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .music-toggle:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--shadow-lg), var(--glow);
+        }
+
+        .music-toggle:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .music-toggle.muted {
+            background: linear-gradient(135deg, var(--gray-mid) 0%, var(--gray-text) 100%);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero-title {
@@ -852,10 +890,73 @@
                 width: 100%;
                 min-width: auto;
             }
+
+            .music-toggle {
+                top: var(--space-xs);
+                right: var(--space-xs);
+                padding: var(--space-xs) var(--space-sm);
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- ============================================
+         AUDIO FILES REQUIRED (Copyright-free sources)
+         ============================================
+
+         Background Music:
+         - static/music/bgm-lofi-ambient.mp3 (2-3 min loop, ~3-5MB)
+         - Source: Pixabay (pixabay.com/music), FreePD (freepd.com), or YouTube Audio Library
+         - Search terms: "lofi ambient", "kawaii bgm", "anime calm", "chill lofi"
+         - Recommended: 2-3 minute seamless loops at 128kbps MP3
+
+         Sound Effects:
+         - static/sounds/hover-whoosh.mp3 (<100KB) - Soft whoosh for widget hover
+         - static/sounds/click.mp3 (<100KB) - Gentle click for general interactions
+         - static/sounds/tick-tock-loop.mp3 (<200KB) - Clock ticking sound (1-2 sec loop)
+         - static/sounds/cactus-funny.mp3 (<200KB) - Funny cactus "ouch!" sound
+         - static/sounds/status-beep.mp3 (<100KB) - Soft beep for status widgets
+         - static/sounds/pop.mp3 (<100KB) - Cute pop sound for modal close
+         - Source: Pixabay Sound Effects (pixabay.com/sound-effects),
+                   freesound.org (requires account, CC0 license),
+                   Zapsplat (zapsplat.com, free tier available)
+
+         IMPORTANT: All files must be copyright-free (CC0, Public Domain, or royalty-free).
+         Always check license before downloading!
+         ============================================ -->
+
+    <!-- Background Music -->
+    <audio id="bgm" loop preload="auto">
+        <source src="/static/music/bgm-lofi-ambient.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Sound Effects -->
+    <audio id="sound-hover" preload="auto">
+        <source src="/static/sounds/hover-whoosh.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sound-click" preload="auto">
+        <source src="/static/sounds/click.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sound-tick-tock" preload="auto" loop>
+        <source src="/static/sounds/tick-tock-loop.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sound-cactus" preload="auto">
+        <source src="/static/sounds/cactus-funny.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sound-status" preload="auto">
+        <source src="/static/sounds/status-beep.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sound-pop" preload="auto">
+        <source src="/static/sounds/pop.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Music Toggle Button -->
+    <button id="musicToggle" class="music-toggle" onclick="toggleMusic()">
+        <span id="musicIcon">🎵</span>
+        <span id="musicText">Music On</span>
+    </button>
+
     <!-- ============================================
          HERO SECTION - SERIOUS & INFORMATIVE
          ============================================ -->
@@ -936,6 +1037,123 @@
     </div>
 
     <script>
+        // ============================================
+        //  MUSIC SYSTEM
+        // ============================================
+
+        let musicInitialized = false;
+        let musicEnabled = true;
+
+        // Initialize music system on first user interaction
+        function initMusic() {
+            if (musicInitialized) return;
+
+            const bgm = document.getElementById('bgm');
+            const musicPreference = localStorage.getItem('dcmaidbot_music');
+
+            // Check user's preference
+            if (musicPreference === 'off') {
+                musicEnabled = false;
+                updateMusicButton();
+            } else {
+                // Try to play background music
+                try {
+                    bgm.volume = 0.3; // Set volume to 30%
+                    bgm.play().catch(err => {
+                        console.log('Autoplay prevented, waiting for user interaction:', err);
+                    });
+                } catch (err) {
+                    console.log('Music initialization error:', err);
+                }
+            }
+
+            musicInitialized = true;
+        }
+
+        // Toggle background music on/off
+        function toggleMusic() {
+            const bgm = document.getElementById('bgm');
+            const musicToggle = document.getElementById('musicToggle');
+            const musicIcon = document.getElementById('musicIcon');
+            const musicText = document.getElementById('musicText');
+
+            // Initialize music if not done yet
+            if (!musicInitialized) {
+                initMusic();
+            }
+
+            musicEnabled = !musicEnabled;
+
+            if (musicEnabled) {
+                // Turn music on
+                try {
+                    bgm.volume = 0.3;
+                    bgm.play().catch(err => console.log('Play error:', err));
+                } catch (err) {
+                    console.log('Play error:', err);
+                }
+                musicIcon.textContent = '🎵';
+                musicText.textContent = 'Music On';
+                musicToggle.classList.remove('muted');
+                localStorage.setItem('dcmaidbot_music', 'on');
+            } else {
+                // Turn music off
+                try {
+                    bgm.pause();
+                } catch (err) {
+                    console.log('Pause error:', err);
+                }
+                musicIcon.textContent = '🔇';
+                musicText.textContent = 'Music Off';
+                musicToggle.classList.add('muted');
+                localStorage.setItem('dcmaidbot_music', 'off');
+            }
+        }
+
+        // Update music button UI based on state
+        function updateMusicButton() {
+            const musicToggle = document.getElementById('musicToggle');
+            const musicIcon = document.getElementById('musicIcon');
+            const musicText = document.getElementById('musicText');
+
+            if (!musicEnabled) {
+                musicIcon.textContent = '🔇';
+                musicText.textContent = 'Music Off';
+                musicToggle.classList.add('muted');
+            } else {
+                musicIcon.textContent = '🎵';
+                musicText.textContent = 'Music On';
+                musicToggle.classList.remove('muted');
+            }
+        }
+
+        // Play a sound effect
+        function playSound(soundId) {
+            if (!musicEnabled) return; // Don't play sounds if music is disabled
+
+            const sound = document.getElementById(soundId);
+            if (!sound) {
+                console.log(`Sound not found: ${soundId}`);
+                return;
+            }
+
+            try {
+                // Clone and play to allow overlapping sounds
+                const soundClone = sound.cloneNode();
+                soundClone.volume = 0.5;
+                soundClone.play().catch(err => {
+                    console.log(`Sound play error for ${soundId}:`, err);
+                });
+            } catch (err) {
+                console.log(`Sound error for ${soundId}:`, err);
+            }
+        }
+
+        // Initialize music on any user interaction
+        document.addEventListener('click', initMusic, { once: true });
+        document.addEventListener('touchstart', initMusic, { once: true });
+        document.addEventListener('keydown', initMusic, { once: true });
+
         // ============================================
         //  DATA & CONFIGURATION
         // ============================================
@@ -1316,7 +1534,8 @@
             modal.classList.add('hidden');
             document.body.classList.remove('modal-open');
 
-            // TODO: Add close sound effect here when music system is implemented
+            // Play pop sound effect
+            playSound('sound-pop');
         }
 
         // Show welcome modal on first visit
@@ -1350,7 +1569,59 @@
 
             // Show welcome modal for first-time visitors
             showWelcomeModal();
+
+            // Add sound effects to widgets after they're rendered
+            setTimeout(() => {
+                addWidgetSoundEffects();
+            }, 100);
         });
+
+        // Add hover and click sound effects to widgets
+        function addWidgetSoundEffects() {
+            const allWidgets = document.querySelectorAll('.widget');
+
+            allWidgets.forEach(widget => {
+                // Hover sound effect (whoosh)
+                widget.addEventListener('mouseenter', () => {
+                    playSound('sound-hover');
+                });
+
+                // Click sound effects based on widget type
+                widget.addEventListener('click', () => {
+                    const widgetId = widget.id;
+
+                    if (widgetId.includes('clock')) {
+                        // Clock widget - tick-tock sound
+                        playSound('sound-tick-tock');
+                    } else if (widgetId.includes('cactus')) {
+                        // Cactus widget - funny sound
+                        playSound('sound-cactus');
+                    } else if (widgetId.includes('bot') || widgetId.includes('redis') || widgetId.includes('postgresql')) {
+                        // Status widgets - beep sound
+                        playSound('sound-status');
+                    } else {
+                        // General click sound
+                        playSound('sound-click');
+                    }
+                });
+            });
+
+            // Add click sound to modal close buttons
+            const modalCloseButtons = document.querySelectorAll('.modal-close, .welcome-close');
+            modalCloseButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playSound('sound-pop');
+                });
+            });
+
+            // Add click sound to CTA buttons
+            const ctaButtons = document.querySelectorAll('.btn');
+            ctaButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playSound('sound-click');
+                });
+            });
+        }
     </script>
 
     <!-- ============================================
