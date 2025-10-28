@@ -227,18 +227,272 @@ dcmaidbot/
 └── CONTRIBUTING.md        # This file
 ```
 
-## PRP Workflow
+## Complete PRP Workflow
 
-1. Read AGENTS.md Core Goal
-2. Pick a PRP from PRPs/*.md
-3. Implement according to DOR/DOD
-4. Write unit tests
-5. Write one e2e test
-6. Update PRP progress with comments
-7. Run lint/typecheck/tests
-8. Mark PRP as complete
-9. **If PR creates related PRs: Comment with links**
-10. Move to next PRP
+### Overview
+
+Each PRP (Product Requirements Process) follows a structured workflow from branch creation to post-release QC sign-off.
+
+### Phase 1: Branch & Implementation
+
+1. **Create unique branch from main**:
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b prp-016-multi-room-house
+   ```
+
+2. **Read PRP requirements**:
+   - Review Definition of Ready (DOR)
+   - Understand Definition of Done (DOD)
+   - Note any dependencies
+
+3. **Implement incrementally**:
+   - Break work into small chunks (1-2 hours each)
+   - Commit frequently with clear messages
+   - Update PRP progress after each chunk
+   - Leave emotional comments in PRP (see AGENTS.md)
+
+4. **Write tests**:
+   - Add unit tests for new features
+   - Add at least one E2E test
+   - Aim for >80% coverage
+
+5. **Run quality checks**:
+   ```bash
+   ruff check . && ruff format .
+   pytest tests/ -v
+   mypy bot.py
+   ```
+
+### Phase 2: PR Creation & Review
+
+1. **Update CHANGELOG.md**:
+   ```markdown
+   ## [Unreleased]
+
+   ### Added
+   - PRP-016: Multi-room house exploration feature
+   ```
+
+2. **Create PR**:
+   ```bash
+   git push -u origin prp-016-multi-room-house
+   gh pr create --title "PRP-016: Multi-Room Interactive House" --body "..."
+   ```
+
+3. **Wait for CI checks** (do NOT proceed until green ✅)
+
+4. **Address review comments**:
+   - Fix all issues (don't paper over them)
+   - Address every nitpick professionally
+   - Commit each fix separately
+   - Respond to each comment
+
+5. **Get approval** and merge:
+   ```bash
+   gh pr merge --squash
+   ```
+
+6. **Leave signal in PRP**:
+   ```markdown
+   ✅ PR merged: https://github.com/dcversus/dcmaidbot/pull/42
+   ```
+
+### Phase 3: Post-Release Workflow
+
+**MANDATORY: Complete ALL steps after merge**
+
+#### Step 1: Monitor Deployment
+
+1. Watch GitHub Actions:
+   ```bash
+   gh run watch
+   ```
+
+2. Monitor pod rollout:
+   ```bash
+   kubectl get pods -n prod-core -l app=dcmaidbot -w
+   ```
+
+3. Update PRP with deployment status:
+   ```markdown
+   ### 🚀 Deployment Status - Oct 28, 2025
+
+   - ✅ GitHub Actions: Build succeeded
+   - ✅ Docker image pushed
+   - ✅ Pods running: 2/2
+   - ✅ Health checks passing
+   ```
+
+#### Step 2: Execute Production E2E Tests
+
+1. Run E2E tests:
+   ```bash
+   pytest tests/e2e/production/ -v --production
+   ```
+
+2. Manual health check:
+   ```bash
+   curl https://dcmaidbot.theedgestory.org/health
+   ```
+
+3. Document results in PRP
+
+#### Step 3: Verify Version & Commit
+
+1. Visit https://dcmaidbot.theedgestory.org/
+
+2. Verify:
+   - Commit hash matches merge commit
+   - Version matches `version.txt`
+
+3. Document in PRP:
+   ```markdown
+   ### ✅ Version Verification
+
+   - Commit: `abc1234` ✅
+   - Version: `0.3.0` ✅
+   ```
+
+#### Step 4: Complete Post-Release Checklist
+
+Execute ALL items in PRP's Post-Release Checklist section.
+
+#### Step 5: Verify DOR/DOD/Tests Alignment
+
+1. Review all PRP sections
+2. Cross-check alignment
+3. Document any gaps found
+
+#### Step 6: QC Engineer Sign-Off
+
+**Role: Quality Control Engineer**
+
+Leave final sign-off in PRP:
+
+```markdown
+### ✅ QC Engineer Sign-Off - Oct 28, 2025
+
+**Quality Acceptance Criteria Review:**
+
+- ✅ All DOR items met
+- ✅ All DOD items completed
+- ✅ All tests passing
+- ✅ Post-release checklist complete
+- ✅ Deployment verified
+- ✅ No regressions detected
+
+**User Story Acceptance**: ✅ APPROVED
+
+**QC Engineer**: Agent (automated role)
+**Date**: October 28, 2025
+**PRP**: PRP-016
+```
+
+### Phase 4: Incident Management (if needed)
+
+**If incident detected during deployment:**
+
+#### SRE Role Activates
+
+1. **Leave ATTENTION signal**:
+   ```markdown
+   ### 🚨 ATTENTION: INCIDENT DETECTED - Oct 28, 2025 14:32 UTC
+
+   **Incident Type**: Deployment Failure
+   **Severity**: 🔴 CRITICAL
+   **Status**: 🔥 ACTIVE
+   ```
+
+2. **Create Postmortem Section** in PRP with timeline table
+
+3. **Investigate and document**:
+   - Current status
+   - Actions taken
+   - Next steps
+
+4. **Update with progress** until resolved
+
+5. **Write complete postmortem** after resolution
+
+6. **Create action item PRPs** to prevent recurrence
+
+7. **Leave final SRE comment** marking incident resolved
+
+See [AGENTS.md](AGENTS.md#incident-management--sre-workflow) for complete incident workflow.
+
+### Phase 5: Next PRP
+
+1. Mark current PRP as complete
+2. Celebrate! 🎉
+3. IMMEDIATELY start next highest priority PRP
+4. Repeat from Phase 1
+
+**NEVER stop working until ALL PRPs are complete!**
+
+### Workflow Summary
+
+```
+┌─────────────────────────────────────────────┐
+│ Phase 1: Branch & Implementation            │
+├─────────────────────────────────────────────┤
+│ ✅ Create branch from main                  │
+│ ✅ Read PRP requirements                    │
+│ ✅ Implement incrementally                  │
+│ ✅ Write tests                              │
+│ ✅ Run quality checks                       │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│ Phase 2: PR Creation & Review               │
+├─────────────────────────────────────────────┤
+│ ✅ Update CHANGELOG                         │
+│ ✅ Create PR                                │
+│ ✅ Wait for CI (green)                      │
+│ ✅ Address review comments                  │
+│ ✅ Merge PR                                 │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│ Phase 3: Post-Release Workflow              │
+├─────────────────────────────────────────────┤
+│ ✅ Monitor deployment                       │
+│ ✅ Run production E2E tests                 │
+│ ✅ Verify version/commit                    │
+│ ✅ Complete post-release checklist          │
+│ ✅ Verify DOR/DOD/Tests alignment           │
+│ ✅ QC Engineer sign-off                     │
+└─────────────────────────────────────────────┘
+                    ↓
+            ┌───────────────┐
+            │ Incident?     │
+            └───────┬───────┘
+               No   │   Yes
+                    │     └──> SRE Workflow
+                    ↓
+┌─────────────────────────────────────────────┐
+│ Phase 5: Next PRP                           │
+├─────────────────────────────────────────────┤
+│ ✅ Mark complete                            │
+│ ✅ Celebrate                                │
+│ ✅ Start next PRP immediately               │
+└─────────────────────────────────────────────┘
+```
+
+### Role-Based Responsibilities
+
+**Developer**:
+- Phase 1 & 2 (implementation, PR)
+
+**SRE (Site Reliability Engineer)**:
+- Phase 3 Step 1 (deployment monitoring)
+- Phase 4 (incident management if needed)
+
+**QC Engineer (Quality Control)**:
+- Phase 3 Steps 2-6 (testing, verification, sign-off)
+
+See [AGENTS.md](AGENTS.md#role-based-workflow--sub-agent-skills) for complete role descriptions.
 
 ## Documentation
 

@@ -210,6 +210,30 @@ ruff format .
 mypy bot.py
 ```
 
+## Development Workflow
+
+We follow a structured PRP (Product Requirements Process) workflow with role-based responsibilities:
+
+### Quick Overview
+
+1. **Branch per PRP**: Each PRP gets its own branch (`prp-016-feature-name`)
+2. **Implement & Test**: Write code, add tests, lint/format
+3. **Create PR**: Submit PR with CHANGELOG update
+4. **Review & Merge**: Address review comments, merge when approved
+5. **Post-Release**: Monitor deployment, run E2E tests, verify version
+6. **QC Sign-Off**: Quality Control Engineer approves post-release checklist
+7. **Next PRP**: Immediately start next PRP
+
+### Roles
+
+- **Developer**: Implementation, testing, code review
+- **QC Engineer**: Post-release verification and quality sign-off
+- **SRE**: Deployment monitoring and incident response
+- **DevOps Engineer**: Infrastructure and GitOps
+- **Tech Writer**: Documentation
+
+See [AGENTS.md](AGENTS.md) for complete workflow details, role responsibilities, incident management, and post-release procedures.
+
 ## Architecture
 
 See [AGENTS.md](AGENTS.md) for detailed architecture, PRPs, and development workflow.
