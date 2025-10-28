@@ -64,17 +64,17 @@ async def test_cmd_status(mock_message):
 
 @pytest.mark.asyncio
 async def test_handle_message_with_admin_mention(mock_message):
-    """Test message handler with admin mention."""
+    """Test message handler ignores non-admin messages (99% rule)."""
     mock_message.text = "I love my master!"
     await waifu.handle_message(mock_message)
-    mock_message.reply.assert_called_once()
-    call_args = mock_message.reply.call_args[0][0]
-    assert "beloved" in call_args or "creators" in call_args
+    # Non-admin messages should be ignored
+    mock_message.reply.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_handle_message_kawai_trigger(mock_message):
-    """Test message handler with kawai trigger."""
+    """Test message handler ignores non-admin messages (99% rule)."""
     mock_message.text = "nya kawai"
     await waifu.handle_message(mock_message)
-    mock_message.reply.assert_called_once()
+    # Non-admin messages should be ignored
+    mock_message.reply.assert_not_called()
