@@ -37,6 +37,7 @@ COPY middlewares/ ./middlewares/
 COPY models/ ./models/
 COPY services/ ./services/
 COPY static/ ./static/
+COPY config/ ./config/
 COPY conftest.py .
 
 # Create non-root user and set ownership
