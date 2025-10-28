@@ -1,55 +1,136 @@
-"""Memory model for dcmaidbot."""
+"""Memory model for PRP-005: Advanced Memory System."""
 
-from datetime import datetime
-from sqlalchemy import BigInteger, String, Text, Boolean, DateTime, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime, timezone
+from typing import Optional
+from sqlalchemy import (
+    BigInteger,
+    Integer,
+    Text,
+    DateTime,
+    Table,
+    Column,
+    ForeignKey,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
 
+# Association table for many-to-many relationship between memories and categories
+memory_category_association = Table(
+    "memory_category_association",
+    Base.metadata,
+    Column(
+        "memory_id",
+        Integer,
+        ForeignKey("memories.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "category_id",
+        Integer,
+        ForeignKey("categories.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
 class Memory(Base):
-    """Memory model - stores bot memories and behavior patterns."""
+    """Memory model - Knowledge graph with simple/full content forms.
+
+    PRP-005: Basic Memory System
+    - Two content forms (simple ~500 tokens, full ~4000 tokens)
+    - Importance scoring (0-9999+)
+    - Categories for organization
+    - Version tracking
+    - Access tracking for optimization
+    """
 
     __tablename__ = "memories"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    admin_id: Mapped[int] = mapped_column(
-        BigInteger, nullable=False, comment="Admin who created memory"
+
+    # Content forms
+    simple_content: Mapped[str] = mapped_column(
+        Text, nullable=False, comment="~500 tokens - emotional signals + key facts"
     )
-    chat_id: Mapped[int] = mapped_column(
-        BigInteger, nullable=True, comment="Specific chat or NULL for global"
+    full_content: Mapped[str] = mapped_column(
+        Text, nullable=False, comment="~4000 tokens - detailed information"
     )
 
-    # Memory content
-    prompt: Mapped[str] = mapped_column(
-        Text, nullable=False, comment="Instructions for bot behavior"
+    # Importance and versioning
+    importance: Mapped[int] = mapped_column(
+        Integer, default=0, index=True, comment="0 (useless) to 9999+ (CRITICAL)"
     )
-    matching_expression: Mapped[str] = mapped_column(
-        String(500), nullable=True, comment="Regex or text to match"
+    version: Mapped[int] = mapped_column(
+        Integer, default=1, comment="Version number for tracking changes"
     )
-    action: Mapped[str] = mapped_column(
-        String(255), nullable=True, comment="Action to take when matched"
-    )
-
-    # Group chat allowance
-    allowance_token: Mapped[str] = mapped_column(
-        String(100), nullable=True, unique=True, comment="Token for group access"
+    parent_id: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True, comment="Original memory ID if this is an update"
     )
 
-    # Control
-    is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
-    priority: Mapped[int] = mapped_column(
-        Integer, default=0, comment="Higher = checked first"
+    # Creator and timestamps
+    created_by: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, comment="User ID who created this memory"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    # Metadata
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    # Access tracking for optimization
+    last_accessed: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True, comment="Last time memory was retrieved"
+    )
+    access_count: Mapped[int] = mapped_column(
+        Integer, default=0, comment="Number of times memory was accessed"
+    )
+
+    # Relationships
+    categories: Mapped[list["Category"]] = relationship(
+        "Category",
+        secondary=memory_category_association,
+        back_populates="memories",
     )
 
     def __repr__(self):
-        prompt_preview = self.prompt[:50] if self.prompt else ""
+        content_preview = self.simple_content[:50] if self.simple_content else ""
+        cats = [c.name for c in self.categories] if self.categories else []
         return (
-            f"<Memory(id={self.id}, admin_id={self.admin_id}, "
-            f"prompt='{prompt_preview}...')>"
+            f"<Memory(id={self.id}, importance={self.importance}, "
+            f"categories={cats}, content='{content_preview}...')>"
         )
+
+
+class Category(Base):
+    """Category model for organizing memories.
+
+    Predefined categories:
+    - person, event, emotion, interest, fact, skill, goal, problem, location, custom
+    """
+
+    __tablename__ = "categories"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(
+        Text, unique=True, nullable=False, index=True, comment="Category name (unique)"
+    )
+    description: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True, comment="Category description"
+    )
+    icon: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True, comment="Emoji icon for category"
+    )
+
+    # Relationships
+    memories: Mapped[list["Memory"]] = relationship(
+        "Memory",
+        secondary=memory_category_association,
+        back_populates="categories",
+    )
+
+    def __repr__(self):
+        return f"<Category(id={self.id}, name='{self.name}', icon='{self.icon}')>"
