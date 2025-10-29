@@ -119,9 +119,10 @@ async def test_health_endpoint():
 
 
 async def test_landing_page():
-    """Test landing page loads and shows correct version."""
+    """Test landing page loads and /api/version endpoint works."""
     try:
         async with httpx.AsyncClient() as client:
+            # Test landing page HTML loads
             response = await client.get(f"{PRODUCTION_URL}/", timeout=10.0)
 
             if response.status_code != 200:
@@ -139,22 +140,38 @@ async def test_landing_page():
                 log_test("Landing Page", "FAIL", "Missing bot name")
                 return False
 
-            # Check version info present
-            with open("version.txt") as f:
-                version = f.read().strip()
+            # Test /api/version endpoint (used by landing page JS)
+            api_response = await client.get(
+                f"{PRODUCTION_URL}/api/version", timeout=10.0
+            )
 
-            if version not in html:
+            if api_response.status_code != 200:
                 log_test(
                     "Landing Page",
                     "FAIL",
-                    f"Version {version} not found in HTML",
+                    f"/api/version returned HTTP {api_response.status_code}",
+                )
+                return False
+
+            version_data = api_response.json()
+
+            # Check version from API matches version.txt
+            with open("version.txt") as f:
+                expected_version = f.read().strip()
+
+            if version_data.get("version") != expected_version:
+                log_test(
+                    "Landing Page",
+                    "FAIL",
+                    f"/api/version returned {version_data.get('version')}, "
+                    f"expected {expected_version}",
                 )
                 return False
 
             log_test(
                 "Landing Page",
                 "PASS",
-                f"Loaded successfully, version {version} displayed",
+                f"HTML loads, /api/version returns v{expected_version}",
             )
             return True
 
