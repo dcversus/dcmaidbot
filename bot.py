@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 from handlers import waifu
 from middlewares.admin_only import AdminOnlyMiddleware
+from services.migration_service import check_migrations
+from database import engine
 
 # Load environment variables first
 load_dotenv()
@@ -30,7 +32,7 @@ def get_bot_token() -> str:
 def get_admin_ids() -> list[int]:
     """Retrieves admin IDs from environment variables (NEVER logs actual IDs)."""
     admin_ids_str = os.getenv("ADMIN_IDS", "")
-    admins = []
+    admins: list[int] = []
 
     if not admin_ids_str:
         logging.warning("No ADMIN_IDS configured. Bot will not respond to anyone.")
@@ -80,6 +82,9 @@ async def main():
     except ValueError as e:
         logging.error(e)
         return
+
+    # Check database migrations FIRST (blocks startup if not up to date)
+    await check_migrations(engine)
 
     bot = Bot(token=token)
     dp = setup_dispatcher()

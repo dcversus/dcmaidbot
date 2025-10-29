@@ -17,6 +17,8 @@ from handlers.nudge import nudge_handler
 from handlers.landing import landing_handler
 from middlewares.admin_only import AdminOnlyMiddleware
 from services.redis_service import redis_service
+from services.migration_service import check_migrations
+from database import engine
 
 load_dotenv()
 
@@ -89,6 +91,9 @@ def setup_dispatcher() -> Dispatcher:
 
 async def on_startup(bot: Bot, webhook_url: str, secret: str):
     """Set webhook on startup."""
+    # Check database migrations FIRST (blocks startup if not up to date)
+    await check_migrations(engine)
+
     # Connect to Redis
     await redis_service.connect()
 
