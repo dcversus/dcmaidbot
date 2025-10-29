@@ -101,8 +101,12 @@ class LLMService:
         if message_history:
             history_text = "\n\n## RECENT CONVERSATION HISTORY\n"
             for msg in message_history[-10:]:  # Last 10 messages
-                sender = "You" if msg.is_bot else user_info.get("username", "User")
-                history_text += f"{sender}: {msg.message_text}\n"
+                sender = (
+                    "You"
+                    if msg.message_type == "bot"
+                    else user_info.get("username", "User")
+                )
+                history_text += f"{sender}: {msg.text}\n"
 
         return f"""{self.base_prompt}
 

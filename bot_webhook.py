@@ -99,6 +99,12 @@ async def on_startup(bot: Bot, webhook_url: str, secret: str):
     # Connect to Redis
     await redis_service.connect()
 
+    # Skip Telegram setup if DISABLE_TG=true
+    disable_tg = os.getenv("DISABLE_TG", "false").lower() == "true"
+    if disable_tg:
+        logging.info("🧪 DISABLE_TG=true: Skipping Telegram webhook setup")
+        return
+
     # Setup bot commands menu
     await setup_bot_commands(bot)
     logging.info("Bot commands menu configured")
@@ -125,13 +131,24 @@ def main():
     token = get_bot_token()
     webhook_config = get_webhook_config()
 
-    # Check if webhook mode is enabled
+    # Check if webhook mode is enabled OR if running without Telegram for testing
     webhook_mode = os.getenv("WEBHOOK_MODE", "false").lower() == "true"
+    disable_tg = os.getenv("DISABLE_TG", "false").lower() == "true"
 
-    if not webhook_mode or not webhook_config["url"]:
+    if not disable_tg and (not webhook_mode or not webhook_config["url"]):
         logging.error("WEBHOOK_MODE=true and WEBHOOK_URL required for webhook mode")
         logging.error("Use bot.py for polling mode instead")
+        logging.error(
+            "Or set DISABLE_TG=true to run without Telegram "
+            "(for /call endpoint testing)"
+        )
         return
+
+    if disable_tg:
+        logging.info("🧪 DISABLE_TG=true: Running without Telegram integration")
+        logging.info(
+            "Only /call, /health, /nudge, and /api/version endpoints will work"
+        )
 
     bot = Bot(token=token)
     dp = setup_dispatcher()
