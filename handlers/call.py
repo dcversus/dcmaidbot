@@ -12,7 +12,11 @@ from typing import Optional
 
 from aiohttp import web
 
+from database import AsyncSessionLocal
 from services.llm_service import llm_service
+from services.lesson_service import LessonService
+from services.memory_service import MemoryService
+from services.message_service import MessageService
 
 
 async def call_handler(request: web.Request) -> web.Response:
@@ -226,7 +230,7 @@ async def handle_command(command: str, user_id: int) -> str:
 
 
 async def handle_message(message: str, user_id: int) -> str:
-    """Handle natural language messages using LLM.
+    """Handle natural language messages using LLM with memories and history.
 
     Args:
         message: User's message text
@@ -236,10 +240,57 @@ async def handle_message(message: str, user_id: int) -> str:
         str: Bot's response text
     """
     try:
-        # Use LLM with waifu personality
-        user_info = {"id": user_id, "username": "test_user"}
-        chat_info = {"id": user_id, "type": "private"}
-        response = await llm_service.get_response(message, user_info, chat_info)
+        # Fetch lessons, memories, and message history from database
+        async with AsyncSessionLocal() as session:
+            lesson_service = LessonService(session)
+            lessons = await lesson_service.get_all_lessons()
+
+            # Fetch memories for this user
+            memory_service = MemoryService(session)
+            memories = await memory_service.search_memories(
+                user_id=user_id,
+                query=message,
+                limit=10,
+            )
+
+            # Fetch recent message history for this user
+            message_service = MessageService(session)
+            message_history = await message_service.get_recent_messages(
+                user_id=user_id,
+                chat_id=user_id,  # In /call, chat_id = user_id for simplicity
+                limit=20,
+            )
+
+            # Store incoming user message to database
+            await message_service.store_message(
+                user_id=user_id,
+                chat_id=user_id,
+                message_text=message,
+                is_bot=False,
+            )
+
+        # Use LLM with waifu personality + context
+        user_info = {"id": user_id, "username": "test_user", "telegram_id": user_id}
+        chat_info = {"id": user_id, "type": "private", "chat_id": user_id}
+        response = await llm_service.get_response(
+            message,
+            user_info,
+            chat_info,
+            lessons,
+            memories=memories,
+            message_history=message_history,
+        )
+
+        # Store bot's response to database
+        async with AsyncSessionLocal() as session:
+            message_service = MessageService(session)
+            await message_service.store_message(
+                user_id=user_id,
+                chat_id=user_id,
+                message_text=response,
+                is_bot=True,
+            )
+
         return response
     except Exception as e:
         return f"😅 Oops! I had trouble processing that. Error: {e}"

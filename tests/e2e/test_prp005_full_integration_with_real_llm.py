@@ -9,7 +9,8 @@ These tests verify that PRP-005 advanced memory features work end-to-end:
 
 ALL tests use REAL OpenAI API calls (not mocked) and LLM-as-judge validation.
 
-Run with: pytest tests/e2e/test_prp005_full_integration_with_real_llm.py -v -s -m integration
+Run with:
+    pytest tests/e2e/test_prp005_full_integration_with_real_llm.py -v -s -m integration
 """
 
 import os
@@ -476,11 +477,12 @@ async def test_bot_extracts_vad_emotions_with_real_llm(
         user_message=followup_msg,
         bot_response=response2["response"],
         criteria=(
-            "The bot should show empathy and emotional awareness. The user previously "
-            "expressed frustration and exhaustion about the refactoring project. "
-            "The bot should acknowledge these feelings, offer support or encouragement, "
-            "and NOT be overly cheerful or dismissive. The response should demonstrate "
-            "emotional intelligence and memory of the user's emotional state."
+            "The bot should show empathy and emotional awareness. "
+            "The user previously expressed frustration and exhaustion about "
+            "the refactoring project. The bot should acknowledge these feelings, "
+            "offer support or encouragement, and NOT be overly cheerful or dismissive. "
+            "The response should demonstrate emotional intelligence and memory "
+            "of the user's emotional state."
         ),
     )
 
@@ -520,14 +522,14 @@ async def test_bot_generates_zettelkasten_attributes_with_llm(
     technical_message = (
         "I'm implementing a distributed tracing system using OpenTelemetry. "
         "The architecture uses Jaeger for trace collection, Prometheus for metrics, "
-        "and Grafana for visualization. We're instrumenting our Python FastAPI services "
-        "with automatic span creation and propagating trace context across services "
-        "using W3C Trace Context headers."
+        "and Grafana for visualization. We're instrumenting our Python FastAPI "
+        "services with automatic span creation and propagating trace context "
+        "across services using W3C Trace Context headers."
     )
 
     # Extract Zettelkasten attributes with REAL LLM
     attributes = await llm_service.generate_zettelkasten_attributes(
-        content=technical_message
+        text=technical_message
     )
 
     print("\n🏷️  Zettelkasten attributes extracted:")
@@ -673,7 +675,8 @@ async def test_full_prp005_workflow_end_to_end(
             "5. User is excited but nervous about scale\n\n"
             "The bot should synthesize all this information and show awareness of "
             "both factual details AND emotional context (excitement + nervousness). "
-            "This demonstrates working memory, emotional intelligence, and context integration."
+            "This demonstrates working memory, emotional intelligence, "
+            "and context integration."
         ),
     )
 
