@@ -1,69 +1,8 @@
 """Unit tests for MemoryService (PRP-005)."""
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
 
-from database import Base
-from models.memory import Category
 from services.memory_service import MemoryService
-
-
-@pytest.fixture
-async def async_session():
-    """Create async test database session."""
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async_session_maker = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    async with async_session_maker() as session:
-        yield session
-
-    await engine.dispose()
-
-
-@pytest.fixture
-async def test_categories(async_session):
-    """Create test categories."""
-    categories = [
-        Category(
-            name="identity",
-            domain="self",
-            full_path="self.identity",
-            description="Bot's identity",
-            icon="🤖",
-            importance_range_min=8000,
-            importance_range_max=10000,
-        ),
-        Category(
-            name="person",
-            domain="social",
-            full_path="social.person",
-            description="Individual profiles",
-            icon="👤",
-            importance_range_min=100,
-            importance_range_max=10000,
-        ),
-        Category(
-            name="tech_domain",
-            domain="knowledge",
-            full_path="knowledge.tech_domain",
-            description="Programming languages",
-            icon="💻",
-            importance_range_min=1000,
-            importance_range_max=5000,
-        ),
-    ]
-
-    for cat in categories:
-        async_session.add(cat)
-    await async_session.commit()
-
-    return categories
 
 
 @pytest.mark.asyncio
@@ -77,7 +16,7 @@ async def test_create_memory(async_session, test_categories):
         "They mentioned working on asyncio projects and FastAPI.",
         importance=5000,
         created_by=123456789,
-        category_ids=[test_categories[2].id],
+        category_ids=[test_categories[1].id],  # Index 1 = tech_domain
         emotion_valence=0.8,
         emotion_arousal=0.6,
         emotion_dominance=0.5,
@@ -388,12 +327,13 @@ async def test_get_category(async_session, test_categories):
     """Test getting category by full path."""
     service = MemoryService(async_session)
 
-    category = await service.get_category("self.identity")
+    # Use one of the categories from test_categories fixture
+    category = await service.get_category("social.person")
 
     assert category is not None
-    assert category.name == "identity"
-    assert category.domain == "self"
-    assert category.icon == "🤖"
+    assert category.name == "person"
+    assert category.domain == "social"
+    assert category.icon == "👤"
 
 
 @pytest.mark.asyncio
@@ -445,5 +385,6 @@ async def test_memory_with_multiple_categories(async_session, test_categories):
 
     assert len(memory.categories) == 2
     category_names = {c.name for c in memory.categories}
-    assert "identity" in category_names
+    # test_categories[0] = person, test_categories[1] = tech_domain
     assert "person" in category_names
+    assert "tech_domain" in category_names

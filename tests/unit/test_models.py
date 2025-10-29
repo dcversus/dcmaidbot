@@ -2,36 +2,18 @@
 
 import pytest
 from datetime import datetime
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from models.user import User
 from models.message import Message
 from models.fact import Fact
 from models.stat import Stat
-from database import Base
 
-
-# Test database setup
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# async_session fixture provided by tests/conftest.py (PostgreSQL)
 
 
 @pytest.fixture
-async def engine():
-    """Create test database engine."""
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield engine
-    await engine.dispose()
-
-
-@pytest.fixture
-async def session(engine):
-    """Create test database session."""
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with async_session() as session:
-        yield session
+async def session(async_session):
+    """Alias async_session as session for compatibility with existing tests."""
+    return async_session
 
 
 class TestUserModel:
