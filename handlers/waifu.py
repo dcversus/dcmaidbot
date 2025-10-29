@@ -87,14 +87,30 @@ async def cmd_joke(message: types.Message):
 @router.message()
 async def handle_message(message: types.Message):
     """Handle regular messages with LLM-powered waifu personality."""
+    import logging
+
+    logger = logging.getLogger(__name__)
+
     if not message.text:
         return
 
+    # Log incoming message details
+    logger.info(
+        f"📨 Received message from user_id={message.from_user.id} "
+        f"in chat_id={message.chat.id} type={message.chat.type}"
+    )
+    logger.info(f"🔑 ADMIN_IDS loaded: {ADMIN_IDS}")
+
     # Only respond to admins or mentions
     is_admin = message.from_user.id in ADMIN_IDS
+    logger.info(f"👤 User {message.from_user.id} is_admin={is_admin}")
+
     if not is_admin:
         # Ignore non-admins (99% of users)
+        logger.info(f"❌ Ignoring non-admin user {message.from_user.id}")
         return
+
+    logger.info(f"✅ Processing message from admin {message.from_user.id}")
 
     # Prepare context
     user_info = {
@@ -113,6 +129,7 @@ async def handle_message(message: types.Message):
 
     # Get LLM response
     try:
+        logger.info(f"🤖 Calling LLM service for user {message.from_user.id}")
         llm_service = get_llm_service()
         response_text = await llm_service.get_response(
             user_message=message.text,
@@ -120,9 +137,14 @@ async def handle_message(message: types.Message):
             chat_info=chat_info,
             lessons=lessons,
         )
+        logger.info(
+            f"💬 LLM response generated ({len(response_text)} chars), sending reply..."
+        )
         await message.reply(response_text)
+        logger.info(f"✅ Reply sent successfully to user {message.from_user.id}")
     except Exception as e:
         # Fallback to simple response if LLM fails
+        logger.error(f"❌ LLM error: {e}", exc_info=True)
         await message.reply(f"Myaw~ Something went wrong! 😿\n\nError: {str(e)}")
 
 
