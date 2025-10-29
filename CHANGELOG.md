@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRP-006: Advanced Memory Features (Relations, Versioning, Compaction)**
+  - Memory versioning: create new versions without deleting originals
+  - Enhanced MemoryLink model with created_by field for tracking
+  - LLM-powered relation strength scoring (0.0-1.0 scale)
+  - LLM-powered relation reasoning generation
+  - Automatic memory compaction when approaching 4000 token limit
+  - create_memory_version() method in MemoryService
+  - get_memory_versions() method for version history
+  - create_enhanced_link() with automatic strength and reason calculation
+  - calculate_relation_strength() in LLM service
+  - generate_relation_reason() in LLM service
+  - compact_memory() in LLM service
+  - Database migration adding created_by to memory_links
 - **PRP-005 Phase 1: Enhanced Memory Database Layer**
   - Memory model with VAD (Valence-Arousal-Dominance) emotional dimensions
   - Zettelkasten-inspired attributes: keywords, tags, temporal/situational context

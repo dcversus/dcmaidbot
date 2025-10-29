@@ -15,6 +15,7 @@ from handlers import admin_lessons
 from handlers.status import version_handler, health_handler
 from handlers.nudge import nudge_handler
 from handlers.landing import landing_handler
+from handlers.waifu import setup_bot_commands
 from middlewares.admin_only import AdminOnlyMiddleware
 from services.redis_service import redis_service
 from services.migration_service import check_migrations
@@ -97,6 +98,10 @@ async def on_startup(bot: Bot, webhook_url: str, secret: str):
     # Connect to Redis
     await redis_service.connect()
 
+    # Setup bot commands menu
+    await setup_bot_commands(bot)
+    logging.info("Bot commands menu configured")
+
     await bot.set_webhook(
         url=webhook_url,
         secret_token=secret,
@@ -150,10 +155,12 @@ def main():
     app.router.add_static("/static/", path=static_dir, name="static")
     logging.info(f"Static files served from: {static_dir}")
 
-    # Add status monitoring endpoints
-    app.router.add_get("/version", version_handler)
+    # Add status monitoring endpoints (only /health for K8s probes)
+    # Version info moved to landing page widgets
     app.router.add_get("/health", health_handler)
-    logging.info("Status endpoints registered: /version, /health")
+    # Keep /version for backwards compat with landing page JS
+    app.router.add_get("/version", version_handler)
+    logging.info("Status endpoints registered: /health, /version")
 
     # Add agent communication endpoint
     app.router.add_post("/nudge", nudge_handler)

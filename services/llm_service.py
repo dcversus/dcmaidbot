@@ -441,6 +441,149 @@ Return ONLY the JSON array, no other text."""
             print(f"Memory link suggestion error: {e}")
             return []
 
+    async def calculate_relation_strength(
+        self, memory_a_content: str, memory_b_content: str
+    ) -> float:
+        """Calculate relation strength between two memories (0.0-1.0).
+
+        Analyzes emotional connections, shared context, causal relationships,
+        and thematic overlap to determine how strongly memories are related.
+
+        Args:
+            memory_a_content: Content of first memory
+            memory_b_content: Content of second memory
+
+        Returns:
+            Float between 0.0 (weak) and 1.0 (critical connection)
+        """
+        prompt = f"""Analyze the connection between these two memories.
+Rate the relationship strength from 0.0 to 1.0.
+
+Memory A:
+{memory_a_content[:1000]}
+
+Memory B:
+{memory_b_content[:1000]}
+
+Scoring Guide:
+0.0-0.2:   Weak connection (tangential relationship)
+0.2-0.4:   Moderate connection (related topic)
+0.4-0.6:   Strong connection (directly related)
+0.6-0.8:   Very strong connection (closely intertwined)
+0.8-1.0:   Critical connection (inseparable concepts)
+
+Consider:
+- Emotional connections
+- Shared people/places/events
+- Causal relationships
+- Thematic overlap
+- Temporal proximity
+
+Return ONLY the numeric score (e.g., 0.75)"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=10,
+                temperature=0,
+            )
+
+            score_text = response.choices[0].message.content.strip()
+            score = float(score_text)
+            return max(0.0, min(1.0, score))
+        except Exception as e:
+            print(f"Relation strength calculation error: {e}")
+            return 0.5
+
+    async def generate_relation_reason(
+        self, memory_a_content: str, memory_b_content: str
+    ) -> str:
+        """Generate concise reason explaining why two memories are related.
+
+        Args:
+            memory_a_content: Content of first memory
+            memory_b_content: Content of second memory
+
+        Returns:
+            Concise explanation (<500 tokens)
+        """
+        prompt = f"""Explain why these two memories are related.
+Be concise (<200 words).
+
+Memory A:
+{memory_a_content[:1000]}
+
+Memory B:
+{memory_b_content[:1000]}
+
+Explain:
+1. What connects these memories?
+2. Why is this connection important?
+3. What emotional or factual link exists?
+
+Be specific and concise."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=300,
+                temperature=0.5,
+            )
+
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"Relation reason generation error: {e}")
+            return "Related memories sharing common context."
+
+    async def compact_memory(
+        self, full_content: str, related_memories_summary: str = ""
+    ) -> str:
+        """Compact memory content when approaching 4000 token limit.
+
+        Preserves emotional signals, key facts, and relationships while
+        reducing token count. Uses intelligent compression that maintains
+        memory value.
+
+        Args:
+            full_content: Full memory content to compress
+            related_memories_summary: Summary of related memories for context
+
+        Returns:
+            Compacted content under token limit
+        """
+        current_tokens = len(full_content) / 4
+
+        prompt = f"""This memory is too long ({int(current_tokens)} tokens).
+Compress to under 4000 tokens while preserving:
+1. ALL emotional signals (VAD emotions, feelings)
+2. ALL key facts and relationships
+3. ALL important details
+4. Connection to related memories
+
+Current Memory:
+{full_content}
+
+Related Memories (preserve connections):
+{related_memories_summary[:500] if related_memories_summary else "None"}
+
+Compress intelligently without losing critical information.
+Focus on emotions and facts. Remove redundancy and verbose descriptions."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=4500,
+                temperature=0.3,
+            )
+
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"Memory compaction error: {e}")
+            return full_content[:15000]
+
     def _default_vad(self) -> dict[str, Any]:
         """Return default VAD emotions when extraction fails."""
         return {

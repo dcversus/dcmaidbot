@@ -287,6 +287,9 @@ class MemoryLink(Base):
 
     # Lifecycle
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_by: Mapped[Optional[int]] = mapped_column(
+        BigInteger, nullable=True
+    )  # User who created this link (PRP-006)
     auto_generated: Mapped[bool] = mapped_column(
         Boolean, default=False
     )  # LLM-generated vs manual
