@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **E2E Production Validation System**
+  - tests/e2e_production.py: Comprehensive post-release testing script
+  - Tests all user stories with real Telegram API calls
+  - GitHub Actions workflow for automated E2E testing
+  - Auto-runs after each deployment to verify production health
+  - Manual trigger via workflow_dispatch
+
+### Changed
+- **Removed /version endpoint** - version info now only on landing page (/)
+- Health endpoint remains at /health for Kubernetes probes
+
+### Removed
+- /version endpoint (consolidated into landing page)
+
 ## [0.3.0] - 2025-10-29
 
 ### Added
