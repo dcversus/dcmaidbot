@@ -53,6 +53,47 @@ async def health_handler(request: web.Request) -> web.Response:
         return web.json_response(health_details, status=503)
 
 
+async def api_version_handler(request: web.Request) -> web.Response:
+    """GET /api/version - Lightweight version info API for landing page.
+
+    Args:
+        request: aiohttp request object
+
+    Returns:
+        web.Response: JSON response with version information
+    """
+    status = await status_service.get_full_status()
+    version_info = status["version_info"]
+    system_info = status["system_info"]
+
+    # Extract relevant data for landing page
+    uptime_seconds = system_info["uptime_seconds"]
+    hours = uptime_seconds // 3600
+    minutes = (uptime_seconds % 3600) // 60
+    uptime_display = f"{hours}h {minutes}m"
+
+    redis_status = "offline"
+    if status["redis"]["connected"]:
+        redis_status = status["redis"]["status"]
+
+    db_status = "offline"
+    if status["database"]["connected"]:
+        db_status = status["database"]["status"]
+
+    data = {
+        "version": version_info["version"],
+        "commit": version_info["git_commit"][:7],
+        "uptime": uptime_display,
+        "redis": redis_status,
+        "postgresql": db_status,
+        "bot": "online",
+        "image_tag": version_info["image_tag"],
+        "build_time": version_info["build_time"],
+    }
+
+    return web.json_response(data, status=200)
+
+
 def render_status_html(status: dict) -> str:
     """Render status as cute HTML page with dcmaidbot personality.
 

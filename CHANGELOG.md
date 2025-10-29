@@ -18,13 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions workflow for automated E2E testing after each deployment
   - Manual trigger via workflow_dispatch
   - 11 user story tests covering all implemented PRPs
+- **/api/version endpoint** - Lightweight JSON API for landing page
+  - Returns version, commit, uptime, service statuses
+  - Used by landing page for dynamic version display
+  - Replaces HTML scraping from old /version endpoint
 
 ### Changed
 - **Removed /version endpoint** - version info now only on landing page (/)
+- Landing page now fetches live data from /api/version JSON endpoint
+- Hero version badge shows "Loading..." until API response arrives
 - Health endpoint remains at /health for Kubernetes probes
 
 ### Removed
-- /version endpoint (consolidated into landing page)
+- /version HTML endpoint (replaced by /api/version JSON API)
 
 ## [0.3.0] - 2025-10-29
 

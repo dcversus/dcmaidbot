@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 from handlers import waifu
 from handlers import admin_lessons
-from handlers.status import health_handler
+from handlers.status import health_handler, api_version_handler
 from handlers.nudge import nudge_handler
 from handlers.landing import landing_handler
 from handlers.waifu import setup_bot_commands
@@ -156,9 +156,12 @@ def main():
     logging.info(f"Static files served from: {static_dir}")
 
     # Add health endpoint for K8s liveness/readiness probes
-    # Version info available on landing page (/)
     app.router.add_get("/health", health_handler)
     logging.info("Health endpoint registered: /health")
+
+    # Add API version endpoint for landing page dynamic data
+    app.router.add_get("/api/version", api_version_handler)
+    logging.info("API endpoint registered: /api/version")
 
     # Add agent communication endpoint
     app.router.add_post("/nudge", nudge_handler)

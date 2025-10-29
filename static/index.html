@@ -891,7 +891,7 @@
 
             <div class="hero-meta">
                 <span class="meta-badge license">📜 GNU AGPL-3.0</span>
-                <span class="meta-badge version" id="hero-version">🎀 v0.1.0</span>
+                <span class="meta-badge version" id="hero-version">🎀 Loading...</span>
             </div>
 
             <div class="cta-buttons">
@@ -1213,34 +1213,27 @@
 
         async function fetchStatusData() {
             try {
-                const response = await fetch('/version');
-                const html = await response.text();
+                const response = await fetch('/api/version');
+                const data = await response.json();
 
-                // Parse HTML to extract data (simple approach)
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
+                // Update version display
+                document.getElementById('versionValue').textContent = data.version;
+                document.getElementById('hero-version').textContent = `🎀 v${data.version}`;
 
-                // Extract version and commit from the HTML
-                const versionElement = doc.querySelector('.value');
-                if (versionElement) {
-                    const version = versionElement.textContent.trim();
-                    document.getElementById('versionValue').textContent = version;
-                    document.getElementById('hero-version').textContent = `🎀 ${version}`;
-                }
-
-                // For now, use placeholder data
-                // In production, create /api/status endpoint that returns JSON
-                updateWidgetData({
-                    version: '0.1.0',
-                    commit: '3f8bf1c',
-                    uptime: '2h 53m',
-                    redis: 'pending',
-                    postgresql: 'pending',
-                    bot: 'online'
-                });
+                // Update all widget data
+                updateWidgetData(data);
 
             } catch (error) {
                 console.error('Failed to fetch status:', error);
+                // Fallback to placeholder if API fails
+                updateWidgetData({
+                    version: 'unknown',
+                    commit: 'unknown',
+                    uptime: 'unknown',
+                    redis: 'error',
+                    postgresql: 'error',
+                    bot: 'unknown'
+                });
             }
         }
 
