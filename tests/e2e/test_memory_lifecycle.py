@@ -11,61 +11,11 @@ Tests the complete memory workflow:
 import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
 
-from database import Base
-from models.memory import Category
 from services.memory_service import MemoryService
 from services.llm_service import LLMService
 
-
-@pytest.fixture
-async def async_session():
-    """Create async test database session."""
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async_session_maker = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    async with async_session_maker() as session:
-        yield session
-
-    await engine.dispose()
-
-
-@pytest.fixture
-async def test_categories(async_session):
-    """Create test categories."""
-    categories = [
-        Category(
-            name="person",
-            domain="social",
-            full_path="social.person",
-            description="Individual profiles",
-            icon="👤",
-            importance_range_min=100,
-            importance_range_max=10000,
-        ),
-        Category(
-            name="tech_domain",
-            domain="knowledge",
-            full_path="knowledge.tech_domain",
-            description="Programming languages",
-            icon="💻",
-            importance_range_min=1000,
-            importance_range_max=5000,
-        ),
-    ]
-
-    for cat in categories:
-        async_session.add(cat)
-    await async_session.commit()
-
-    return categories
+# async_session and test_categories fixtures provided by tests/conftest.py (PostgreSQL)
 
 
 @pytest.fixture

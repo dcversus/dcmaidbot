@@ -1,29 +1,11 @@
 """Unit tests for lesson service."""
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
 
-from database import Base
 from models.lesson import Lesson
 from services.lesson_service import LessonService
 
-
-@pytest.fixture
-async def async_session():
-    """Create async test database session."""
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async_session_maker = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    async with async_session_maker() as session:
-        yield session
-
-    await engine.dispose()
+# async_session fixture is provided by tests/conftest.py (PostgreSQL)
 
 
 @pytest.mark.asyncio
