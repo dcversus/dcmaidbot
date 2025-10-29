@@ -18,15 +18,29 @@ class LLMService:
     """LLM service for intelligent bot responses."""
 
     def __init__(self):
-        """Initialize LLM service."""
+        """Initialize LLM service with cost-efficient model tiers.
+
+        Model tiers:
+        - test_model: Cheapest for testing/judging (gpt-4o-mini)
+        - default_model: Main bot responses with tool support (gpt-4o-mini baseline)
+        - complex_model: Advanced tasks, production will use gpt-5 when available
+        """
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set")
 
         self.client = AsyncOpenAI(api_key=api_key)
         self.base_prompt = self.load_base_prompt()
-        self.default_model = "gpt-4o-mini"
-        self.complex_model = "gpt-4"
+
+        # Model tiers for cost efficiency
+        self.test_model = "gpt-4o-mini"  # Cheapest for testing/judging
+        self.default_model = (
+            "gpt-4o-mini"  # Main bot, supports tools (agentic baseline)
+        )
+        self.complex_model = os.getenv("COMPLEX_MODEL", "gpt-4o")  # Production: gpt-5
+
+        # Production readiness: gpt-4o-mini supports function calling (agentic tools)
+        # When GPT-5 releases, set COMPLEX_MODEL=gpt-5 for production
 
     def load_base_prompt(self) -> str:
         """Load BASE_PROMPT from config file."""
