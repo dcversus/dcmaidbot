@@ -112,6 +112,53 @@ docker build -t dcmaidbot:latest .
 docker run --env-file .env dcmaidbot:latest
 ```
 
+## Code Quality Rules
+
+### 🚨 MANDATORY: No Linter Suppression
+
+**RULE**: Using `# noqa`, `# type: ignore`, `# ruff: noqa`, or any linter/type checker suppression comments is **STRICTLY FORBIDDEN**.
+
+**Why**:
+- Suppressing warnings hides real problems
+- Creates technical debt
+- Makes code harder to maintain
+- Violates production quality standards
+
+**Instead**:
+- ✅ Fix the actual issue (refactor code, break long lines, fix types)
+- ✅ Improve code structure to satisfy linter
+- ✅ Ask for clarification if unclear how to fix
+
+**Examples**:
+
+❌ **WRONG**:
+```python
+result = some_very_long_function_call_that_exceeds_line_limit(arg1, arg2, arg3)  # noqa: E501
+```
+
+✅ **CORRECT**:
+```python
+result = some_very_long_function_call_that_exceeds_line_limit(
+    arg1,
+    arg2,
+    arg3
+)
+```
+
+❌ **WRONG**:
+```python
+value = dict["key"]  # type: ignore
+```
+
+✅ **CORRECT**:
+```python
+from typing import Dict
+my_dict: Dict[str, Any] = {"key": "value"}
+value = my_dict["key"]
+```
+
+**Enforcement**: PRs with suppression comments will be rejected in code review.
+
 ## Environment Variables
 
 Required in `.env`:
