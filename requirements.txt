@@ -27,3 +27,7 @@ aioredis>=2.0.0
 
 # Scheduling (PRP-008)
 apscheduler>=3.10.0
+
+# E2E Testing with User Client (PRP-013)
+pyrogram[fast]>=2.0.0
+tgcrypto>=1.2.0

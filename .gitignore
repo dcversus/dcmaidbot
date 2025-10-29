@@ -27,3 +27,9 @@ logs/
 
 # Storage
 storage/
+
+# Pyrogram session files (security-sensitive)
+tests/*.session
+tests/*.session-journal
+*.session
+*.session-journal
