@@ -115,11 +115,12 @@ async def test_get_response_api_error(mock_openai):
 
 @pytest.mark.asyncio
 async def test_get_response_with_tools(mock_openai):
-    """Test LLM response with tool schemas."""
+    """Test LLM response with tool schemas (but LLM chooses not to use tools)."""
     mock_response = MagicMock()
     mock_choice = MagicMock()
     mock_message = MagicMock()
     mock_message.content = "Using tools!"
+    mock_message.tool_calls = None  # LLM chose not to call tools
     mock_choice.message = mock_message
     mock_response.choices = [mock_choice]
 

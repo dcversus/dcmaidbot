@@ -269,17 +269,80 @@ async def handle_message(message: str, user_id: int) -> str:
                 is_bot=False,
             )
 
-        # Use LLM with waifu personality + context
+        # Import tools for agentic behavior
+        from tools.memory_tools import MEMORY_TOOLS
+        from tools.web_search_tools import WEB_SEARCH_TOOLS
+        from tools.tool_executor import ToolExecutor
+
+        all_tools = MEMORY_TOOLS + WEB_SEARCH_TOOLS
+
+        # Use LLM with waifu personality + context + tools
         user_info = {"id": user_id, "username": "test_user", "telegram_id": user_id}
         chat_info = {"id": user_id, "type": "private", "chat_id": user_id}
-        response = await llm_service.get_response(
+        llm_response = await llm_service.get_response(
             message,
             user_info,
             chat_info,
             lessons,
             memories=memories,
             message_history=message_history,
+            tools=all_tools,
         )
+
+        # Check if LLM wants to use tools
+        if hasattr(llm_response, "tool_calls") and llm_response.tool_calls:
+            # Execute each tool call
+            async with AsyncSessionLocal() as tool_session:
+                tool_executor = ToolExecutor(tool_session)
+                tool_results = []
+
+                for tool_call in llm_response.tool_calls:
+                    # Parse tool arguments
+                    import json
+
+                    try:
+                        arguments = json.loads(tool_call.function.arguments)
+                    except json.JSONDecodeError:
+                        arguments = {}
+
+                    # Execute tool
+                    result = await tool_executor.execute(
+                        tool_name=tool_call.function.name,
+                        arguments=arguments,
+                        user_id=user_id,
+                    )
+
+                    tool_results.append(
+                        {
+                            "tool_call_id": tool_call.id,
+                            "result": result,
+                        }
+                    )
+
+            # Get final response from LLM after tool execution
+            response = await llm_service.get_response_after_tools(
+                user_message=message,
+                user_info=user_info,
+                chat_info=chat_info,
+                lessons=lessons,
+                memories=memories,
+                message_history=message_history,
+                tool_calls=[
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                    for tc in llm_response.tool_calls
+                ],
+                tool_results=tool_results,
+            )
+        else:
+            # No tools needed, just use the text response
+            response = llm_response
 
         # Store bot's response to database
         async with AsyncSessionLocal() as session:

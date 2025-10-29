@@ -186,8 +186,15 @@ Use "nya", "myaw", "kawai" expressions when appropriate! 💕
 
             # Extract response
             choice = response.choices[0]
-            if choice.message.content:
-                return choice.message.content
+            message = choice.message
+
+            # If tools were provided and LLM wants to call tools, return full message
+            if tools and message.tool_calls:
+                return message  # Return message object with tool_calls
+
+            # Otherwise return text content
+            if message.content:
+                return message.content
             else:
                 return "Nya~ I couldn't generate a response! 💕"
 
@@ -307,6 +314,189 @@ Use "nya", "myaw", "kawai" expressions when appropriate! 💕
         except Exception as e:
             print(f"LLM function call error: {e}")
             return (f"Myaw~ Tool error: {e}", None)
+
+    async def get_response_after_tools(
+        self,
+        user_message: str,
+        user_info: dict[str, Any],
+        chat_info: dict[str, Any],
+        lessons: list[str],
+        memories: Optional[list] = None,
+        message_history: Optional[list] = None,
+        tool_calls: list[dict[str, Any]] = None,
+        tool_results: list[dict[str, Any]] = None,
+    ) -> str:
+        """
+        Get final response after tool execution.
+
+        This is called after tools have been executed to get the LLM's
+        final response incorporating the tool results.
+
+        Args:
+            user_message: Original user message
+            user_info: User information dict
+            chat_info: Chat information dict
+            lessons: List of active lessons
+            memories: List of relevant memories (optional)
+            message_history: Recent message history (optional)
+            tool_calls: List of tool calls made by LLM
+            tool_results: List of tool execution results
+
+        Returns:
+            Final bot response text
+        """
+        if lessons is None:
+            lessons = []
+        if memories is None:
+            memories = []
+        if message_history is None:
+            message_history = []
+        if tool_calls is None:
+            tool_calls = []
+        if tool_results is None:
+            tool_results = []
+
+        system_prompt = self.construct_prompt(
+            user_message, user_info, chat_info, lessons, memories, message_history
+        )
+
+        # Build conversation with tool calls and results
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ]
+
+        # Add assistant's tool calls
+        if tool_calls:
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": tool_calls,
+                }
+            )
+
+        # Add tool results
+        for tool_result in tool_results:
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_result["tool_call_id"],
+                    "content": json.dumps(tool_result["result"]),
+                }
+            )
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.default_model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1000,
+            )
+
+            choice = response.choices[0]
+            if choice.message.content:
+                return choice.message.content
+            else:
+                return "Nya~ I couldn't generate a response! 💕"
+
+        except Exception as e:
+            print(f"LLM API error after tools: {e}")
+            return "Myaw~ Something went wrong processing the results! 😿"
+
+    async def extract_simple_content(self, full_content: str) -> str:
+        """
+        Extract simple content (~500 tokens) from full content.
+
+        Args:
+            full_content: Full detailed content
+
+        Returns:
+            Simple summary focusing on key facts and emotions
+        """
+        prompt = f"""Extract the most important information from this text,
+focusing on key facts and emotional signals. Keep it concise (max 500 words).
+
+Text:
+{full_content}
+
+Provide a clear, focused summary."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.default_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You extract key information from text.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+                max_tokens=600,
+            )
+
+            return response.choices[0].message.content or full_content[:500]
+
+        except Exception as e:
+            print(f"Error extracting simple content: {e}")
+            # Fallback: truncate full content
+            return full_content[:500]
+
+    async def calculate_importance(self, content: str) -> int:
+        """
+        Calculate importance score (0-9999+) for memory.
+
+        Args:
+            content: Memory content to evaluate
+
+        Returns:
+            Importance score (0-9999+)
+        """
+        prompt = f"""Rate the importance of this information on a scale from 0 to 9999+.
+
+Content:
+{content}
+
+Scoring guide:
+- 0-10: Trivial
+- 11-100: Casual
+- 101-1000: Notable
+- 1001-5000: Important
+- 5001-9999: Critical
+- 10000+: Life-changing
+
+Return only the numeric score."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.default_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You evaluate importance of information.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0,
+                max_tokens=10,
+            )
+
+            content = response.choices[0].message.content
+            if content:
+                # Extract first number from response
+                import re
+
+                match = re.search(r"\d+", content.strip())
+                if match:
+                    return int(match.group())
+
+            # Default to moderate importance
+            return 500
+
+        except Exception as e:
+            print(f"Error calculating importance: {e}")
+            return 500
 
     async def extract_vad_emotions(self, text: str) -> dict[str, Any]:
         """

@@ -39,7 +39,7 @@ repos:
       - id: mixed-line-ending
       - id: detect-private-key
 
-  # Run tests before commit
+  # Run unit tests before commit (skip E2E which require bot running)
   - repo: local
     hooks:
       - id: pytest
@@ -47,5 +47,5 @@ repos:
         entry: pytest
         language: system
         pass_filenames: false
-        args: [tests/unit/, tests/e2e/, -v, --tb=short]
+        args: [tests/unit/, -v, --tb=short]
         always_run: true
