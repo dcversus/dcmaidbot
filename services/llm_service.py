@@ -1,8 +1,15 @@
-"""LLM service for OpenAI integration with BASE_PROMPT and LESSONS."""
+"""LLM service for OpenAI integration with BASE_PROMPT and LESSONS.
+
+Extended with PRP-005 capabilities:
+- VAD (Valence-Arousal-Dominance) emotion extraction
+- Zettelkasten attribute generation (keywords, tags, contexts)
+- Dynamic memory link suggestion
+"""
 
 import os
+import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, AsyncIterator
 
 from openai import AsyncOpenAI
 
@@ -132,6 +139,63 @@ Use "nya", "myaw", "kawai" expressions when appropriate! 💕
             print(f"LLM API error: {e}")
             return "Myaw~ Something went wrong with my brain! 😿"
 
+    async def get_response_stream(
+        self,
+        user_message: str,
+        user_info: dict[str, Any],
+        chat_info: dict[str, Any],
+        lessons: Optional[list[str]] = None,
+        use_complex_model: bool = False,
+    ) -> AsyncIterator[str]:
+        """
+        Stream LLM response with lessons injected.
+
+        Yields chunks of text as they arrive from the LLM.
+
+        Args:
+            user_message: The user's message
+            user_info: User information dict
+            chat_info: Chat information dict
+            lessons: List of active lessons (optional)
+            use_complex_model: Use GPT-4 for complex tasks
+
+        Yields:
+            Text chunks from the LLM response
+        """
+        if lessons is None:
+            lessons = []
+
+        system_prompt = self.construct_prompt(
+            user_message, user_info, chat_info, lessons
+        )
+
+        model = self.complex_model if use_complex_model else self.default_model
+
+        try:
+            # Build request parameters
+            request_params: dict[str, Any] = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1000,
+                "stream": True,
+            }
+
+            # Call OpenAI API with streaming
+            stream = await self.client.chat.completions.create(**request_params)
+
+            # Yield chunks as they arrive
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+
+        except Exception as e:
+            print(f"LLM streaming error: {e}")
+            yield "Myaw~ Something went wrong with my brain! 😿"
+
     async def get_function_call_response(
         self,
         user_message: str,
@@ -179,6 +243,221 @@ Use "nya", "myaw", "kawai" expressions when appropriate! 💕
         except Exception as e:
             print(f"LLM function call error: {e}")
             return (f"Myaw~ Tool error: {e}", None)
+
+    async def extract_vad_emotions(self, text: str) -> dict[str, Any]:
+        """
+        Extract VAD (Valence-Arousal-Dominance) emotions from text.
+
+        Based on Mehrabian & Russell (1974) VAD model:
+        - Valence: -1.0 (negative) to +1.0 (positive)
+        - Arousal: -1.0 (calm) to +1.0 (excited)
+        - Dominance: -1.0 (submissive) to +1.0 (dominant)
+
+        Args:
+            text: Text content to analyze
+
+        Returns:
+            Dictionary with valence, arousal, dominance, and emotion_label
+        """
+        prompt = f"""Analyze the emotional content of this text using the VAD model.
+
+Text: {text}
+
+Provide your analysis in JSON format with these exact fields:
+- valence: float from -1.0 (negative) to +1.0 (positive)
+- arousal: float from -1.0 (calm) to +1.0 (excited)
+- dominance: float from -1.0 (submissive) to +1.0 (dominant)
+- emotion_label: string (joy, sadness, anger, fear, surprise, disgust, neutral, etc.)
+
+Return ONLY the JSON object, no other text."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.default_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an emotion analysis expert using the VAD model."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+                max_tokens=200,
+            )
+
+            content = response.choices[0].message.content
+            if content:
+                result = json.loads(content.strip())
+                return {
+                    "valence": float(result.get("valence", 0.0)),
+                    "arousal": float(result.get("arousal", 0.0)),
+                    "dominance": float(result.get("dominance", 0.0)),
+                    "emotion_label": result.get("emotion_label", "neutral"),
+                }
+            else:
+                return self._default_vad()
+
+        except Exception as e:
+            print(f"VAD extraction error: {e}")
+            return self._default_vad()
+
+    async def generate_zettelkasten_attributes(self, text: str) -> dict[str, Any]:
+        """
+        Generate Zettelkasten-inspired attributes for memory organization.
+
+        Extracts:
+        - keywords: Key concepts for indexing
+        - tags: Hierarchical tags (e.g., "social/friend", "technical/python")
+        - context_temporal: When this happened
+        - context_situational: Situation/setting
+
+        Args:
+            text: Text content to analyze
+
+        Returns:
+            Dictionary with keywords, tags, and contexts
+        """
+        prompt = f"""Analyze this text and extract Zettelkasten attributes.
+
+Text: {text}
+
+Provide your analysis in JSON format with these exact fields:
+- keywords: array of 3-7 key concepts (strings)
+- tags: array of 2-5 hierarchical tags in "domain/subdomain" format
+- context_temporal: string describing when this happened (or null)
+- context_situational: string describing the situation/setting (or null)
+
+Examples of good tags:
+- "social/friend", "social/family", "technical/python"
+- "knowledge/programming", "interest/humor", "episode/success"
+
+Return ONLY the JSON object, no other text."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.default_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a knowledge organization expert.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+                max_tokens=300,
+            )
+
+            content = response.choices[0].message.content
+            if content:
+                result = json.loads(content.strip())
+                return {
+                    "keywords": result.get("keywords", []),
+                    "tags": result.get("tags", []),
+                    "context_temporal": result.get("context_temporal"),
+                    "context_situational": result.get("context_situational"),
+                }
+            else:
+                return self._default_zettelkasten()
+
+        except Exception as e:
+            print(f"Zettelkasten generation error: {e}")
+            return self._default_zettelkasten()
+
+    async def suggest_memory_links(
+        self, memory_text: str, existing_memories: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """
+        Suggest links between memories (Zettelkasten-style connections).
+
+        Args:
+            memory_text: Current memory text
+            existing_memories: List of existing memory dicts with id and simple_content
+
+        Returns:
+            List of suggested links with structure:
+            [{"memory_id": int, "link_type": str, "strength": float, "reason": str}]
+
+        Link types:
+        - related: Generally related topics
+        - causes: This causes that
+        - contradicts: Conflicting information
+        - elaborates: Provides more detail
+        - precedes: Temporal ordering
+        - follows: Temporal ordering
+        """
+        if not existing_memories:
+            return []
+
+        memories_context = "\n".join(
+            f"ID {m['id']}: {m['simple_content'][:200]}" for m in existing_memories[:20]
+        )
+
+        prompt = f"""Given a new memory, suggest connections to existing memories.
+
+New Memory:
+{memory_text}
+
+Existing Memories:
+{memories_context}
+
+Analyze relationships and suggest 0-5 meaningful links.
+
+Return JSON array with this structure:
+[
+  {{
+    "memory_id": integer,
+    "link_type": "related"|"causes"|"contradicts"|"elaborates"|"precedes"|"follows",
+    "strength": float 0.0-1.0,
+    "reason": "brief explanation"
+  }}
+]
+
+Return ONLY the JSON array, no other text."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.default_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a knowledge graph expert.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+                max_tokens=500,
+            )
+
+            content = response.choices[0].message.content
+            if content:
+                links = json.loads(content.strip())
+                return links if isinstance(links, list) else []
+            else:
+                return []
+
+        except Exception as e:
+            print(f"Memory link suggestion error: {e}")
+            return []
+
+    def _default_vad(self) -> dict[str, Any]:
+        """Return default VAD emotions when extraction fails."""
+        return {
+            "valence": 0.0,
+            "arousal": 0.0,
+            "dominance": 0.0,
+            "emotion_label": "neutral",
+        }
+
+    def _default_zettelkasten(self) -> dict[str, Any]:
+        """Return default Zettelkasten attributes when generation fails."""
+        return {
+            "keywords": [],
+            "tags": [],
+            "context_temporal": None,
+            "context_situational": None,
+        }
 
 
 # Global LLM service instance (lazy initialization)

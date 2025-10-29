@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SQLite/PostgreSQL compatibility with conditional ARRAY type handling
   - Category seeding script for initial database setup
   - Database migration adding all VAD and Zettelkasten fields
+- **PRP-005 Phase 2: Memory Service Layer**
+  - MemoryService with full CRUD operations for memories
+  - Memory search with filters (category, importance, emotions, tags)
+  - Memory link management (create, query bidirectional links)
+  - Category management (by domain, by full_path)
+  - Redis caching for frequently accessed memories
+  - VAD emotion extraction from text using LLM (extract_vad_emotions)
+  - Zettelkasten attribute generation using LLM (generate_zettelkasten_attributes)
+  - Dynamic memory link suggestion using LLM (suggest_memory_links)
 - **Rich Telegram Bot UX improvements**
   - HTML formatting for all bot messages (bold, italic, code, spoilers)
   - Inline keyboards for interactive buttons (/start, /joke commands)
