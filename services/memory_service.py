@@ -87,17 +87,16 @@ class MemoryService:
             context_situational=context_situational,
         )
 
-        self.session.add(memory)
-        await self.session.flush()
-
         if category_ids:
-            categories = await self.session.execute(
+            categories_result = await self.session.execute(
                 select(Category).where(Category.id.in_(category_ids))
             )
-            memory.categories = list(categories.scalars().all())
+            categories_list = list(categories_result.scalars().all())
+            memory.categories = categories_list
 
+        self.session.add(memory)
         await self.session.commit()
-        await self.session.refresh(memory)
+        await self.session.refresh(memory, ["categories"])
 
         await self._invalidate_cache(created_by)
 
