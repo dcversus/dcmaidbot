@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **PRP-005 Phase 1: Enhanced Memory Database Layer**
+  - Memory model with VAD (Valence-Arousal-Dominance) emotional dimensions
+  - Zettelkasten-inspired attributes: keywords, tags, temporal/situational context
+  - Memory versioning and evolution tracking (parent_id, evolution_triggers)
+  - 6-domain categorical system (self, social, knowledge, interest, episode, meta)
+  - 35 predefined categories across all domains with importance ranges
+  - MemoryLink model for Zettelkasten-style bidirectional memory connections
+  - SQLite/PostgreSQL compatibility with conditional ARRAY type handling
+  - Category seeding script for initial database setup
+  - Database migration adding all VAD and Zettelkasten fields
+- **Rich Telegram Bot UX improvements**
+  - HTML formatting for all bot messages (bold, italic, code, spoilers)
+  - Inline keyboards for interactive buttons (/start, /joke commands)
+  - Callback query handlers for button interactions
+  - Typing indicators before LLM responses (send_chat_action)
+  - Bot commands menu (setMyCommands API integration)
+  - Version and commit hash display in /status and /help commands
+  - Website link buttons in commands (https://dcmaidbot.theedgestory.org)
+- **Joke system enhancements**
+  - Inline keyboard for joke reactions (😂 Funny!, 😐 Meh, 💡 Tell another!)
+  - Spoiler tags for joke punchlines
+  - Callback handlers for reaction tracking (foundation for PRP-006)
+- **Streaming LLM responses with realistic interaction**
+  - OpenAI streaming API integration for real-time response generation
+  - Realistic human-like delays: read time (0.3-0.8s) + think time (0.2-0.5s)
+  - Continuous typing indicators during streaming (refreshed every 5s)
+  - Blazing fast response delivery as tokens arrive
+  - Mimics natural conversation flow: read → think → type → send
+
+### Changed
+- All message responses now use HTML parse_mode instead of Markdown
+- /start command now includes interactive buttons
+- /help command displays version and git commit
+- /status command shows uptime, version, commit, and site link
+- /joke command uses spoiler tags and reaction buttons
+- LLM service now streams responses instead of waiting for complete generation
+- Message handler implements realistic interaction timing
+- Bot commands menu automatically configured on startup
+
+### Fixed
+- Python 3.9 compatibility: Changed `int | None` to `Optional[int]` in models
+- SQLAlchemy Table redefinition: Added `extend_existing=True` to association tables
+- Memory model type annotations for Python 3.9 compatibility
+- ARRAY type compatibility with SQLite via JSON serialization and proper type casting
+
+### Technical
+- **No Linter Suppression Rule** (PRP-005)
+  - Documented in AGENTS.md as mandatory coding standard
+  - Prohibits use of `# noqa`, `# type: ignore`, or any linter suppression
+  - Enforces proper fixes for all lint/type errors
+
 ## [0.2.0] - 2025-10-28
 
 ### Added
