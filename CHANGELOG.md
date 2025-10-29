@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E Production Validation System**
   - tests/e2e_production.py: Infrastructure and health testing
   - tests/e2e_user_stories.py: **Real user story and feature testing**
+  - **tests/e2e_with_userbot.py: Automated bot-to-bot testing using Pyrogram** 🆕
+    - Uses Pyrogram (MTProto) to act as a real Telegram user
+    - Sends messages to bot and verifies responses
+    - Solves "chat not found" error in automated tests
+    - Supports session persistence (tests/userbot.session)
+    - Requires Telegram API credentials (api_id, api_hash)
   - Tests ALL bot commands: /start, /help, /status, /joke, /love, /view_lessons
   - Tests LLM integration: waifu personality, streaming responses, joke generation
   - Tests memory system: PostgreSQL database, Redis caching
@@ -18,10 +24,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GitHub Actions workflow for automated E2E testing after each deployment
   - Manual trigger via workflow_dispatch
   - 11 user story tests covering all implemented PRPs
+  - **tests/README.md: Comprehensive E2E testing documentation**
 - **/api/version endpoint** - Lightweight JSON API for landing page
   - Returns version, commit, uptime, service statuses
   - Used by landing page for dynamic version display
   - Replaces HTML scraping from old /version endpoint
+- **Test Bot Configuration (@dcnotabot)**
+  - Dedicated test bot for E2E testing
+  - Stored in Kubernetes secret: dcmaidbot-test-secrets
+  - GitHub Actions secrets: BOT_TOKEN, TEST_ADMIN_ID
+  - Local .env file for development testing
 
 ### Changed
 - **Removed /version endpoint** - version info now only on landing page (/)
