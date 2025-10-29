@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **E2E Production Validation System**
-  - tests/e2e_production.py: Comprehensive post-release testing script
-  - Tests all user stories with real Telegram API calls
-  - GitHub Actions workflow for automated E2E testing
-  - Auto-runs after each deployment to verify production health
+  - tests/e2e_production.py: Infrastructure and health testing
+  - tests/e2e_user_stories.py: **Real user story and feature testing**
+  - Tests ALL bot commands: /start, /help, /status, /joke, /love, /view_lessons
+  - Tests LLM integration: waifu personality, streaming responses, joke generation
+  - Tests memory system: PostgreSQL database, Redis caching
+  - Tests /nudge endpoint for agent communication
+  - GitHub Actions workflow for automated E2E testing after each deployment
   - Manual trigger via workflow_dispatch
+  - 11 user story tests covering all implemented PRPs
 
 ### Changed
 - **Removed /version endpoint** - version info now only on landing page (/)

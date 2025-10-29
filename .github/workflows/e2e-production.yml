@@ -41,13 +41,21 @@ jobs:
       - name: Wait for deployment to stabilize
         run: sleep 30
 
-      - name: Run E2E Production Tests
+      - name: Run E2E Infrastructure Tests
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           TEST_ADMIN_ID: ${{ secrets.TEST_ADMIN_ID }}
           PRODUCTION_URL: ${{ inputs.production_url || 'https://dcmaidbot.theedgestory.org' }}
         run: |
           python tests/e2e_production.py
+
+      - name: Run E2E User Story Tests
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          TEST_ADMIN_ID: ${{ secrets.TEST_ADMIN_ID }}
+          PRODUCTION_URL: ${{ inputs.production_url || 'https://dcmaidbot.theedgestory.org' }}
+        run: |
+          python tests/e2e_user_stories.py
 
       - name: Notify on failure
         if: failure()
