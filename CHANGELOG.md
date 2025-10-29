@@ -42,8 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test Bot Configuration (@dcnotabot)**
   - Dedicated test bot for E2E testing
   - Stored in Kubernetes secret: dcmaidbot-test-secrets
-  - GitHub Actions secrets: BOT_TOKEN, TEST_ADMIN_ID
+  - GitHub Actions secrets: BOT_TOKEN, TEST_ADMIN_ID, NUDGE_SECRET
   - Local .env file for development testing
+  - Automated /call endpoint E2E tests in GitHub Actions workflow
 
 ### Changed
 - **Removed /version endpoint** - version info now only on landing page (/)
