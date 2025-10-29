@@ -57,6 +57,14 @@ jobs:
         run: |
           python tests/e2e_user_stories.py
 
+      - name: Run /call Endpoint E2E Tests
+        env:
+          NUDGE_SECRET: ${{ secrets.NUDGE_SECRET }}
+          TEST_USER_ID: ${{ secrets.TEST_ADMIN_ID }}
+          PRODUCTION_URL: ${{ inputs.production_url || 'https://dcmaidbot.theedgestory.org' }}
+        run: |
+          python tests/e2e_call_endpoint.py
+
       - name: Notify on failure
         if: failure()
         uses: actions/github-script@v7
