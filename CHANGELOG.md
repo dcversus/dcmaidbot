@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **/call endpoint - Direct bot logic testing** 🆕 **RECOMMENDED APPROACH**
+  - POST /call endpoint for testing bot logic without Telegram
+  - Same authentication as /nudge (NUDGE_SECRET)
+  - Accepts user_id + command or message
+  - Returns bot's response directly (no Telegram involved)
+  - Perfect for CI/CD automation
+  - tests/e2e_call_endpoint.py: Automated E2E tests via /call
+  - handlers/call.py: Bot logic abstracted from Telegram
+  - **Why**: Telegram bots can't message users who haven't initiated chat
+  - **Solution**: Bypass Telegram entirely, test bot logic directly
 - **E2E Production Validation System**
   - tests/e2e_production.py: Infrastructure and health testing
   - tests/e2e_user_stories.py: **Real user story and feature testing**
