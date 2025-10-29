@@ -8,6 +8,8 @@ from database import AsyncSessionLocal
 from services.llm_service import get_llm_service
 from services.lesson_service import LessonService
 from services.status_service import StatusService
+from services.memory_service import MemoryService
+from services.message_service import MessageService
 
 router = Router()
 
@@ -239,10 +241,34 @@ async def handle_message(message: types.Message):
         "chat_id": message.chat.id,
     }
 
-    # Get lessons from database
+    # Get lessons, memories, and message history from database
     async with AsyncSessionLocal() as session:
         lesson_service = LessonService(session)
         lessons = await lesson_service.get_all_lessons()
+
+        # Fetch memories for this user
+        memory_service = MemoryService(session)
+        memories = await memory_service.search_memories(
+            user_id=message.from_user.id,
+            query=message.text,
+            limit=10,
+        )
+
+        # Fetch recent message history for this user/chat
+        message_service = MessageService(session)
+        message_history = await message_service.get_recent_messages(
+            user_id=message.from_user.id,
+            chat_id=message.chat.id,
+            limit=20,
+        )
+
+        # Store incoming user message to database
+        await message_service.store_message(
+            user_id=message.from_user.id,
+            chat_id=message.chat.id,
+            message_text=message.text,
+            is_bot=False,
+        )
 
     # Stream LLM response with typing indicators
     try:
@@ -257,6 +283,8 @@ async def handle_message(message: types.Message):
             user_info=user_info,
             chat_info=chat_info,
             lessons=lessons,
+            memories=memories,
+            message_history=message_history,
         ):
             response_chunks.append(chunk)
 
@@ -273,6 +301,16 @@ async def handle_message(message: types.Message):
 
         # Send complete response
         await message.reply(response_text, parse_mode="HTML")
+
+        # Store bot's response to database
+        async with AsyncSessionLocal() as session:
+            message_service = MessageService(session)
+            await message_service.store_message(
+                user_id=message.from_user.id,
+                chat_id=message.chat.id,
+                message_text=response_text,
+                is_bot=True,
+            )
 
     except Exception as e:
         # Fallback to simple response if LLM fails

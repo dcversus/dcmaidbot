@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRP-005 Integration: Memory and Message History in Bot Responses** 🎉
+  - Integrated MemoryService into handlers/waifu.py - bot now fetches relevant memories
+  - Integrated MessageService for message history tracking (last 20 messages)
+  - Bot stores all incoming/outgoing messages to database for context
+  - LLM prompts now include memories and conversation history
+  - /call endpoint updated to use full context (memories + history + lessons)
+  - Bot responses now contextually aware of past conversations and stored facts
 - **/call endpoint - Direct bot logic testing** 🆕 **RECOMMENDED APPROACH**
   - POST /call endpoint for testing bot logic without Telegram
   - Same authentication as /nudge (NUDGE_SECRET)
