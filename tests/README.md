@@ -4,7 +4,42 @@ This directory contains end-to-end tests for DCMaidBot in production.
 
 ## Test Files
 
-### 1. `e2e_production.py` - Infrastructure Tests
+### 1. `e2e_call_endpoint.py` - Direct Bot Logic Tests ⭐ **RECOMMENDED**
+**NEW**: Tests bot functionality by calling `/call` endpoint directly, bypassing Telegram entirely.
+
+This is the **simplest and most reliable** E2E testing approach:
+- ✅ No Telegram API credentials needed
+- ✅ No user interaction required
+- ✅ Tests actual bot logic (LLM, commands, personality)
+- ✅ Fast and deterministic
+- ✅ Perfect for CI/CD
+
+**How it works:**
+- Calls `/call` endpoint with user_id and command/message
+- Bot processes request using same logic as Telegram handlers
+- Returns response directly (no Telegram involved)
+
+**Usage:**
+```bash
+export NUDGE_SECRET="your_secret"
+python tests/e2e_call_endpoint.py
+```
+
+**What It Tests:**
+- Authentication (same secret as /nudge)
+- `/start`, `/help`, `/status`, `/love` commands
+- `/joke` command (LLM integration)
+- Waifu personality with natural messages (LLM)
+
+**Why This Approach:**
+- Telegram bots can't message users who haven't initiated chat
+- `/call` bypasses Telegram entirely
+- Tests the actual bot logic, not Telegram API
+- Can be automated in CI/CD without credentials
+
+---
+
+### 2. `e2e_production.py` - Infrastructure Tests
 Tests infrastructure health and availability:
 - `/health` endpoint
 - Landing page
@@ -22,7 +57,7 @@ export TEST_ADMIN_ID="your_telegram_id"
 python tests/e2e_production.py
 ```
 
-### 2. `e2e_user_stories.py` - User Story Tests
+### 3. `e2e_user_stories.py` - User Story Tests
 Tests all user stories and bot features:
 - Bot commands: /start, /help, /status, /joke, /love
 - LLM integration: waifu personality, streaming responses
@@ -36,7 +71,7 @@ export TEST_ADMIN_ID="your_telegram_id"
 python tests/e2e_user_stories.py
 ```
 
-### 3. `e2e_with_userbot.py` - Real User Interaction Tests ⭐
+### 4. `e2e_with_userbot.py` - Real User Interaction Tests (Advanced)
 **NEW**: Tests bot responses using a real Telegram user account via Pyrogram.
 
 This script acts as a **real user** to send messages to the bot and verify responses. This solves the "chat not found" error that occurs when a bot tries to message a user who hasn't initiated contact first.
@@ -122,6 +157,32 @@ gh workflow run e2e-production.yml
 - Test bot token: stored in `.env` and Kubernetes secrets
 - No webhook configuration (not needed for testing)
 
+## Recommended Testing Strategy
+
+### For Automated CI/CD: Use `/call` Endpoint ⭐
+```bash
+export NUDGE_SECRET="your_secret"
+python tests/e2e_call_endpoint.py
+```
+- **Fastest and most reliable**
+- No Telegram credentials needed
+- Tests actual bot logic
+- Perfect for automated testing
+
+### For Manual Verification: Real Telegram Testing
+After deployment, manually test with real Telegram:
+1. Open Telegram app
+2. Send messages to @dcmaidbot
+3. Verify responses match expected behavior
+4. Check UI elements (buttons, formatting)
+
+### For Advanced Telegram Integration Testing: Pyrogram
+Only needed if testing Telegram-specific features:
+- Callback queries
+- Inline keyboards
+- Message editing
+- Media handling
+
 ## Local Testing
 
 1. **Copy environment template:**
@@ -129,13 +190,17 @@ gh workflow run e2e-production.yml
    cp .env.example .env
    ```
 
-2. **Edit `.env` with test bot credentials:**
+2. **Edit `.env` with credentials:**
    ```env
+   # For /call endpoint tests (RECOMMENDED)
+   NUDGE_SECRET=your_nudge_secret_here
+
+   # For Telegram API tests (optional)
    BOT_TOKEN=your_test_bot_token_here
    ADMIN_IDS=122657093,196907653
    TEST_ADMIN_ID=122657093
 
-   # For userbot tests
+   # For userbot tests (advanced, optional)
    TELEGRAM_API_ID=12345
    TELEGRAM_API_HASH=your_hash_here
    TELEGRAM_USER_PHONE=+1234567890
@@ -143,13 +208,16 @@ gh workflow run e2e-production.yml
 
 3. **Run tests:**
    ```bash
+   # Direct bot logic tests (RECOMMENDED)
+   python tests/e2e_call_endpoint.py
+
    # Infrastructure tests
    python tests/e2e_production.py
 
    # User story tests
    python tests/e2e_user_stories.py
 
-   # User client tests (most comprehensive)
+   # User client tests (advanced)
    python tests/e2e_with_userbot.py
    ```
 

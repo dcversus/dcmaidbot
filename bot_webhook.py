@@ -15,6 +15,7 @@ from handlers import admin_lessons
 from handlers.status import health_handler, api_version_handler
 from handlers.nudge import nudge_handler
 from handlers.landing import landing_handler
+from handlers.call import call_handler
 from handlers.waifu import setup_bot_commands
 from middlewares.admin_only import AdminOnlyMiddleware
 from services.redis_service import redis_service
@@ -166,6 +167,10 @@ def main():
     # Add agent communication endpoint
     app.router.add_post("/nudge", nudge_handler)
     logging.info("Agent communication endpoint registered: /nudge")
+
+    # Add direct bot logic testing endpoint
+    app.router.add_post("/call", call_handler)
+    logging.info("Direct bot logic testing endpoint registered: /call")
 
     # Setup application
     setup_application(app, dp, bot=bot)
