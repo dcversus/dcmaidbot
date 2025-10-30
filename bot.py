@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
-from handlers import waifu
+from handlers import waifu, help as help_handler
 from middlewares.admin_only import AdminOnlyMiddleware
 from services.migration_service import check_migrations
 from database import engine
@@ -69,7 +69,8 @@ def setup_dispatcher() -> Dispatcher:
     dp.message.middleware(AdminOnlyMiddleware(admin_ids))
     dp.callback_query.middleware(AdminOnlyMiddleware(admin_ids))
 
-    # Register waifu router
+    # Register routers
+    dp.include_router(help_handler.router)  # Help handler first (role-aware)
     dp.include_router(waifu.router)
 
     return dp

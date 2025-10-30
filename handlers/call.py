@@ -273,9 +273,18 @@ async def handle_message(message: str, user_id: int) -> str:
         # Import tools for agentic behavior
         from tools.memory_tools import MEMORY_TOOLS
         from tools.web_search_tools import WEB_SEARCH_TOOLS
+        from tools.lesson_tools import LESSON_TOOLS
         from tools.tool_executor import ToolExecutor
+        from services.auth_service import AuthService
 
+        # Check if user is admin for tool filtering
+        auth_service = AuthService()
+        is_admin = auth_service.is_admin(user_id)
+
+        # Build tools list (admins get lesson tools, non-admins don't)
         all_tools = MEMORY_TOOLS + WEB_SEARCH_TOOLS
+        if is_admin:
+            all_tools = all_tools + LESSON_TOOLS
 
         # Use LLM with waifu personality + context + tools
         user_info = {"id": user_id, "username": "test_user", "telegram_id": user_id}

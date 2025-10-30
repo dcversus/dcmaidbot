@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **PRP-017: Role-Based Access Control & Admin Lesson Tools** 🔐
+  - Created `tools/lesson_tools.py` with 4 admin-only lesson management tools
+    - `get_all_lessons` - List all lessons with IDs and content
+    - `create_lesson` - Add new lesson through natural conversation
+    - `edit_lesson` - Update existing lesson content
+    - `delete_lesson` - Remove lesson (soft delete)
+  - Created `services/auth_service.py` for centralized authentication
+    - `is_admin(user_id)` - Check if user has admin permissions
+    - `get_role(user_id)` - Get user role ("admin" or "user")
+    - `filter_tools_by_role()` - Filter tools based on user permissions
+    - `is_admin_only_tool()` - Check if tool requires admin access
+  - Created `handlers/help.py` with role-aware /help command
+    - Admins see full command list including lesson management
+    - Non-admins see only public commands
+    - Different tool descriptions based on role
+  - Enhanced `tools/tool_executor.py` with role-based access control
+    - Admin-only tools return vague deflection for non-admins
+    - "I'm not sure what you mean by that! 😊" instead of permission errors
+    - Prevents leaking information about admin-only features
+  - Updated `handlers/waifu.py` and `handlers/call.py`
+    - Filter tools by user role before passing to LLM
+    - Admins get lesson tools, non-admins don't
+    - Seamless integration with existing tool system
+  - Comprehensive test suite (26 tests total):
+    - 10 tests for AuthService (role checking, tool filtering)
+    - 16 tests for lesson tools (tool definitions, RBAC, execution)
+    - All tests passing with full coverage
+  - **Feature**: Admins can now manage lessons conversationally
+    - "Save this as a lesson: Always be enthusiastic!"
+    - "Show me all my lessons"
+    - "Edit lesson #3 to say..."
+    - "Delete lesson #5"
+  - **Security**: Non-admins get natural deflections, no access denied errors
+    - Bot doesn't reveal that lesson features exist
+    - Maintains kawaii personality even when denying access
+
 ### Fixed
 - **Hotfix: /nudge LLM mode parameter bug** 🐛
   - Fixed incorrect `use_tools` parameter → `tools` in `NudgeService.send_via_llm()`

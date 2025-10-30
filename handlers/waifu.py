@@ -64,47 +64,7 @@ async def cmd_start(message: types.Message):
     )
 
 
-@router.message(Command("help"))
-async def cmd_help(message: types.Message):
-    """Handle /help command with version and site link."""
-    version_info = status_service.get_version_info()
-    version = version_info["version"]
-    git_commit = version_info["git_commit"]
-    git_commit = git_commit[:7] if git_commit != "unknown" else "unknown"
-
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🌐 Visit Site", url=SITE_URL),
-                InlineKeyboardButton(
-                    text="📦 GitHub", url="https://github.com/dcversus/dcmaidbot"
-                ),
-            ]
-        ]
-    )
-
-    help_text = f"""<b>🐱 DCMaid Waifu Bot Help 🐱</b>
-
-I'm your kawai waifu bot, loving my beloved admins! 💕
-
-<b>Commands:</b>
-/start - Greet me!
-/help - Show this help
-/joke - Make a kawai joke!
-/love - Show my love for my masters
-/status - Check my status &amp; version
-
-<b>I can also:</b>
-✨ Tell jokes about messages
-🛡️ Protect my loved ones
-📚 Help with learning and fun
-
-<i>Nya! 💖</i>
-
-<b>Version:</b> <code>{version}</code> (<code>{git_commit}</code>)
-<b>Website:</b> {SITE_URL}
-"""
-    await message.reply(help_text, parse_mode="HTML", reply_markup=keyboard)
+# /help command moved to handlers/help.py for role-aware functionality
 
 
 @router.message(Command("love"))
@@ -186,9 +146,8 @@ async def handle_callback_query(callback: types.CallbackQuery):
     data = callback.data
 
     if data == "cmd_help":
-        # Call help command
-        await cmd_help(callback.message)
-        await callback.answer()
+        # Help command moved to handlers/help.py - ignore this callback
+        await callback.answer("Please use /help command", show_alert=False)
     elif data == "cmd_joke":
         # Call joke command
         await cmd_joke(callback.message)
@@ -278,9 +237,18 @@ async def handle_message(message: types.Message):
         # Import tools for agentic behavior
         from tools.memory_tools import MEMORY_TOOLS
         from tools.web_search_tools import WEB_SEARCH_TOOLS
+        from tools.lesson_tools import LESSON_TOOLS
         from tools.tool_executor import ToolExecutor
+        from services.auth_service import AuthService
 
+        # Check if user is admin for tool filtering
+        auth_service = AuthService()
+        is_admin = auth_service.is_admin(message.from_user.id)
+
+        # Build tools list (admins get lesson tools, non-admins don't)
         all_tools = MEMORY_TOOLS + WEB_SEARCH_TOOLS
+        if is_admin:
+            all_tools = all_tools + LESSON_TOOLS
 
         # Show typing indicator
         await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
