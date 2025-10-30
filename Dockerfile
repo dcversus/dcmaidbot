@@ -36,6 +36,7 @@ COPY handlers/ ./handlers/
 COPY middlewares/ ./middlewares/
 COPY models/ ./models/
 COPY services/ ./services/
+COPY tools/ ./tools/
 COPY static/ ./static/
 COPY config/ ./config/
 COPY conftest.py .
