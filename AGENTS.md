@@ -8,87 +8,6 @@ make deep analyse of current domaidbot prototype of service configuration. refac
 
 Each PRP is a 3-4 working day task for a middle developer, including implementation, unit tests, and one e2e test.
 
-### Overview of PRPs
-
-1. **[PRP-001: Infrastructure Cleanup & GitHub Container Registry Deployment](PRPs/PRP-001.md)**
-   - Clean all Vercel-related files and references
-   - Setup GitHub Container Registry deployment pipeline
-   - Implement deployment configuration from https://github.com/uz0/core-pipeline
-
-2. **[PRP-002: Waifu Personality & Admin System](PRPs/PRP-002.md)**
-   - Implement kawai waifu personality loving her mysterious creators
-   - Admin detection from .env (ADMIN_IDS (comma-separated): )
-   - Protector mode: kick enemies of admins
-   - Ignore 99% of non-admin users
-
-3. **[PRP-003: PostgreSQL Database Foundation](PRPs/PRP-003.md)**
-   - Migrate from JSON/Redis to PostgreSQL
-   - Schema for users, messages, facts, stats
-   - Linear text history storage
-   - Database connection pooling and migrations
-
-4. **[PRP-004: Memories System](PRPs/PRP-004.md)**
-   - Memory storage: prompts with matching expressions
-   - Admin-only memory CRUD operations via DM/chat
-   - Memory matching engine
-   - Example: "send message fuu if any sasha mention you"
-
-5. **[PRP-005: Friends & Favors System](PRPs/PRP-005.md)**
-   - Friend management via memories (admin-defined)
-   - Favor detection: "kawai, nya" triggers
-   - Expose Telegram API to friends
-   - Web search and other tools access
-
-6. **[PRP-006: Joking System with Learning](PRPs/PRP-006.md)**
-   - Joke detection and generation in any language
-   - Track reactions (likes) on jokes
-   - Learn from reactions: avoid no-like jokes, repeat liked patterns
-   - Setup/punchline and other joke formulas
-
-7. **[PRP-007: RAG (Retrieval-Augmented Generation) System](PRPs/PRP-007.md)**
-   - Vector embeddings for chat history
-   - RAG search across all messages
-   - Context retrieval for joke generation and responses
-   - Integration with LLM for context-aware responses
-
-8. **[PRP-008: Cron Tasks & Summary Generation](PRPs/PRP-008.md)**
-   - Self-managed cron task system
-   - Periodic RAG summarization of history into short summaries
-   - Store summaries as memories
-   - Task execution engine
-
-9. **[PRP-009: Tools Integration (Web Search, Games, etc.)](PRPs/PRP-009.md)**
-   - Web search tool integration
-   - Games framework (mini-games to play with users)
-   - Tool registry and execution
-   - Tool access control (friends, admins)
-
-10. **[PRP-010: Testing Framework & E2E Tests](PRPs/PRP-010.md)**
-    - Unit test infrastructure for all features
-    - E2E test suite for bot interactions
-    - Mock Telegram API for testing
-    - CI/CD integration for automated testing
-
-11. **[PRP-011: Canary Deployment & Sister Bot Communication](PRPs/PRP-011.md)**
-    - dcmaidbot-canary: happy little sister bot for testing
-    - E2E production testing with cron automation
-    - Status page with health checks
-    - 5% canary release in Kubernetes
-    - Inter-bot communication API for summary and tool sharing
-
-12. **[PRP-012: Analytics & Observability Framework](PRPs/PRP-012.md)**
-    - LangSmith + Prometheus + Grafana integration
-    - Privacy-first approach with GDPR compliance
-    - Message tracking, performance monitoring
-    - User analytics and bot health metrics
-
-13. **[PRP-013: Production E2E Testing with Test Bot](PRPs/PRP-013.md)**
-    - Automated production testing using separate test bot
-    - Real Telegram API calls to verify deployed features
-    - Smoke tests after each deploy
-    - Full regression test suite
-    - GitHub Actions integration for automated testing
-
 ## Development Commands
 
 ```bash
@@ -209,12 +128,14 @@ dcmaidbot/
 2. Pick a PRP from PRPs/*.md
 3. Implement according to DOR/DOD
 4. Write unit tests (pytest)
-5. Write one e2e test
-6. Update PRP progress with comments
+5. Write at least one e2e test check with llm as a judge
+6. Update PRP progress with comment and signal
 7. Run lint/typecheck/tests
-8. Mark PRP as complete
+8. **Follow Pre-Release Checklist** (see 🚀 Pre-Release & Post-Release Checklist)
 9. **If PR creates related PRs (e.g., GitOps): Comment with links**
-10. Move to next PRP
+10. **Follow Post-Release Checklist** after merge
+11. Mark PRP as complete ONLY if DoD fully met
+12. Move to next PRP (or continue with new PR if PRP incomplete)
 
 Each PRP/*.md contains:
 - Description
@@ -470,38 +391,42 @@ This is MANDATORY. This is NON-NEGOTIABLE. This is the ONLY way to work.
    - Run tests: `pytest tests/ -v`
    - **Update PRP with progress**:
      - ✅ Mark completed tasks
-     - 🔄 Note in-progress work
+     - 🔄 Note in-progress work with signal
      - 🔍 Flag research needs
      - 🚧 Document blockers
      - 🧪 Note testing requirements
    - Commit changes with clear message
-3. **Leave emotional progress comments** in PRP (see Emotional Intelligence section)
+3. **Leave emotional progress comments** in PRP (see Signals)
 4. **If stuck or need help**: Use `/nudge` endpoint to request user input (async)
 
 ### Phase 3: PR Creation & Review Cycle
 
 **MANDATORY: DO NOT skip any steps**
 
+**Follow the 🚀 Pre-Release Checklist (see dedicated section below)**
+
+Summary of key steps:
+
 1. **Before creating PR:**
+   - ✅ Run local E2E tests with LLM judge
    - ✅ All tests pass
    - ✅ Linting clean
    - ✅ Type checking passes
    - ✅ CHANGELOG.md updated
+   - ✅ Landing page widget updated (if applicable)
    - ✅ All DOD criteria met
-   - ✅ PRP updated with final status
+   - ✅ PRP results documented with `[pr]` signal
 
 2. **Create PR** with complete description (see Code Review Process)
 
 3. **Wait for CI checks** - DO NOT proceed until green
 
-4. **Update CHANGELOG.md if needed** during review
-
-5. **Monitor for review comments** from:
+4. **Monitor for review comments** from:
    - Human reviewers
    - Bot code reviewers (CodeRabbit, etc.)
    - CI/CD feedback
 
-6. **Execute ALL review comments:**
+5. **Execute ALL review comments:**
    - **FIX problems, DON'T paper over them**
    - Address every nitpick professionally
    - If architecture recommendations found:
@@ -511,35 +436,51 @@ This is MANDATORY. This is NON-NEGOTIABLE. This is the ONLY way to work.
    - Commit each fix separately
    - Respond to each comment with what was done
 
-7. **Re-run CI after changes** - ensure green
+6. **Re-run CI after changes** - ensure green
 
-8. **Wait for approval** - be patient, professional
+7. **Update version number, write changelog and update landing page with new story**
+
+8. **Final pre-merge signal:**
+   - Leave to PRP comment with `[PR]` signal and commit it as last commit in PR, wait until CI passed
+   - Example: `[PR] All checks passed, all reviews resolved. Merge.`
+
+9. **Merge (squash)** - ONLY after step 7 complete
 
 ### Phase 4: Merge & Deployment Monitoring
 
-1. **After approval: Merge PR**
+**Follow the 🏁 Post-Release Checklist (see dedicated section below)**
 
-2. **Immediately start monitoring deployment:**
-   - Watch GitHub Actions workflow
-   - Monitor ArgoCD sync status
+Summary of key steps:
+
+1. **After approval: Merge PR (squash)**
+
+2. **Monitor GitHub Deploy Job:**
+   - Watch GitHub Actions workflow: `gh run watch <run-id>`
+   - Monitor for errors in deploy.yml workflow
+   - Check Docker image build and push
+   - Verify GitHub Release creation
+
+3. **Monitor Kubernetes Deployment:**
    - Use `kubectl get pods -n prod-core -l app=dcmaidbot -w`
+   - Wait for new pods to reach Running state
    - Check pod logs if issues occur
+   - Verify no CrashLoopBackOff errors
 
-3. **Verify deployment successful:**
-   - Pods running
-   - New version deployed
-   - No CrashLoopBackOff errors
-
-4. **Test deployed feature:**
-   - Use manual testing (curl, Telegram, etc.)
+4. **Validate in Production:**
+   - Test deployed feature (curl to https://dcmaidbot.theedgestory.org/call with manual checks)
    - If PRP requires: Use chrome-mcp or playwright-mcp for browser testing
-   - Document test results in PRP
+   - Verify feature works as expected including llm as a judge check in production
+   - Check logs for errors or warnings
 
-5. **Update PRP with deployment status:**
-   - ✅ Deployed successfully
-   - 🧪 Test results
-   - 📊 Links to logs/metrics
-   - Any follow-up items
+5. **Post-Release Signal:**
+   - Add to PRP comment with signal `[Do]`
+   - Include: Production test results, links to logs/metrics
+
+6. **PRP Completion Check:**
+   - Review PRP Definition of Done (DoD)
+   - **If ALL DoD met:** Mark PRP complete ✅, celebrate! 🎉
+   - **If goal NOT achieved:** Create new branch, start new PR with continuation
+   - Start working in the new branch with next PRP or PR in this PR. latest result of production check will be commited right with the next PR.
 
 ### Phase 5: Infrastructure Problems (if any)
 
@@ -586,6 +527,135 @@ This is MANDATORY. This is NON-NEGOTIABLE. This is the ONLY way to work.
 4. Repeat from Phase 1
 
 **This continues until ALL PRPs are implemented, tested, and deployed.**
+
+## 🚀 Pre-Release & Post-Release Checklist (MANDATORY)
+
+**This checklist is MANDATORY for EVERY PR. NO exceptions.**
+
+### 📋 Pre-Release Checklist
+
+**Complete ALL items before merge:**
+
+1. **Local E2E Testing with LLM Judge**
+   - Run full E2E test suite locally: `pytest tests/e2e/ -v --llm-judge`
+   - LLM analyzes test results and provides quality assessment
+   - Document test results in PRP with signal: `[E2E-TESTED]`
+   - Include: Pass/fail counts, LLM judge feedback, edge cases found
+
+2. **CHANGELOG.md Update**
+   - Update `[Unreleased]` section with new version notes
+   - Follow [Keep a Changelog](https://keepachangelog.com/) format
+   - Include: Added, Changed, Fixed, Removed, Security sections
+   - Be specific about user-facing changes
+
+3. **Landing Page Widget Update**
+   - Add update notes to landing page widget
+   - Generate story with image for the update
+   - Use AI image generation for visual appeal
+   - Story should: Explain feature, show benefits, be engaging
+   - Commit landing page changes separately
+
+4. **PR Ready Signal**
+   - Commit all changes with message including `[PR]` signal
+   - This signals PR is ready for review
+   - Example: `[PR] PRP-005 Phase 2 - Agentic Tools Integration`
+
+5. **CI Checks**
+   - Wait for ALL CI checks to pass
+   - DO NOT proceed until all checks are green
+   - If checks fail: Fix immediately and re-run
+
+6. **Review Comments Resolution**
+   - Address EVERY review comment (human and bot)
+   - Resolve ALL nitpicks professionally
+   - Commit each fix separately with clear messages
+   - Respond to each comment explaining what was done
+   - Request re-review after changes
+
+7. **Final Pre-Merge Signal**
+   - After all checks pass and reviews approved
+   - Leave comment with `[PR]` signal on latest commit
+   - This is the FINAL signal before merge
+   - Example comment: `[PR] All checks passed, all reviews resolved. Ready to merge.`
+
+8. **Merge (Squash)**
+   - **ONLY NOW** merge PR using squash merge
+   - Update commit message if needed
+   - DO NOT merge until step 7 is complete
+
+### 🏁 Post-Release Checklist
+
+**Complete ALL items after merge:**
+
+1. **GitHub Deploy Job Monitoring**
+   - Watch GitHub Actions workflow: `gh run watch <run-id>`
+   - Monitor for errors in deploy.yml workflow
+   - Check Docker image build and push
+   - Verify GitHub Release creation
+
+2. **Kubernetes Deployment Monitoring**
+   - Watch pod rollout: `kubectl get pods -n prod-core -l app=dcmaidbot -w`
+   - Wait for new pods to reach Running state
+   - Check pod logs: `kubectl logs -n prod-core -l app=dcmaidbot --tail=100`
+   - Verify no CrashLoopBackOff errors
+
+3. **Production Validation**
+   - Test deployed feature in production
+   - Use manual testing (Telegram, curl, etc.)
+   - Verify feature works as expected
+   - Check logs for errors or warnings
+
+4. **Post-Release Signal**
+   - Update PR with comment: `[POST-RELEASE-VALIDATED]`
+   - Include: Production test results, links to logs/metrics
+   - Example: `[POST-RELEASE-VALIDATED] Feature tested in production, all working correctly. Logs: <link>`
+
+5. **PRP Completion Check**
+   - Review PRP Definition of Done (DoD)
+   - **If ALL DoD criteria met:**
+     - Mark PRP as complete with ✅
+     - Update PRP with final PR link and validation notes
+     - Leave celebratory comment in PRP! 🎉
+     - Add system-analyst confirmation that goal is achieved
+
+   - **If goal NOT achieved:**
+     - Document what's missing in PRP
+     - Create new branch from main: `git checkout -b prp-XXX-phase-Y`
+     - Start new PR with continuation work
+     - Reference previous PR and post-release notes
+     - DO NOT mark PRP as complete yet
+
+6. **Next Steps**
+   - If PRP complete: Select next highest priority PRP
+   - If PRP incomplete: Continue with next PR for same PRP
+   - Update project board/tracking
+   - Celebrate progress! 🎉
+
+### 🔔 Signal Reference
+
+Use these signals in commits and comments:
+
+- **`[E2E-TESTED]`** - Local E2E tests passed with LLM judge approval
+- **`[PR]`** - PR ready for review (in commit message)
+- **`[PR]`** - Final signal before merge (in comment on latest commit)
+- **`[POST-RELEASE-VALIDATED]`** - Production validation complete
+- **`[PRP-COMPLETE]`** - PRP Definition of Done fully met
+
+### ⚠️ Enforcement
+
+- PRs without `[E2E-TESTED]` signal will be rejected
+- PRs without CHANGELOG updates will be rejected
+- PRs without `[PR]` final signal will not be merged
+- Merges without post-release validation will require rollback
+- Incomplete PRPs must continue with new PRs until DoD met
+
+### 💡 Best Practices
+
+- **Be thorough**: Each step matters for quality
+- **Document everything**: Future you will thank present you
+- **Celebrate wins**: Mark milestones with positive comments
+- **Iterate quickly**: If PRP not complete, start next PR same day
+- **Learn from production**: Production issues inform next iteration
 
 ## 😊 Emotional Intelligence & Progress Communication
 
