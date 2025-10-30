@@ -31,3 +31,6 @@ apscheduler>=3.10.0
 # E2E Testing with User Client (PRP-013)
 pyrogram[fast]>=2.0.0
 tgcrypto>=1.2.0
+
+# Web Search (PRP-005)
+duckduckgo-search>=6.0.0

@@ -115,6 +115,7 @@ Be strict but fair. The bot should clearly meet the criteria."""
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 @pytest.mark.slow
 async def test_bot_creates_enhanced_links_with_real_llm_strength(
@@ -212,6 +213,7 @@ async def test_bot_creates_enhanced_links_with_real_llm_strength(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 @pytest.mark.slow
 async def test_bot_versions_memories_when_info_changes(
@@ -307,6 +309,7 @@ async def test_bot_versions_memories_when_info_changes(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 @pytest.mark.slow
 async def test_bot_compacts_memory_approaching_4000_tokens(
@@ -412,6 +415,7 @@ Respond with JSON:
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 @pytest.mark.slow
 async def test_bot_extracts_vad_emotions_with_real_llm(
@@ -499,6 +503,7 @@ async def test_bot_extracts_vad_emotions_with_real_llm(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 @pytest.mark.slow
 async def test_bot_generates_zettelkasten_attributes_with_llm(
@@ -621,6 +626,7 @@ Respond with JSON:
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 @pytest.mark.slow
 async def test_full_prp005_workflow_end_to_end(

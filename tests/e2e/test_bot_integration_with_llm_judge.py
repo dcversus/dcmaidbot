@@ -139,6 +139,7 @@ Be strict but fair. The bot should clearly meet the criteria."""
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 async def test_bot_remembers_message_history(
     bot_client, setup_test_admin, async_session, llm_judge
@@ -191,6 +192,7 @@ async def test_bot_remembers_message_history(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 async def test_bot_uses_memories_in_response(
     bot_client, setup_test_admin, async_session, llm_judge, test_categories
@@ -250,6 +252,7 @@ async def test_bot_uses_memories_in_response(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 async def test_bot_creates_memories_from_conversation(
     bot_client, setup_test_admin, async_session, llm_judge
@@ -309,6 +312,7 @@ async def test_bot_creates_memories_from_conversation(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 async def test_bot_uses_vad_emotions_in_context(
     bot_client, setup_test_admin, async_session, llm_judge, test_categories
@@ -373,6 +377,7 @@ async def test_bot_uses_vad_emotions_in_context(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.requires_openai
 async def test_bot_responds_without_telegram(bot_client, setup_test_admin):
     """Basic test: Verify /call endpoint works without Telegram.
 
