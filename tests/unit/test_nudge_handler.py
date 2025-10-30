@@ -25,32 +25,114 @@ def mock_request():
 
 
 @pytest.mark.asyncio
-async def test_nudge_handler_success(mock_request, mock_env_secret):
-    """Test successful nudge request."""
+async def test_nudge_handler_direct_mode_success(mock_request, mock_env_secret):
+    """Test successful nudge request in direct mode."""
     mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
     mock_request.json = AsyncMock(
         return_value={
-            "user_ids": [123456],
-            "message": "Test nudge message",
-            "urgency": "medium",
+            "message": "Test **direct** message with [markdown](https://example.com)",
+            "type": "direct",
         }
     )
 
-    mock_external_response = {"status": "sent", "message_id": "msg_123"}
+    mock_result = {
+        "success": True,
+        "mode": "direct",
+        "sent_count": 2,
+        "failed_count": 0,
+        "results": [
+            {"user_id": 123, "message_id": 456, "status": "success"},
+            {"user_id": 789, "message_id": 101, "status": "success"},
+        ],
+        "errors": None,
+    }
 
-    with patch(
-        "handlers.nudge.nudge_service.forward_nudge",
-        new_callable=AsyncMock,
-        return_value=mock_external_response,
-    ):
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
         assert response.status == 200
         response_data = json.loads(response.body)
         assert response_data["status"] == "success"
-        assert "Nudge forwarded" in response_data["message"]
-        assert response_data["user_ids"] == [123456]
-        assert response_data["external_response"] == mock_external_response
+        assert "Message sent via direct mode" in response_data["message"]
+        assert response_data["result"] == mock_result
+
+
+@pytest.mark.asyncio
+async def test_nudge_handler_llm_mode_success(mock_request, mock_env_secret):
+    """Test successful nudge request in llm mode."""
+    mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
+    mock_request.json = AsyncMock(
+        return_value={
+            "message": "Hey! Phase 2 is complete! All tests passing! Nya~",
+            "type": "llm",
+        }
+    )
+
+    mock_result = {
+        "success": True,
+        "mode": "llm",
+        "sent_count": 1,
+        "failed_count": 0,
+        "results": [
+            {
+                "user_id": 123,
+                "message_id": 456,
+                "llm_response": "Nya~ Masters! Phase 2 is done! 🎉",
+                "status": "success",
+            },
+        ],
+        "errors": None,
+    }
+
+    mock_service = MagicMock()
+    mock_service.send_via_llm = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
+        response = await nudge_handler(mock_request)
+
+        assert response.status == 200
+        response_data = json.loads(response.body)
+        assert response_data["status"] == "success"
+        assert "Message sent via llm mode" in response_data["message"]
+        assert response_data["result"] == mock_result
+
+
+@pytest.mark.asyncio
+async def test_nudge_handler_with_specific_user_id(mock_request, mock_env_secret):
+    """Test handler sends to specific user_id when provided."""
+    mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
+    mock_request.json = AsyncMock(
+        return_value={
+            "message": "Test message to specific user",
+            "type": "direct",
+            "user_id": 99999,
+        }
+    )
+
+    mock_result = {
+        "success": True,
+        "mode": "direct",
+        "sent_count": 1,
+        "failed_count": 0,
+        "results": [{"user_id": 99999, "message_id": 111, "status": "success"}],
+        "errors": None,
+    }
+
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
+        response = await nudge_handler(mock_request)
+
+        assert response.status == 200
+        # Verify send_direct was called with user_id
+        mock_service.send_direct.assert_called_once_with(
+            message="Test message to specific user",
+            user_id=99999,
+        )
 
 
 @pytest.mark.asyncio
@@ -121,50 +203,12 @@ async def test_nudge_handler_invalid_json(mock_request, mock_env_secret):
 
 
 @pytest.mark.asyncio
-async def test_nudge_handler_missing_user_ids(mock_request, mock_env_secret):
-    """Test handler returns 400 when user_ids missing."""
-    mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
-    mock_request.json = AsyncMock(
-        return_value={
-            "message": "Test message",
-            # user_ids missing
-        }
-    )
-
-    response = await nudge_handler(mock_request)
-
-    assert response.status == 400
-    response_data = json.loads(response.body)
-    assert response_data["status"] == "error"
-    assert "user_ids" in response_data["error"]
-
-
-@pytest.mark.asyncio
-async def test_nudge_handler_invalid_user_ids_type(mock_request, mock_env_secret):
-    """Test handler returns 400 when user_ids is not a list."""
-    mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
-    mock_request.json = AsyncMock(
-        return_value={
-            "user_ids": "not_a_list",  # Should be list
-            "message": "Test message",
-        }
-    )
-
-    response = await nudge_handler(mock_request)
-
-    assert response.status == 400
-    response_data = json.loads(response.body)
-    assert response_data["status"] == "error"
-    assert "user_ids" in response_data["error"]
-
-
-@pytest.mark.asyncio
 async def test_nudge_handler_missing_message(mock_request, mock_env_secret):
     """Test handler returns 400 when message missing."""
     mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
     mock_request.json = AsyncMock(
         return_value={
-            "user_ids": [123],
+            "type": "direct",
             # message missing
         }
     )
@@ -183,8 +227,8 @@ async def test_nudge_handler_invalid_message_type(mock_request, mock_env_secret)
     mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
     mock_request.json = AsyncMock(
         return_value={
-            "user_ids": [123],
             "message": 12345,  # Should be string
+            "type": "direct",
         }
     )
 
@@ -197,89 +241,121 @@ async def test_nudge_handler_invalid_message_type(mock_request, mock_env_secret)
 
 
 @pytest.mark.asyncio
-async def test_nudge_handler_with_optional_params(mock_request, mock_env_secret):
-    """Test handler accepts and forwards optional parameters."""
+async def test_nudge_handler_missing_type(mock_request, mock_env_secret):
+    """Test handler returns 400 when type missing."""
     mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
     mock_request.json = AsyncMock(
         return_value={
-            "user_ids": [111, 222],
-            "message": "Complex nudge",
-            "pr_url": "https://github.com/test/pr/99",
-            "prp_file": "PRPs/PRP-014.md",
-            "prp_section": "#testing",
-            "urgency": "high",
+            "message": "Test message",
+            # type missing
         }
     )
 
-    mock_external_response = {"status": "sent"}
+    response = await nudge_handler(mock_request)
 
-    with patch(
-        "handlers.nudge.nudge_service.forward_nudge",
-        new_callable=AsyncMock,
-        return_value=mock_external_response,
-    ) as mock_forward:
-        response = await nudge_handler(mock_request)
+    assert response.status == 400
+    response_data = json.loads(response.body)
+    assert response_data["status"] == "error"
+    assert "type" in response_data["error"]
 
-        assert response.status == 200
 
-        # Verify forward_nudge was called with all parameters
-        mock_forward.assert_called_once_with(
-            user_ids=[111, 222],
-            message="Complex nudge",
-            pr_url="https://github.com/test/pr/99",
-            prp_file="PRPs/PRP-014.md",
-            prp_section="#testing",
-            urgency="high",
-        )
+@pytest.mark.asyncio
+async def test_nudge_handler_invalid_type_value(mock_request, mock_env_secret):
+    """Test handler returns 400 when type is not 'direct' or 'llm'."""
+    mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
+    mock_request.json = AsyncMock(
+        return_value={
+            "message": "Test message",
+            "type": "invalid_type",  # Should be 'direct' or 'llm'
+        }
+    )
+
+    response = await nudge_handler(mock_request)
+
+    assert response.status == 400
+    response_data = json.loads(response.body)
+    assert response_data["status"] == "error"
+    assert "type" in response_data["error"]
+
+
+@pytest.mark.asyncio
+async def test_nudge_handler_invalid_user_id_type(mock_request, mock_env_secret):
+    """Test handler returns 400 when user_id is not an integer."""
+    mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
+    mock_request.json = AsyncMock(
+        return_value={
+            "message": "Test message",
+            "type": "direct",
+            "user_id": "not_an_integer",  # Should be int
+        }
+    )
+
+    response = await nudge_handler(mock_request)
+
+    assert response.status == 400
+    response_data = json.loads(response.body)
+    assert response_data["status"] == "error"
+    assert "user_id" in response_data["error"]
 
 
 @pytest.mark.asyncio
 async def test_nudge_handler_service_error(mock_request, mock_env_secret):
-    """Test handler returns 502 when service throws error."""
+    """Test handler returns 500 when service throws error."""
     mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
     mock_request.json = AsyncMock(
         return_value={
-            "user_ids": [123],
             "message": "Test",
+            "type": "direct",
         }
     )
 
-    with patch(
-        "handlers.nudge.nudge_service.forward_nudge",
-        new_callable=AsyncMock,
-        side_effect=Exception("External service unreachable"),
-    ):
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(side_effect=Exception("Bot token invalid"))
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
-        assert response.status == 502
+        assert response.status == 500
         response_data = json.loads(response.body)
         assert response_data["status"] == "error"
-        assert "Failed to forward nudge" in response_data["error"]
+        assert "Failed to send message" in response_data["error"]
 
 
 @pytest.mark.asyncio
-async def test_nudge_handler_default_urgency(mock_request, mock_env_secret):
-    """Test handler uses default urgency value when not provided."""
+async def test_nudge_handler_markdown_message(mock_request, mock_env_secret):
+    """Test handler accepts and forwards markdown-formatted messages."""
+    markdown_message = (
+        "🎉 **PRP-005 Complete!**\n\n"
+        "[View PR #15](https://github.com/dcversus/dcmaidbot/pull/15)\n\n"
+        "All tests passing, ready for review! nya~"
+    )
+
     mock_request.headers = {"Authorization": "Bearer test_nudge_secret"}
     mock_request.json = AsyncMock(
         return_value={
-            "user_ids": [123],
-            "message": "Test without urgency",
-            # urgency not provided
+            "message": markdown_message,
+            "type": "direct",
         }
     )
 
-    mock_external_response = {"status": "sent"}
+    mock_result = {
+        "success": True,
+        "mode": "direct",
+        "sent_count": 1,
+        "failed_count": 0,
+        "results": [{"user_id": 123, "message_id": 456, "status": "success"}],
+        "errors": None,
+    }
 
-    with patch(
-        "handlers.nudge.nudge_service.forward_nudge",
-        new_callable=AsyncMock,
-        return_value=mock_external_response,
-    ) as mock_forward:
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
         assert response.status == 200
-
-        # Verify default urgency was used
-        call_kwargs = mock_forward.call_args.kwargs
-        assert call_kwargs["urgency"] == "medium"
+        # Verify markdown message was passed correctly
+        mock_service.send_direct.assert_called_once_with(
+            message=markdown_message,
+            user_id=None,
+        )
