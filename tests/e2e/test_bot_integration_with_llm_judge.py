@@ -243,9 +243,9 @@ async def test_bot_uses_memories_in_response(
     print(f"  Score: {judgment['score']}")
     print(f"  Reasoning: {judgment['reasoning']}")
 
-    assert judgment["passes"] is True, (
-        f"Bot failed to use stored memory. Judge reasoning: {judgment['reasoning']}"
-    )
+    assert (
+        judgment["passes"] is True
+    ), f"Bot failed to use stored memory. Judge reasoning: {judgment['reasoning']}"
     assert judgment["score"] >= 0.7, "Judge confidence too low"
 
 
@@ -373,6 +373,7 @@ async def test_bot_uses_vad_emotions_in_context(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.requires_openai
 async def test_bot_responds_without_telegram(bot_client, setup_test_admin):
     """Basic test: Verify /call endpoint works without Telegram.
 

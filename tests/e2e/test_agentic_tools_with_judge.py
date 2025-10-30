@@ -34,7 +34,18 @@ async def bot_client():
 
 @pytest.fixture
 async def setup_test_admin(async_session):
-    """Create test admin user in database."""
+    """Create or get test admin user in database."""
+    from sqlalchemy import select
+
+    # Check if user already exists
+    stmt = select(User).where(User.telegram_id == TEST_ADMIN_ID)
+    result = await async_session.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if user:
+        return user
+
+    # Create new user
     user = User(
         telegram_id=TEST_ADMIN_ID,
         username="test_admin",
@@ -293,9 +304,9 @@ async def test_all_agentic_tools_with_batch_judge(
             print(f"  Reasoning: {verdict['reasoning']}")
 
     # Assert overall success
-    assert judgment["overall_passes"] is True, (
-        f"Agentic tools test failed. Overall reasoning: {judgment['overall_reasoning']}"
-    )
+    assert (
+        judgment["overall_passes"] is True
+    ), f"Agentic tools test failed. Overall reasoning: {judgment['overall_reasoning']}"
     assert judgment["overall_score"] >= 0.7, "Judge confidence too low"
 
     print("\n" + "=" * 70)
@@ -363,7 +374,7 @@ Respond with JSON:
     print(f"  Score: {judgment['score']}")
     print(f"  Reasoning: {judgment['reasoning']}")
 
-    assert judgment["passes"] is True, (
-        f"Web search tool not properly used. Judge reasoning: {judgment['reasoning']}"
-    )
+    assert (
+        judgment["passes"] is True
+    ), f"Web search tool not properly used. Judge reasoning: {judgment['reasoning']}"
     assert judgment["score"] >= 0.7, "Judge confidence too low"
