@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Hotfix: /nudge LLM mode parameter bug** 🐛
+  - Fixed incorrect `use_tools` parameter → `tools` in `NudgeService.send_via_llm()`
+  - LLM mode now works correctly with personalized messaging
+  - Direct mode was unaffected (working since v0.3.0)
+
 ### Changed
 - **PRP-014 v0.2.0: Direct Telegram Messaging via /nudge** 🔄
   - **BREAKING**: Removed external endpoint forwarding (dcmaid.theedgestory.org/nudge)
