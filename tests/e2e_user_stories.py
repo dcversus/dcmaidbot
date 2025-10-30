@@ -238,7 +238,7 @@ async def test_waifu_responds_to_messages():
 
         bot = Bot(token=BOT_TOKEN)
         test_msg = (
-            f"🧪 Test: Hello Lilit! How are you? ({datetime.utcnow().isoformat()})"
+            f"🧪 Test: Hello Lilith! How are you? ({datetime.utcnow().isoformat()})"
         )
         msg = await bot.send_message(chat_id=TEST_ADMIN_ID, text=test_msg)
         await bot.session.close()

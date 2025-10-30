@@ -116,7 +116,7 @@ async def test_start_command():
             return False
 
         response = data.get("response", "")
-        if "Welcome" in response or "Lilit" in response:
+        if "Welcome" in response or "Lilith" in response:
             log_test(
                 "US-001: /start command",
                 "PASS",

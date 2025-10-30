@@ -139,7 +139,7 @@ async def handle_command(command: str, user_id: int, is_admin: bool) -> str:
     if command == "/start":
         return (
             "💕 <b>Nya~ Welcome, dear friend!</b>\n\n"
-            "I'm <b>Lilit</b>, your kawaii maid bot! I'm here to chat, "
+            "I'm <b>Lilith</b>, your kawaii maid bot! I'm here to chat, "
             "tell jokes, and spread love! 🎀\n\n"
             "<b>Available commands:</b>\n"
             "• /help - Show all commands\n"
