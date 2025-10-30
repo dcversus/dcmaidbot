@@ -208,10 +208,10 @@ class NudgeService:
                     lessons=lessons,
                     memories=[],
                     message_history=[],
-                    use_tools=False,  # Don't need tools for this
+                    tools=None,  # Don't provide tools for this
                 )
 
-                # Handle tool calls (shouldn't happen with use_tools=False)
+                # Handle tool calls (shouldn't happen with tools=None)
                 final_message = llm_response
                 if hasattr(llm_response, "content"):
                     final_message = llm_response.content
