@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRP-016 Phase 1: Interactive Landing Page Enhancement** 🎵✨
+  - **Phase 1B: Music System** - Complete audio management implementation
+    - AudioManager class with Web Audio API for sound effect playback
+    - Background music support with loop control (30% volume)
+    - Music toggle button (fixed position, top-right corner with pink gradient)
+    - Graceful fallback for browsers without Web Audio API support
+    - Sound placeholder system ready for audio file integration
+  - **Phase 1C: Widget Click Actions** - Interactive widget behaviors
+    - Clock widget: Plays tick-tock sound effect
+    - Version widget: Opens CHANGELOG.md in GitHub
+    - Git Commit widget: Opens specific commit page in GitHub
+    - Uptime widget: Plays funny song snippet
+    - Redis/PostgreSQL widgets: Opens status.theedgestory.org
+    - Bot Status widget: Opens @dcmaidbot Telegram chat
+    - Cactus widget: Plays funny sound effect
+    - The Edge Story widget: Opens theedgestory.org website
+  - **Phase 1D: Widget Hover States** - Enhanced visual feedback
+    - Improved hover transform: translateY(-8px) + scale(1.02)
+    - Pink gradient glow effect on hover (blur + opacity fade)
+    - Pulsing radial gradient animation (2s cycle)
+    - Hover sound effects (30% volume)
+    - Enhanced shadow effects on widget hover
+  - Future-ready audio system with placeholder paths:
+    - `/static/audio/bgm-lofi-anime.mp3` (background music)
+    - `/static/audio/hover.mp3` (widget hover sound)
+    - `/static/audio/click.mp3` (button click sound)
+    - `/static/audio/tick-tock-loop.mp3` (clock sound)
+    - `/static/audio/funny-song.mp3` (cactus & uptime sound)
 - **PRP-017: Role-Based Access Control & Admin Lesson Tools** 🔐
   - Created `tools/lesson_tools.py` with 4 admin-only lesson management tools
     - `get_all_lessons` - List all lessons with IDs and content

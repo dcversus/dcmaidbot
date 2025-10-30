@@ -321,8 +321,8 @@
         }
 
         .widget:hover {
-            transform: translateY(-4px) rotate(1deg);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-lg), 0 0 30px rgba(255, 105, 180, 0.4);
             border-color: var(--pink-main);
         }
 
@@ -333,13 +333,41 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255, 182, 217, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 182, 217, 0.2) 0%, transparent 70%);
             opacity: 0;
             transition: opacity 0.3s ease;
+            pointer-events: none;
         }
 
         .widget:hover::before {
             opacity: 1;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Widget Glow Effect on Hover */
+        .widget::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            background: linear-gradient(45deg, var(--pink-main), var(--pink-dark), var(--purple-main));
+            border-radius: inherit;
+            opacity: 0;
+            z-index: -1;
+            filter: blur(20px);
+            transition: opacity 0.3s ease;
+        }
+
+        .widget:hover::after {
+            opacity: 0.5;
         }
 
         /* Widget Sizes */
@@ -1360,6 +1388,215 @@
         }
 
         // ============================================
+        //  AUDIO MANAGER (Phase 1B)
+        // ============================================
+
+        class AudioManager {
+            constructor() {
+                this.context = null;
+                this.sounds = {};
+                this.music = null;
+                this.musicEnabled = false;
+                this.initialized = false;
+            }
+
+            async init() {
+                if (this.initialized) return;
+
+                try {
+                    this.context = new (window.AudioContext || window.webkitAudioContext)();
+                    this.initialized = true;
+                    console.log('AudioManager initialized');
+                } catch (error) {
+                    console.warn('Web Audio API not supported:', error);
+                }
+            }
+
+            async loadSound(name, url) {
+                if (!this.initialized) await this.init();
+                if (!this.context) return;
+
+                try {
+                    const response = await fetch(url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
+                    this.sounds[name] = audioBuffer;
+                    console.log(`Sound loaded: ${name}`);
+                } catch (error) {
+                    console.warn(`Failed to load sound ${name}:`, error);
+                }
+            }
+
+            playSound(name, volume = 1.0) {
+                if (!this.initialized || !this.context || !this.sounds[name]) {
+                    console.warn(`Sound ${name} not available`);
+                    return;
+                }
+
+                try {
+                    const source = this.context.createBufferSource();
+                    const gainNode = this.context.createGain();
+
+                    source.buffer = this.sounds[name];
+                    gainNode.gain.value = volume;
+
+                    source.connect(gainNode);
+                    gainNode.connect(this.context.destination);
+                    source.start(0);
+                } catch (error) {
+                    console.warn(`Failed to play sound ${name}:`, error);
+                }
+            }
+
+            async playMusic(url, loop = true) {
+                if (!this.initialized) await this.init();
+
+                try {
+                    this.stopMusic();
+                    const audio = new Audio(url);
+                    audio.loop = loop;
+                    audio.volume = 0.3;
+                    this.music = audio;
+                    await audio.play();
+                    this.musicEnabled = true;
+                    console.log('Music playing');
+                } catch (error) {
+                    console.warn('Failed to play music:', error);
+                }
+            }
+
+            stopMusic() {
+                if (this.music) {
+                    this.music.pause();
+                    this.music = null;
+                    this.musicEnabled = false;
+                    console.log('Music stopped');
+                }
+            }
+
+            toggleMusic() {
+                if (this.musicEnabled) {
+                    this.stopMusic();
+                } else {
+                    this.playMusic('/static/audio/bgm-lofi-anime.mp3');
+                }
+            }
+        }
+
+        const audioManager = new AudioManager();
+
+        // ============================================
+        //  WIDGET CLICK ACTIONS (Phase 1C)
+        // ============================================
+
+        const widgetActions = {
+            'clock': () => {
+                audioManager.playSound('tick-tock-loop');
+                console.log('Clock clicked - playing tick-tock');
+            },
+            'version': () => {
+                window.open('https://github.com/dcversus/dcmaidbot/blob/main/CHANGELOG.md', '_blank');
+                audioManager.playSound('click');
+            },
+            'commit': () => {
+                const commitValue = document.getElementById('commitValue')?.textContent;
+                if (commitValue && commitValue !== 'Loading...') {
+                    window.open(`https://github.com/dcversus/dcmaidbot/commit/${commitValue}`, '_blank');
+                    audioManager.playSound('click');
+                }
+            },
+            'uptime': () => {
+                audioManager.playSound('funny-song');
+                console.log('Uptime clicked - playing funny song');
+            },
+            'redis': () => {
+                window.open('https://status.theedgestory.org', '_blank');
+                audioManager.playSound('click');
+            },
+            'postgresql': () => {
+                window.open('https://status.theedgestory.org', '_blank');
+                audioManager.playSound('click');
+            },
+            'bot': () => {
+                window.open('https://t.me/dcmaidbot', '_blank');
+                audioManager.playSound('click');
+            },
+            'cactus': () => {
+                audioManager.playSound('funny-song');
+                console.log('Cactus clicked - playing funny song');
+            },
+            'theedgestory': () => {
+                window.open('https://theedgestory.org', '_blank');
+                audioManager.playSound('click');
+            }
+        };
+
+        function setupWidgetActions() {
+            document.querySelectorAll('.widget').forEach(widget => {
+                const widgetId = widget.id.replace('widget-', '');
+
+                // Skip changelog widgets (they have their own click handlers)
+                if (widgetId.startsWith('changelog-')) return;
+
+                widget.addEventListener('click', () => {
+                    if (widgetActions[widgetId]) {
+                        widgetActions[widgetId]();
+                    }
+                });
+
+                // Add hover sound effect (Phase 1D)
+                widget.addEventListener('mouseenter', () => {
+                    audioManager.playSound('hover', 0.3);
+                });
+            });
+        }
+
+        // ============================================
+        //  MUSIC TOGGLE BUTTON
+        // ============================================
+
+        function createMusicToggle() {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.id = 'musicToggle';
+            toggleBtn.innerHTML = '🎵';
+            toggleBtn.title = 'Toggle Music';
+            toggleBtn.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--pink-main) 0%, var(--pink-dark) 100%);
+                border: none;
+                font-size: 1.8rem;
+                cursor: pointer;
+                box-shadow: var(--shadow-lg);
+                z-index: 9999;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+
+            toggleBtn.addEventListener('click', () => {
+                audioManager.toggleMusic();
+                toggleBtn.innerHTML = audioManager.musicEnabled ? '🎵' : '🔇';
+                toggleBtn.title = audioManager.musicEnabled ? 'Music: ON' : 'Music: OFF';
+            });
+
+            toggleBtn.addEventListener('mouseenter', () => {
+                toggleBtn.style.transform = 'scale(1.1)';
+            });
+
+            toggleBtn.addEventListener('mouseleave', () => {
+                toggleBtn.style.transform = 'scale(1)';
+            });
+
+            document.body.appendChild(toggleBtn);
+        }
+
+        // ============================================
         //  INITIALIZATION
         // ============================================
 
@@ -1374,6 +1611,22 @@
 
             // Show welcome modal for first-time visitors
             showWelcomeModal();
+
+            // Initialize audio system on user interaction
+            document.addEventListener('click', async () => {
+                if (!audioManager.initialized) {
+                    await audioManager.init();
+                    // Preload sound effects (placeholder paths)
+                    // TODO: Add actual sound files to /static/audio/
+                    console.log('Audio system initialized on first click');
+                }
+            }, { once: true });
+
+            // Setup widget actions (Phase 1C)
+            setupWidgetActions();
+
+            // Create music toggle button (Phase 1B)
+            createMusicToggle();
         });
     </script>
 
