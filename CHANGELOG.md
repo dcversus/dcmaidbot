@@ -8,7 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **PRP-005 Integration: Memory and Message History in Bot Responses** 🎉
+- **PRP-005 Phase 2: Agentic Tools Integration** 🤖🎊
+  - Bot is now FULLY AGENTIC - can autonomously use tools!
+  - `tools/memory_tools.py`: Memory management tools (create_memory, search_memories, get_memory)
+  - `tools/web_search_tools.py`: Web search tool using DuckDuckGo (no API key needed)
+  - `tools/tool_executor.py`: Tool execution engine with automatic VAD + Zettelkasten extraction
+  - Bot autonomously creates memories when users share important information
+  - Bot searches memories to recall past conversations
+  - Bot searches web for current information
+  - `services/llm_service.py`: Tool support with OpenAI function calling
+  - `handlers/waifu.py` and `handlers/call.py`: Process tool calls from LLM
+  - `tests/e2e/test_agentic_tools_with_judge.py`: Comprehensive E2E test with batch LLM judge
+  - Automatic importance scoring, VAD emotion extraction, Zettelkasten attributes on memory creation
+- **PRP-005 Phase 1: Memory and Message History in Bot Responses** 🎉
   - Integrated MemoryService into handlers/waifu.py - bot now fetches relevant memories
   - Integrated MessageService for message history tracking (last 20 messages)
   - Bot stores all incoming/outgoing messages to database for context

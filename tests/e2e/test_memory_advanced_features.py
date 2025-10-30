@@ -27,6 +27,7 @@ def mock_openai():
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 async def test_create_enhanced_link_with_automatic_strength_scoring(
     async_session, test_categories, mock_openai
 ):
@@ -110,6 +111,7 @@ async def test_create_enhanced_link_with_automatic_strength_scoring(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 async def test_create_memory_version(async_session, test_categories):
     """
     E2E Test: create_memory_version() - Memory versioning system.
@@ -159,6 +161,7 @@ async def test_create_memory_version(async_session, test_categories):
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 async def test_compact_memory_when_approaching_token_limit(
     async_session, test_categories, mock_openai
 ):
@@ -210,6 +213,7 @@ async def test_compact_memory_when_approaching_token_limit(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 async def test_calculate_relation_strength_llm_integration(mock_openai):
     """
     E2E Test: calculate_relation_strength() - LLM integration for strength scoring.
@@ -244,6 +248,7 @@ async def test_calculate_relation_strength_llm_integration(mock_openai):
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 async def test_generate_relation_reason_llm_integration(mock_openai):
     """
     E2E Test: generate_relation_reason() - LLM integration for reasoning generation.

@@ -1,5 +1,6 @@
 import os
 import asyncio
+import json
 from aiogram import Router, types, Bot
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
@@ -270,34 +271,83 @@ async def handle_message(message: types.Message):
             is_bot=False,
         )
 
-    # Stream LLM response with typing indicators
+    # Get LLM response with tool support
     try:
         llm_service = get_llm_service()
 
-        # Collect response with streaming
-        response_chunks = []
-        last_typing_time = asyncio.get_event_loop().time()
+        # Import tools for agentic behavior
+        from tools.memory_tools import MEMORY_TOOLS
+        from tools.web_search_tools import WEB_SEARCH_TOOLS
+        from tools.tool_executor import ToolExecutor
 
-        async for chunk in llm_service.get_response_stream(
+        all_tools = MEMORY_TOOLS + WEB_SEARCH_TOOLS
+
+        # Show typing indicator
+        await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+
+        # Get LLM response (may contain tool calls)
+        llm_response = await llm_service.get_response(
             user_message=message.text,
             user_info=user_info,
             chat_info=chat_info,
             lessons=lessons,
             memories=memories,
             message_history=message_history,
-        ):
-            response_chunks.append(chunk)
+            tools=all_tools,
+        )
 
-            # Update typing indicator every 5 seconds during streaming
-            current_time = asyncio.get_event_loop().time()
-            if current_time - last_typing_time >= 5.0:
-                await message.bot.send_chat_action(
-                    chat_id=message.chat.id, action="typing"
-                )
-                last_typing_time = current_time
+        # Check if LLM wants to use tools
+        if hasattr(llm_response, "tool_calls") and llm_response.tool_calls:
+            # Execute each tool call
+            async with AsyncSessionLocal() as tool_session:
+                tool_executor = ToolExecutor(tool_session)
+                tool_results = []
 
-        # Combine chunks
-        response_text = "".join(response_chunks)
+                for tool_call in llm_response.tool_calls:
+                    # Parse tool arguments
+                    try:
+                        arguments = json.loads(tool_call.function.arguments)
+                    except json.JSONDecodeError:
+                        arguments = {}
+
+                    # Execute tool
+                    result = await tool_executor.execute(
+                        tool_name=tool_call.function.name,
+                        arguments=arguments,
+                        user_id=message.from_user.id,
+                    )
+
+                    tool_results.append(
+                        {
+                            "tool_call_id": tool_call.id,
+                            "result": result,
+                        }
+                    )
+
+            # Get final response from LLM after tool execution
+            response_text = await llm_service.get_response_after_tools(
+                user_message=message.text,
+                user_info=user_info,
+                chat_info=chat_info,
+                lessons=lessons,
+                memories=memories,
+                message_history=message_history,
+                tool_calls=[
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                    for tc in llm_response.tool_calls
+                ],
+                tool_results=tool_results,
+            )
+        else:
+            # No tools needed, just use the text response
+            response_text = llm_response
 
         # Send complete response
         await message.reply(response_text, parse_mode="HTML")
