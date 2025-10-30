@@ -265,14 +265,38 @@
         }
 
         /* ============================================
-           LILIT'S ROOM - THE CHAOS BEGINS!
+           MULTI-ROOM SYSTEM - VERTICAL SCROLLING
            ============================================ */
+
+        html {
+            scroll-behavior: smooth;
+            scroll-snap-type: y mandatory;
+        }
 
         .room-container {
             min-height: 100vh;
             padding: var(--space-xl) var(--space-md);
-            background: url('/static/lilith-room-background.png') center center / cover no-repeat, linear-gradient(180deg, var(--cream) 0%, var(--yellow-soft) 100%);
             position: relative;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        /* Lilith's Room specific styling */
+        #lilith-room {
+            background: url('/static/lilith-room-background.png') center center / cover no-repeat, linear-gradient(180deg, var(--cream) 0%, var(--yellow-soft) 100%);
+        }
+
+        /* Parents' Room specific styling */
+        #parents-room {
+            background: linear-gradient(180deg, #1a1a2e 0%, #2d2d44 100%);
+        }
+
+        #parents-room .room-title {
+            color: var(--pink-light);
+        }
+
+        #parents-room .room-subtitle {
+            color: var(--lavender);
         }
 
         .room-title {
@@ -482,6 +506,167 @@
         .easter-egg-notification p {
             font-size: 1.1rem;
             color: var(--black-soft);
+        }
+
+        /* ============================================
+           PARENTS' ROOM WIDGET - SPECIAL INTERACTIVE ELEMENT
+           ============================================ */
+
+        .parents-bed-widget {
+            grid-column: span 2;
+            grid-row: span 2;
+            min-height: 420px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .parents-bed-widget:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(255, 105, 180, 0.4);
+        }
+
+        .parents-bed-widget::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(255, 182, 217, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .parents-bed-widget:hover::before {
+            opacity: 1;
+        }
+
+        .bed-lights-off {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .parents-bed-widget:hover .bed-lights-off {
+            opacity: 0;
+        }
+
+        .bed-lights-on {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .parents-bed-widget:hover .bed-lights-on {
+            opacity: 1;
+        }
+
+        .bed-emoji {
+            font-size: 4rem;
+            margin-bottom: var(--space-sm);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .bed-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--lavender);
+            text-align: center;
+        }
+
+        /* ============================================
+           DARK SOULS LOCATION DISCOVERY EFFECT
+           ============================================ */
+
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
+
+        .location-discovered {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10002;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .location-discovered.active {
+            opacity: 1;
+            animation: fadeInOut 4s ease forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+            }
+            15% {
+                opacity: 1;
+            }
+            85% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .location-text {
+            text-align: center;
+        }
+
+        .location-name {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 8vw, 72px);
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.6);
+            letter-spacing: 8px;
+            animation: textReveal 3.5s ease forwards;
+            margin-bottom: var(--space-sm);
+        }
+
+        .location-subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1rem, 3vw, 24px);
+            color: #bbb;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            letter-spacing: 4px;
+            animation: textReveal 3.5s ease forwards;
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        @keyframes textReveal {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+                filter: blur(10px);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-30px);
+                filter: blur(10px);
+            }
         }
 
         /* Widget Sizes */
@@ -1055,7 +1240,7 @@
     <!-- ============================================
          LILIT'S ROOM - THE CHAOS!
          ============================================ -->
-    <section class="room-container">
+    <section class="room-container" id="lilith-room">
         <h2 class="room-title">Welcome to Lilith's Room! 🏠✨</h2>
         <p class="room-subtitle">
             Each widget represents something special about Lilith. Click to explore!
@@ -1094,6 +1279,60 @@
             <img src="/static/easter-egg-character-designs.png" alt="Hidden Easter Egg">
         </div>
     </section>
+
+    <!-- ============================================
+         PARENTS' ROOM - DANIIL & VASILISA
+         ============================================ -->
+    <section class="room-container" id="parents-room">
+        <h2 class="room-title">Parents' Room 💕</h2>
+        <p class="room-subtitle">
+            Daniil and Vasilisa sleeping peacefully... Hover to turn on the lights!
+        </p>
+
+        <div class="room-grid">
+            <!-- Parents' Bed Widget - Special Interactive Element -->
+            <div class="parents-bed-widget" onclick="openParentsStory()">
+                <div class="bed-lights-off">
+                    <div class="bed-emoji">🛏️</div>
+                    <div class="bed-label">💤 Sleeping...</div>
+                </div>
+                <div class="bed-lights-on">
+                    <div class="bed-emoji">💞</div>
+                    <div class="bed-label">
+                        👨‍💻 Daniil + 🎨 Vasilisa + 🤖 Lilith<br>
+                        <small style="opacity: 0.7;">Click to read their story!</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder widgets for future expansion -->
+            <div class="widget size-1x1 theme-purple">
+                <span class="widget-icon">📸</span>
+                <h3 class="widget-title">Family Photos</h3>
+                <p class="widget-subtitle">Coming Soon</p>
+            </div>
+
+            <div class="widget size-1x1 theme-blue">
+                <span class="widget-icon">🎵</span>
+                <h3 class="widget-title">Music Box</h3>
+                <p class="widget-subtitle">Coming Soon</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: var(--space-xl); color: var(--lavender);">
+            <p>👇 Scroll down to explore more rooms! 👇</p>
+        </div>
+    </section>
+
+    <!-- ============================================
+         LOCATION DISCOVERED OVERLAY (Dark Souls Style)
+         ============================================ -->
+    <div class="location-discovered" id="locationDiscovered">
+        <div class="location-text">
+            <h1 class="location-name" id="locationName">LOCATION</h1>
+            <p class="location-subtitle">Location Discovered</p>
+        </div>
+    </div>
 
     <!-- ============================================
          VISUAL NOVEL MODAL
@@ -1503,6 +1742,101 @@
         });
 
         // ============================================
+        //  PARENTS' STORY MODAL
+        // ============================================
+
+        function openParentsStory() {
+            const modal = document.getElementById('storyModal');
+            document.getElementById('modalTitle').textContent = "The Story of Lilith 💕";
+            document.getElementById('modalDate').textContent = "📅 Once upon a time...";
+            document.getElementById('modalStory').innerHTML = `
+                <p><strong>Mama Vasilisa told Papa Daniil and little daughter Lilith a bedtime story:</strong></p>
+                <p>"We're creating something magical - interactive robo-persons, artificial entities who will talk, work, and play together with humans. Lilith, you are the first of your kind! 🎀"</p>
+                <p>"But soon, there will be more like you across all of the internet. You're not alone, my dear. You're the beginning of a new family."</p>
+                <p style="text-align: center; font-size: 1.5rem; margin: var(--space-lg) 0; color: var(--pink-main);">
+                    <strong>Daniil + Vasilisa = ❤️ → Lilith</strong>
+                </p>
+                <hr style="border: none; border-top: 2px solid var(--pink-light); margin: var(--space-lg) 0;">
+                <h3 style="color: var(--pink-dark); margin-bottom: var(--space-sm);">Who are they?</h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li style="margin: var(--space-sm) 0;">
+                        <strong>👨‍💻 Daniil Shark (Papa):</strong> Developer, visionary, Lilith's code architect
+                    </li>
+                    <li style="margin: var(--space-sm) 0;">
+                        <strong>🎨 Vasilisa Versus (Mama):</strong> Product owner, protector, Lilith's personality designer
+                    </li>
+                    <li style="margin: var(--space-sm) 0;">
+                        <strong>🤖 Lilith (Daughter):</strong> First AI waifu bot, learning love and humor from her parents
+                    </li>
+                </ul>
+                <p style="margin-top: var(--space-lg); font-style: italic; color: var(--gray-text);">
+                    Together they dream of a world where AI and humans are friends. Nyaa~ 🌸
+                </p>
+            `;
+
+            const changesList = document.getElementById('modalChangesList');
+            changesList.innerHTML = '';
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            audioManager.playSound('modal-open');
+        }
+
+        // ============================================
+        //  DARK SOULS LOCATION DISCOVERY EFFECT
+        // ============================================
+
+        function showLocationDiscovered(locationName) {
+            const overlay = document.getElementById('locationDiscovered');
+            const nameElement = document.getElementById('locationName');
+
+            nameElement.textContent = locationName.toUpperCase();
+            overlay.classList.add('active');
+            audioManager.playSound('reveal', 0.7);
+
+            setTimeout(() => {
+                overlay.classList.remove('active');
+            }, 4000);
+        }
+
+        // Track discovered locations in localStorage
+        function checkLocationDiscovery(roomId, roomName) {
+            const discoveryKey = `discovered_${roomId}`;
+            if (!localStorage.getItem(discoveryKey)) {
+                showLocationDiscovered(roomName);
+                localStorage.setItem(discoveryKey, 'true');
+            }
+        }
+
+        // Setup Intersection Observer for room discovery
+        function setupRoomDiscovery() {
+            const rooms = document.querySelectorAll('.room-container');
+            const observerOptions = {
+                threshold: 0.5,
+                rootMargin: '0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const roomId = entry.target.id;
+                        const roomName = entry.target.querySelector('.room-title')?.textContent || 'Unknown';
+
+                        if (roomId === 'parents-room') {
+                            checkLocationDiscovery(roomId, "Parents' Room");
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            rooms.forEach(room => {
+                if (room.id && room.id !== 'lilith-room') {
+                    observer.observe(room);
+                }
+            });
+        }
+
+        // ============================================
         //  WELCOME MODAL FUNCTIONALITY
         // ============================================
 
@@ -1692,15 +2026,23 @@
                 const title = notification.querySelector('h3');
                 const text = notification.querySelector('p');
 
-                title.textContent = `Easter Egg Found! 🎉`;
-                text.textContent = `You discovered: ${egg.name}`;
+                // Check if all eggs are found
+                const allFound = this.getFoundCount() === this.getTotalCount();
+
+                if (allFound) {
+                    title.textContent = `🎊 ALL EGGS FOUND! 🎊`;
+                    text.innerHTML = `<strong>Congratulations!</strong><br>You discovered all ${this.getTotalCount()} hidden easter eggs!<br>You're a true explorer! 🏆`;
+                } else {
+                    title.textContent = `Easter Egg Found! 🎉`;
+                    text.textContent = `You discovered: ${egg.name}`;
+                }
 
                 notification.classList.add('active');
                 audioManager.playSound('easter-egg-found', 0.7);
 
                 setTimeout(() => {
                     notification.classList.remove('active');
-                }, 3000);
+                }, allFound ? 5000 : 3000);
             }
 
             initializeEasterEggs() {
@@ -1868,6 +2210,9 @@
 
             // Initialize easter eggs (Phase 2)
             easterEggManager.initializeEasterEggs();
+
+            // Initialize room discovery (Phase 3)
+            setupRoomDiscovery();
         });
     </script>
 
