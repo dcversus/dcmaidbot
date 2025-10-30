@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRP-016 Phase 3: Multi-Room House Exploration System** 🏠✨
+  - **Vertical Scrolling with Scroll-Snap** - Smooth room-to-room navigation
+    - CSS scroll-snap for precise alignment between rooms
+    - Smooth scroll behavior with native browser support
+    - Full-height room sections for immersive experience
+  - **Parents' Room Implementation** - Interactive family space
+    - Special bed widget with lights on/off hover effect
+    - Bedroom transitions dark (lights off) → lit (lights on) on hover
+    - Click to open Parents' Story modal with family backstory
+    - Placeholder widgets for future expansion (photos, music box)
+  - **Dark Souls Location Discovery Effect** - Epic room discovery
+    - Cinzel font with golden glow and text shadow effects
+    - 4-second fadeInOut animation with text reveal
+    - Location name + subtitle with staggered animations
+    - localStorage tracking to show discovery only once per room
+  - **Intersection Observer Room Tracking** - Automatic discovery
+    - Observes when user scrolls to new rooms (50% threshold)
+    - Triggers location discovery on first visit
+    - Tracks discoveries per room ID in localStorage
+  - **Parents' Story Modal** - Family backstory narrative
+    - Touching story about Daniil, Vasilisa, and Lilith
+    - Family tree with roles: Papa (Dev), Mama (Product), Daughter (Bot)
+    - "Daniil + Vasilisa = ❤️ → Lilith" equation
+    - Fully styled with gradient backgrounds and typography
+  - **Multi-Room Foundation** - Architecture for 5-layer system
+    - Room-specific styling per ID (Lilith's Room, Parents' Room)
+    - Ready for expansion to 20-25 rooms across 5 vertical layers
+    - Responsive layout preserved across all rooms
 - **PRP-016 Phase 2: Easter Egg Discovery System** 🥚✨
   - **EasterEggManager class** - Complete easter egg tracking and discovery
     - LocalStorage persistence for found eggs across sessions
