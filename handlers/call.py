@@ -18,6 +18,7 @@ from services.llm_service import llm_service
 from services.lesson_service import LessonService
 from services.memory_service import MemoryService
 from services.message_service import MessageService
+from services.auth_service import AuthService
 
 
 async def call_handler(request: web.Request) -> web.Response:
@@ -84,11 +85,10 @@ async def call_handler(request: web.Request) -> web.Response:
             status=400,
         )
 
-    # If is_admin not provided, infer from ADMIN_IDS env
+    # If is_admin not provided, infer using AuthService
     if is_admin is None:
-        admin_ids_str = os.getenv("ADMIN_IDS", "")
-        admin_ids = [int(id.strip()) for id in admin_ids_str.split(",") if id.strip()]
-        is_admin = user_id in admin_ids
+        auth_service = AuthService()
+        is_admin = auth_service.is_admin(user_id)
 
     # Process command or message
     response_text: Optional[str] = None

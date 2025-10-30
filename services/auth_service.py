@@ -4,8 +4,11 @@ This service provides role-based access control for dcmaidbot.
 Admins are determined by the ADMIN_IDS environment variable.
 """
 
+import logging
 import os
 from typing import Any, Dict, Set
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -21,11 +24,44 @@ class AuthService:
     }
 
     def __init__(self) -> None:
-        """Initialize auth service with admin IDs from environment."""
+        """Initialize auth service with admin IDs from environment.
+
+        Raises:
+            Warning if ADMIN_IDS is empty or malformed (logs but doesn't fail)
+        """
         admin_ids_str = os.getenv("ADMIN_IDS", "")
-        self.admin_ids: Set[int] = set(
-            int(x.strip()) for x in admin_ids_str.split(",") if x.strip()
-        )
+
+        # Validate and parse admin IDs
+        if not admin_ids_str or not admin_ids_str.strip():
+            logger.warning(
+                "ADMIN_IDS environment variable is empty! "
+                "No admin users will be configured."
+            )
+            self.admin_ids: Set[int] = set()
+            return
+
+        # Parse admin IDs with error handling
+        parsed_ids: Set[int] = set()
+        for id_str in admin_ids_str.split(","):
+            id_str = id_str.strip()
+            if not id_str:
+                continue
+            try:
+                parsed_ids.add(int(id_str))
+            except ValueError:
+                logger.warning(
+                    f"Invalid admin ID '{id_str}' in ADMIN_IDS - skipping. "
+                    f"Admin IDs must be integers."
+                )
+
+        if not parsed_ids:
+            logger.warning(
+                "No valid admin IDs found in ADMIN_IDS! "
+                "Check environment variable format (comma-separated integers)."
+            )
+
+        self.admin_ids = parsed_ids
+        logger.info(f"AuthService initialized with {len(self.admin_ids)} admin(s)")
 
     def is_admin(self, user_id: int) -> bool:
         """Check if user is an admin.

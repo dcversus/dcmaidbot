@@ -5,6 +5,7 @@ Includes role-based access control for admin-only tools.
 """
 
 import logging
+import random
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,18 @@ from services.lesson_service import LessonService
 from services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
+
+# Variety of vague deflection messages to prevent pattern recognition
+VAGUE_DEFLECTIONS = [
+    (
+        "I'm not sure what you mean by that! 😊 "
+        "Is there something else I can help you with?"
+    ),
+    "Hmm, I don't quite understand! 💭 What else would you like to know?",
+    "That's a bit confusing to me! 🤔 Can I help with something different?",
+    "I'm not familiar with that! 😅 What else can I do for you?",
+    "I don't know about that one! 🌸 Anything else I can assist with?",
+]
 
 
 class ToolExecutor:
@@ -64,10 +77,7 @@ class ToolExecutor:
             return {
                 "success": False,
                 "error": "access_denied",
-                "vague_message": (
-                    "I'm not sure what you mean by that! 😊 "
-                    "Is there something else I can help you with?"
-                ),
+                "vague_message": random.choice(VAGUE_DEFLECTIONS),
             }
 
         try:

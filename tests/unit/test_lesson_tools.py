@@ -108,7 +108,8 @@ async def test_non_admin_cannot_get_all_lessons(async_session):
         assert result["success"] is False
         assert result["error"] == "access_denied"
         assert "vague_message" in result
-        assert "not sure what you mean" in result["vague_message"].lower()
+        # Vague message should be present and non-empty (randomized)
+        assert len(result["vague_message"]) > 0
 
 
 @pytest.mark.asyncio
