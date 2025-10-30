@@ -162,6 +162,7 @@ Be strict but fair. The bot should clearly demonstrate agentic tool usage."""
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 @pytest.mark.slow
 async def test_all_agentic_tools_with_batch_judge(
@@ -315,6 +316,7 @@ async def test_all_agentic_tools_with_batch_judge(
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 @pytest.mark.integration
 async def test_web_search_tool_explicitly(bot_client, setup_test_admin, llm_judge):
     """Test that web search tool works for current information."""
