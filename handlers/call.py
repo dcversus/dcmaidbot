@@ -8,6 +8,7 @@ Authentication: Uses same NUDGE_SECRET as /nudge endpoint
 """
 
 import os
+import json
 from typing import Optional
 
 from aiohttp import web
@@ -298,8 +299,6 @@ async def handle_message(message: str, user_id: int) -> str:
 
                 for tool_call in llm_response.tool_calls:
                     # Parse tool arguments
-                    import json
-
                     try:
                         arguments = json.loads(tool_call.function.arguments)
                     except json.JSONDecodeError:

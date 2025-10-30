@@ -1,5 +1,6 @@
 import os
 import asyncio
+import json
 from aiogram import Router, types, Bot
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
@@ -304,8 +305,6 @@ async def handle_message(message: types.Message):
 
                 for tool_call in llm_response.tool_calls:
                     # Parse tool arguments
-                    import json
-
                     try:
                         arguments = json.loads(tool_call.function.arguments)
                     except json.JSONDecodeError:
