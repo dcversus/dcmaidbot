@@ -304,9 +304,9 @@ async def test_all_agentic_tools_with_batch_judge(
             print(f"  Reasoning: {verdict['reasoning']}")
 
     # Assert overall success
-    assert (
-        judgment["overall_passes"] is True
-    ), f"Agentic tools test failed. Overall reasoning: {judgment['overall_reasoning']}"
+    assert judgment["overall_passes"] is True, (
+        f"Agentic tools test failed. Overall reasoning: {judgment['overall_reasoning']}"
+    )
     assert judgment["overall_score"] >= 0.7, "Judge confidence too low"
 
     print("\n" + "=" * 70)
@@ -374,7 +374,7 @@ Respond with JSON:
     print(f"  Score: {judgment['score']}")
     print(f"  Reasoning: {judgment['reasoning']}")
 
-    assert (
-        judgment["passes"] is True
-    ), f"Web search tool not properly used. Judge reasoning: {judgment['reasoning']}"
+    assert judgment["passes"] is True, (
+        f"Web search tool not properly used. Judge reasoning: {judgment['reasoning']}"
+    )
     assert judgment["score"] >= 0.7, "Judge confidence too low"

@@ -164,9 +164,9 @@ async def test_bot_creates_enhanced_links_with_real_llm_strength(
             fastapi_async_link = link
             break
 
-    assert (
-        fastapi_async_link is not None
-    ), "Bot should create enhanced link with LLM-calculated strength"
+    assert fastapi_async_link is not None, (
+        "Bot should create enhanced link with LLM-calculated strength"
+    )
 
     # Verify strength was calculated (not default)
     assert fastapi_async_link.strength > 0.0, "Link strength should be calculated"
@@ -269,9 +269,9 @@ async def test_bot_versions_memories_when_info_changes(
 
     # Verify versioning relationship
     if microsoft_memory.parent_id is not None:
-        assert (
-            microsoft_memory.parent_id == google_memory.id
-        ), "Microsoft memory should link to Google memory as parent"
+        assert microsoft_memory.parent_id == google_memory.id, (
+            "Microsoft memory should link to Google memory as parent"
+        )
         print("\n✅ Memory versioning works!")
         print(f"  Original: {google_memory.simple_content[:50]}...")
         print(f"  New version: {microsoft_memory.simple_content[:50]}...")
@@ -352,9 +352,9 @@ async def test_bot_compacts_memory_approaching_4000_tokens(
     print(f"  {compacted_content[:200]}...")
 
     # Step 4: Verify compaction worked
-    assert len(compacted_content) < len(
-        long_content
-    ), "Compacted content should be shorter"
+    assert len(compacted_content) < len(long_content), (
+        "Compacted content should be shorter"
+    )
     assert len(compacted_content) > 50, "Compacted content should still have substance"
 
     # Step 5: Use LLM-as-judge to validate information preservation
@@ -457,9 +457,9 @@ async def test_bot_extracts_vad_emotions_with_real_llm(
     assert vad_scores["arousal"] > 0, "Frustrated message should have positive arousal"
 
     # Frustration should have low dominance (feeling powerless)
-    assert (
-        vad_scores["dominance"] < 0
-    ), "Frustrated message should have negative dominance"
+    assert vad_scores["dominance"] < 0, (
+        "Frustrated message should have negative dominance"
+    )
 
     # Step 4: Now test if bot shows emotional intelligence
     # User shares frustration with bot
