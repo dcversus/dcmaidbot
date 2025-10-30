@@ -113,15 +113,18 @@ async def cleanup_test_data(async_session):
     """Cleanup test data after each test.
 
     This fixture runs automatically for every test.
-    Truncates all tables except categories to ensure clean state.
+    Deletes all data from tables except categories to ensure clean state.
     Silently ignores tables that don't exist yet.
+
+    Note: Using DELETE instead of TRUNCATE to avoid permission issues.
     """
     yield
 
     # Cleanup after test - ignore missing tables
+    # Use DELETE instead of TRUNCATE (requires fewer privileges)
     tables = [
+        "memory_links",  # Delete links first due to foreign keys
         "memories",
-        "memory_links",
         "users",
         "messages",
         "facts",
@@ -131,7 +134,7 @@ async def cleanup_test_data(async_session):
 
     for table in tables:
         try:
-            await async_session.execute(text(f"TRUNCATE TABLE {table} CASCADE"))
+            await async_session.execute(text(f"DELETE FROM {table}"))
         except Exception:
             # Table doesn't exist yet, that's fine
             pass
