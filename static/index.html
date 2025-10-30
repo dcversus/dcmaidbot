@@ -370,6 +370,120 @@
             opacity: 0.5;
         }
 
+        /* ============================================
+           EASTER EGG SYSTEM (Phase 2)
+           ============================================ */
+
+        .easter-egg-counter {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--purple-main) 0%, var(--pink-main) 100%);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-weight: 700;
+            color: var(--white);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .easter-egg-counter:hover {
+            transform: scale(1.05);
+        }
+
+        .easter-egg-trigger {
+            position: absolute;
+            cursor: pointer;
+            opacity: 0.15;
+            filter: grayscale(100%) brightness(0.8);
+            transition: all 0.4s ease;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            z-index: 5;
+        }
+
+        .easter-egg-trigger:hover {
+            opacity: 0.8;
+            filter: grayscale(0%) brightness(1);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .easter-egg-trigger:not(.found) {
+            animation: eggPulse 3s infinite;
+        }
+
+        @keyframes eggPulse {
+            0%, 100% {
+                opacity: 0.15;
+            }
+            50% {
+                opacity: 0.35;
+            }
+        }
+
+        .easter-egg-trigger.found {
+            opacity: 1;
+            filter: grayscale(0%) brightness(1);
+            pointer-events: none;
+        }
+
+        .easter-egg-trigger img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Easter Egg Discovery Notification */
+        .easter-egg-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, var(--pink-light) 0%, var(--purple-light) 100%);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: 10001;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .easter-egg-notification.active {
+            opacity: 1;
+            animation: eggFoundBounce 0.6s ease;
+        }
+
+        @keyframes eggFoundBounce {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .easter-egg-notification h3 {
+            font-size: 1.8rem;
+            color: var(--pink-dark);
+            margin-bottom: var(--space-sm);
+        }
+
+        .easter-egg-notification p {
+            font-size: 1.1rem;
+            color: var(--black-soft);
+        }
+
         /* Widget Sizes */
         .widget.size-1x1 {
             grid-column: span 1;
@@ -950,6 +1064,35 @@
         <div class="room-grid" id="roomGrid">
             <!-- Widgets will be dynamically inserted here -->
         </div>
+
+        <!-- Easter Eggs Hidden in the Room (Phase 2) -->
+        <div class="easter-egg-trigger" data-egg="meditation" style="top: 12%; left: 8%; width: 60px; height: 80px;">
+            <img src="/static/easter-egg-lilith-meditation.jpg" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="organizing" style="top: 25%; right: 10%; width: 70px; height: 90px;">
+            <img src="/static/easter-egg-lilith-organizing.jpg" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="contract" style="bottom: 15%; left: 12%; width: 65px; height: 85px;">
+            <img src="/static/easter-egg-lilith-contract.jpg" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="emotion-wheel" style="top: 45%; left: 5%; width: 75px; height: 75px;">
+            <img src="/static/easter-egg-emotion-wheel.png" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="vasilisa-armor" style="top: 8%; right: 25%; width: 55px; height: 95px;">
+            <img src="/static/easter-egg-vasilisa-armor.jpg" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="vasilisa-rollerblades" style="bottom: 20%; right: 8%; width: 60px; height: 100px;">
+            <img src="/static/easter-egg-vasilisa-rollerblades.jpg" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="comic-1" style="top: 60%; right: 20%; width: 80px; height: 60px;">
+            <img src="/static/easter-egg-comic-1.png" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="comic-2" style="bottom: 35%; left: 25%; width: 75px; height: 65px;">
+            <img src="/static/easter-egg-comic-2.png" alt="Hidden Easter Egg">
+        </div>
+        <div class="easter-egg-trigger" data-egg="character-designs" style="top: 35%; right: 5%; width: 70px; height: 90px;">
+            <img src="/static/easter-egg-character-designs.png" alt="Hidden Easter Egg">
+        </div>
     </section>
 
     <!-- ============================================
@@ -1486,6 +1629,101 @@
         const audioManager = new AudioManager();
 
         // ============================================
+        //  EASTER EGG MANAGER (Phase 2)
+        // ============================================
+
+        class EasterEggManager {
+            constructor() {
+                this.eggs = [
+                    { id: 'meditation', name: 'Lilith Meditating', file: 'easter-egg-lilith-meditation.jpg', found: false },
+                    { id: 'organizing', name: 'Lilith Organizing', file: 'easter-egg-lilith-organizing.jpg', found: false },
+                    { id: 'contract', name: 'Lilith Contract', file: 'easter-egg-lilith-contract.jpg', found: false },
+                    { id: 'emotion-wheel', name: 'AI Emotion Wheel', file: 'easter-egg-emotion-wheel.png', found: false },
+                    { id: 'vasilisa-armor', name: 'Warrior Vasilisa', file: 'easter-egg-vasilisa-armor.jpg', found: false },
+                    { id: 'vasilisa-rollerblades', name: 'Casual Vasilisa', file: 'easter-egg-vasilisa-rollerblades.jpg', found: false },
+                    { id: 'comic-1', name: 'Comic Storyboard', file: 'easter-egg-comic-1.png', found: false },
+                    { id: 'comic-2', name: 'Character Designs', file: 'easter-egg-comic-2.png', found: false },
+                    { id: 'character-designs', name: 'Development Sketches', file: 'easter-egg-character-designs.png', found: false }
+                ];
+                this.loadProgress();
+            }
+
+            loadProgress() {
+                const found = JSON.parse(localStorage.getItem('easter_eggs_found') || '[]');
+                this.eggs.forEach(egg => {
+                    egg.found = found.includes(egg.id);
+                });
+            }
+
+            saveProgress() {
+                const found = this.eggs.filter(e => e.found).map(e => e.id);
+                localStorage.setItem('easter_eggs_found', JSON.stringify(found));
+            }
+
+            findEgg(eggId) {
+                const egg = this.eggs.find(e => e.id === eggId);
+                if (egg && !egg.found) {
+                    egg.found = true;
+                    this.saveProgress();
+                    this.updateCounter();
+                    this.showNotification(egg);
+                    return true;
+                }
+                return false;
+            }
+
+            getFoundCount() {
+                return this.eggs.filter(e => e.found).length;
+            }
+
+            getTotalCount() {
+                return this.eggs.length;
+            }
+
+            updateCounter() {
+                const counter = document.getElementById('easterEggCount');
+                if (counter) {
+                    counter.textContent = `${this.getFoundCount()}/${this.getTotalCount()}`;
+                }
+            }
+
+            showNotification(egg) {
+                const notification = document.getElementById('easterEggNotification');
+                const title = notification.querySelector('h3');
+                const text = notification.querySelector('p');
+
+                title.textContent = `Easter Egg Found! 🎉`;
+                text.textContent = `You discovered: ${egg.name}`;
+
+                notification.classList.add('active');
+                audioManager.playSound('easter-egg-found', 0.7);
+
+                setTimeout(() => {
+                    notification.classList.remove('active');
+                }, 3000);
+            }
+
+            initializeEasterEggs() {
+                this.eggs.forEach(egg => {
+                    const trigger = document.querySelector(`[data-egg="${egg.id}"]`);
+                    if (trigger) {
+                        if (egg.found) {
+                            trigger.classList.add('found');
+                        }
+                        trigger.addEventListener('click', () => {
+                            if (this.findEgg(egg.id)) {
+                                trigger.classList.add('found');
+                            }
+                        });
+                    }
+                });
+                this.updateCounter();
+            }
+        }
+
+        const easterEggManager = new EasterEggManager();
+
+        // ============================================
         //  WIDGET CLICK ACTIONS (Phase 1C)
         // ============================================
 
@@ -1627,8 +1865,25 @@
 
             // Create music toggle button (Phase 1B)
             createMusicToggle();
+
+            // Initialize easter eggs (Phase 2)
+            easterEggManager.initializeEasterEggs();
         });
     </script>
+
+    <!-- ============================================
+         EASTER EGG UI ELEMENTS (Phase 2)
+         ============================================ -->
+    <!-- Counter in top-right corner -->
+    <div class="easter-egg-counter">
+        🥚 Easter Eggs: <span id="easterEggCount">0/9</span>
+    </div>
+
+    <!-- Discovery Notification -->
+    <div class="easter-egg-notification" id="easterEggNotification">
+        <h3>Easter Egg Found! 🎉</h3>
+        <p>You discovered something special!</p>
+    </div>
 
     <!-- ============================================
          WELCOME MODAL

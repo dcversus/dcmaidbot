@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRP-016 Phase 2: Easter Egg Discovery System** 🥚✨
+  - **EasterEggManager class** - Complete easter egg tracking and discovery
+    - LocalStorage persistence for found eggs across sessions
+    - Progress tracking with 9 hidden easter eggs
+    - Discovery notifications with bounce animations
+    - Automatic state management (found vs. unfound)
+  - **Easter Egg Counter UI** - Fixed position display in top-right
+    - Real-time counter showing X/9 eggs found
+    - Purple-to-pink gradient styling
+    - Hover scale animation for engagement
+  - **Discovery Notification System** - Celebratory popup on find
+    - Animated bounce effect on discovery
+    - 3-second auto-dismiss
+    - Custom message per egg with name display
+  - **9 Hidden Easter Eggs** strategically placed in Lilith's Room:
+    - Lilith Meditation, Organizing, Contract
+    - AI Emotion Wheel
+    - Warrior Vasilisa, Casual Vasilisa
+    - Comic Storyboard, Character Designs, Development Sketches
+  - **Visual Effects**:
+    - Grayscale + low opacity when undiscovered (pulse animation)
+    - Golden glow on hover (0 0 20px rgba(255, 215, 0, 0.8))
+    - Full color + opacity when found
+    - Scale transform on hover for feedback
 - **PRP-016 Phase 1: Interactive Landing Page Enhancement** 🎵✨
   - **Phase 1B: Music System** - Complete audio management implementation
     - AudioManager class with Web Audio API for sound effect playback
