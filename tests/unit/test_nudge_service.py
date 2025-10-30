@@ -269,7 +269,9 @@ def test_get_admin_ids_single_id(mock_env_bot_token, monkeypatch):
     """Test _get_admin_ids parses single admin ID."""
     monkeypatch.setenv("ADMIN_IDS", "123456789")
 
-    with patch("services.nudge_service.Bot"), patch("services.nudge_service.LLMService"):
+    with patch("services.nudge_service.Bot"), patch(
+        "services.nudge_service.LLMService"
+    ):
         service = NudgeService()
         admin_ids = service._get_admin_ids()
 
@@ -280,7 +282,9 @@ def test_get_admin_ids_multiple_ids(mock_env_bot_token, monkeypatch):
     """Test _get_admin_ids parses multiple comma-separated admin IDs."""
     monkeypatch.setenv("ADMIN_IDS", "111,222,333")
 
-    with patch("services.nudge_service.Bot"), patch("services.nudge_service.LLMService"):
+    with patch("services.nudge_service.Bot"), patch(
+        "services.nudge_service.LLMService"
+    ):
         service = NudgeService()
         admin_ids = service._get_admin_ids()
 
@@ -291,7 +295,9 @@ def test_get_admin_ids_with_spaces(mock_env_bot_token, monkeypatch):
     """Test _get_admin_ids handles spaces in admin IDs list."""
     monkeypatch.setenv("ADMIN_IDS", "111, 222 , 333")
 
-    with patch("services.nudge_service.Bot"), patch("services.nudge_service.LLMService"):
+    with patch("services.nudge_service.Bot"), patch(
+        "services.nudge_service.LLMService"
+    ):
         service = NudgeService()
         admin_ids = service._get_admin_ids()
 
@@ -302,7 +308,9 @@ def test_get_admin_ids_missing_env_var(mock_env_bot_token, monkeypatch):
     """Test _get_admin_ids raises error when ADMIN_IDS not set."""
     monkeypatch.delenv("ADMIN_IDS", raising=False)
 
-    with patch("services.nudge_service.Bot"), patch("services.nudge_service.LLMService"):
+    with patch("services.nudge_service.Bot"), patch(
+        "services.nudge_service.LLMService"
+    ):
         service = NudgeService()
 
         with pytest.raises(ValueError, match="ADMIN_IDS not configured"):
@@ -313,7 +321,9 @@ def test_get_admin_ids_invalid_format(mock_env_bot_token, monkeypatch):
     """Test _get_admin_ids raises error for invalid ID format."""
     monkeypatch.setenv("ADMIN_IDS", "111,not_a_number,333")
 
-    with patch("services.nudge_service.Bot"), patch("services.nudge_service.LLMService"):
+    with patch("services.nudge_service.Bot"), patch(
+        "services.nudge_service.LLMService"
+    ):
         service = NudgeService()
 
         with pytest.raises(ValueError, match="Invalid ADMIN_IDS format"):
@@ -330,7 +340,9 @@ def test_nudge_service_init_missing_bot_token(monkeypatch):
 
 def test_nudge_service_init_success(mock_env_bot_token):
     """Test NudgeService initializes successfully with BOT_TOKEN."""
-    with patch("services.nudge_service.Bot"), patch("services.nudge_service.LLMService"):
+    with patch("services.nudge_service.Bot"), patch(
+        "services.nudge_service.LLMService"
+    ):
         service = NudgeService()
         assert service.bot_token == "test_bot_token"
         assert service.bot is not None
