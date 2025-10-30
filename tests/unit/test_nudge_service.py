@@ -29,7 +29,7 @@ def nudge_service(mock_env_bot_token, mock_env_admin_ids):
 
         service = NudgeService()
         # Bot is already mocked by the patch above
-        return service
+        yield service
 
 
 @pytest.mark.asyncio
