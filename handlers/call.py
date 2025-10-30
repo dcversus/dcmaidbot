@@ -18,6 +18,7 @@ from services.llm_service import llm_service
 from services.lesson_service import LessonService
 from services.memory_service import MemoryService
 from services.message_service import MessageService
+from services.auth_service import AuthService
 
 
 async def call_handler(request: web.Request) -> web.Response:
@@ -27,7 +28,8 @@ async def call_handler(request: web.Request) -> web.Response:
     {
         "user_id": 123456789,
         "message": "Hello bot!",
-        "command": "/start"  # Optional, if it's a command
+        "command": "/start",  # Optional, if it's a command
+        "is_admin": true  # Optional, default: check ADMIN_IDS env
     }
 
     Response:
@@ -75,12 +77,18 @@ async def call_handler(request: web.Request) -> web.Response:
     user_id = data.get("user_id")
     message = data.get("message", "")
     command = data.get("command")
+    is_admin = data.get("is_admin")
 
     if not user_id:
         return web.json_response(
             {"error": "Missing required field: user_id"},
             status=400,
         )
+
+    # If is_admin not provided, infer using AuthService
+    if is_admin is None:
+        auth_service = AuthService()
+        is_admin = auth_service.is_admin(user_id)
 
     # Process command or message
     response_text: Optional[str] = None
@@ -89,11 +97,11 @@ async def call_handler(request: web.Request) -> web.Response:
     try:
         # Handle commands
         if command:
-            response_text = await handle_command(command, user_id)
+            response_text = await handle_command(command, user_id, is_admin)
             command_handled = command
         # Handle natural language messages
         elif message:
-            response_text = await handle_message(message, user_id)
+            response_text = await handle_message(message, user_id, is_admin)
         else:
             return web.json_response(
                 {"error": "Either 'message' or 'command' is required"},
@@ -116,12 +124,13 @@ async def call_handler(request: web.Request) -> web.Response:
         )
 
 
-async def handle_command(command: str, user_id: int) -> str:
+async def handle_command(command: str, user_id: int, is_admin: bool) -> str:
     """Handle bot commands directly.
 
     Args:
         command: Command string (e.g., "/start", "/help")
         user_id: Telegram user ID
+        is_admin: Whether user is admin (affects /help content)
 
     Returns:
         str: Bot's response text
@@ -142,24 +151,56 @@ async def handle_command(command: str, user_id: int) -> str:
             '<a href="https://dcmaidbot.theedgestory.org">dcmaidbot.theedgestory.org</a>'
         )
 
-    # /help command
+    # /help command - role-aware
     elif command == "/help":
-        return (
-            "<b>💕 Lilit's Command List</b>\n\n"
-            "<b>General Commands:</b>\n"
-            "• /start - Welcome message\n"
-            "• /help - This help message\n"
-            "• /status - Bot status and uptime\n"
-            "• /joke - Random joke from my collection\n"
-            "• /love - Spread some love 💕\n\n"
-            "<b>Admin Commands:</b>\n"
-            "• /view_lessons - View all lessons (admin only)\n\n"
-            "<b>Natural Chat:</b>\n"
-            "Just send me any message and I'll respond with my "
-            "waifu personality! 🎀\n\n"
-            "<i>Website:</i> "
-            '<a href="https://dcmaidbot.theedgestory.org">dcmaidbot.theedgestory.org</a>'
-        )
+        if is_admin:
+            return (
+                "<b>📚 DCMaid Help - Admin Mode</b>\n\n"
+                "<b>🔧 Admin Commands (Lessons):</b>\n"
+                "/view_lessons - View all lesson instructions\n"
+                "/add_lesson &lt;text&gt; - Add a new lesson\n"
+                "/edit_lesson &lt;id&gt; &lt;text&gt; - Edit existing lesson\n"
+                "/remove_lesson &lt;id&gt; - Delete a lesson\n"
+                "/reorder_lesson &lt;id&gt; &lt;order&gt; - Change lesson order\n\n"
+                "<b>🤖 Admin Commands (System):</b>\n"
+                "/status - Bot status, version, and uptime\n\n"
+                "<b>💬 Public Commands:</b>\n"
+                "/start - Welcome message\n"
+                "/help - This help message\n"
+                "/joke - Tell a random joke\n"
+                "/love - Show love for admins\n\n"
+                "<b>✨ Agentic Tools (Available to You!):</b>\n"
+                "I can help you manage lessons through natural conversation! "
+                "Just ask me to:\n"
+                '• "Save this as a lesson: ..."\n'
+                '• "Show me all my lessons"\n'
+                '• "Edit lesson #3 to say..."\n'
+                '• "Delete lesson #5"\n\n'
+                "I also have access to:\n"
+                "• <b>Memory management</b> - Create, search, and retrieve memories\n"
+                "• <b>Web search</b> - Search the web via DuckDuckGo\n"
+                "• <b>Lesson tools</b> - Full lesson CRUD through conversation\n\n"
+                "<i>Nya~ I'm here to help you manage everything! 💕</i>"
+            )
+        else:
+            return (
+                "<b>📚 DCMaid Help</b>\n\n"
+                "<b>💬 Available Commands:</b>\n"
+                "/start - Welcome message and introduction\n"
+                "/help - This help message\n"
+                "/joke - Tell you a random joke\n"
+                "/status - Check bot status\n\n"
+                "<b>✨ About Me:</b>\n"
+                "I'm your kawaii AI maid! 💕 I can chat with you, "
+                "remember our conversations, and help you with various tasks!\n\n"
+                "Just talk to me naturally and I'll do my best to help!\n\n"
+                "I can:\n"
+                "• Have natural conversations\n"
+                "• Remember important things you tell me\n"
+                "• Search the web for information\n"
+                "• Tell jokes and spread positivity\n\n"
+                "<i>Nya~ Let's chat! 🎀</i>"
+            )
 
     # /status command
     elif command == "/status":
@@ -230,12 +271,13 @@ async def handle_command(command: str, user_id: int) -> str:
         return f"❌ Unknown command: {command}"
 
 
-async def handle_message(message: str, user_id: int) -> str:
+async def handle_message(message: str, user_id: int, is_admin: bool) -> str:
     """Handle natural language messages using LLM with memories and history.
 
     Args:
         message: User's message text
         user_id: Telegram user ID
+        is_admin: Whether user is admin (affects tool availability)
 
     Returns:
         str: Bot's response text
@@ -273,9 +315,13 @@ async def handle_message(message: str, user_id: int) -> str:
         # Import tools for agentic behavior
         from tools.memory_tools import MEMORY_TOOLS
         from tools.web_search_tools import WEB_SEARCH_TOOLS
+        from tools.lesson_tools import LESSON_TOOLS
         from tools.tool_executor import ToolExecutor
 
+        # Build tools list (admins get lesson tools, non-admins don't)
         all_tools = MEMORY_TOOLS + WEB_SEARCH_TOOLS
+        if is_admin:
+            all_tools = all_tools + LESSON_TOOLS
 
         # Use LLM with waifu personality + context + tools
         user_info = {"id": user_id, "username": "test_user", "telegram_id": user_id}
