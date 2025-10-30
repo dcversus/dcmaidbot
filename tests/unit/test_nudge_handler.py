@@ -47,11 +47,10 @@ async def test_nudge_handler_direct_mode_success(mock_request, mock_env_secret):
         "errors": None,
     }
 
-    with patch(
-        "handlers.nudge.nudge_service.send_direct",
-        new_callable=AsyncMock,
-        return_value=mock_result,
-    ):
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
         assert response.status == 200
@@ -88,11 +87,10 @@ async def test_nudge_handler_llm_mode_success(mock_request, mock_env_secret):
         "errors": None,
     }
 
-    with patch(
-        "handlers.nudge.nudge_service.send_via_llm",
-        new_callable=AsyncMock,
-        return_value=mock_result,
-    ):
+    mock_service = MagicMock()
+    mock_service.send_via_llm = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
         assert response.status == 200
@@ -123,16 +121,15 @@ async def test_nudge_handler_with_specific_user_id(mock_request, mock_env_secret
         "errors": None,
     }
 
-    with patch(
-        "handlers.nudge.nudge_service.send_direct",
-        new_callable=AsyncMock,
-        return_value=mock_result,
-    ) as mock_send:
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
         assert response.status == 200
         # Verify send_direct was called with user_id
-        mock_send.assert_called_once_with(
+        mock_service.send_direct.assert_called_once_with(
             message="Test message to specific user",
             user_id=99999,
         )
@@ -312,11 +309,10 @@ async def test_nudge_handler_service_error(mock_request, mock_env_secret):
         }
     )
 
-    with patch(
-        "handlers.nudge.nudge_service.send_direct",
-        new_callable=AsyncMock,
-        side_effect=Exception("Bot token invalid"),
-    ):
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(side_effect=Exception("Bot token invalid"))
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
         assert response.status == 500
@@ -351,16 +347,15 @@ async def test_nudge_handler_markdown_message(mock_request, mock_env_secret):
         "errors": None,
     }
 
-    with patch(
-        "handlers.nudge.nudge_service.send_direct",
-        new_callable=AsyncMock,
-        return_value=mock_result,
-    ) as mock_send:
+    mock_service = MagicMock()
+    mock_service.send_direct = AsyncMock(return_value=mock_result)
+
+    with patch("handlers.nudge.get_nudge_service", return_value=mock_service):
         response = await nudge_handler(mock_request)
 
         assert response.status == 200
         # Verify markdown message was passed correctly
-        mock_send.assert_called_once_with(
+        mock_service.send_direct.assert_called_once_with(
             message=markdown_message,
             user_id=None,
         )

@@ -13,8 +13,16 @@ from aiohttp import web
 
 from services.nudge_service import NudgeService
 
-# Global service instance
-nudge_service = NudgeService()
+# Lazy-loaded service instance (created on first use)
+_nudge_service = None
+
+
+def get_nudge_service() -> NudgeService:
+    """Get or create NudgeService instance (lazy loading)."""
+    global _nudge_service
+    if _nudge_service is None:
+        _nudge_service = NudgeService()
+    return _nudge_service
 
 
 async def nudge_handler(request: web.Request) -> web.Response:
@@ -106,13 +114,14 @@ async def nudge_handler(request: web.Request) -> web.Response:
 
     # 3. Send message via appropriate mode
     try:
+        service = get_nudge_service()
         if msg_type == "direct":
-            result = await nudge_service.send_direct(
+            result = await service.send_direct(
                 message=message,
                 user_id=user_id,
             )
         else:  # msg_type == "llm"
-            result = await nudge_service.send_via_llm(
+            result = await service.send_via_llm(
                 message=message,
                 user_id=user_id,
             )
