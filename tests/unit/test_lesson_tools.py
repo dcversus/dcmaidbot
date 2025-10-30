@@ -71,7 +71,10 @@ def test_delete_lesson_tool_structure():
 @pytest.mark.asyncio
 async def test_admin_can_get_all_lessons(async_session):
     """Test that admin can successfully call get_all_lessons."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         # Add a lesson first
@@ -92,7 +95,10 @@ async def test_admin_can_get_all_lessons(async_session):
 @pytest.mark.asyncio
 async def test_non_admin_cannot_get_all_lessons(async_session):
     """Test that non-admin gets access denied for get_all_lessons."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(
@@ -108,7 +114,10 @@ async def test_non_admin_cannot_get_all_lessons(async_session):
 @pytest.mark.asyncio
 async def test_admin_can_create_lesson(async_session):
     """Test that admin can successfully create a lesson."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(
@@ -125,7 +134,10 @@ async def test_admin_can_create_lesson(async_session):
 @pytest.mark.asyncio
 async def test_non_admin_cannot_create_lesson(async_session):
     """Test that non-admin gets access denied for create_lesson."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(
@@ -142,7 +154,10 @@ async def test_non_admin_cannot_create_lesson(async_session):
 @pytest.mark.asyncio
 async def test_admin_can_edit_lesson(async_session):
     """Test that admin can successfully edit a lesson."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         # Create a lesson first
         from services.lesson_service import LessonService
 
@@ -163,7 +178,10 @@ async def test_admin_can_edit_lesson(async_session):
 @pytest.mark.asyncio
 async def test_non_admin_cannot_edit_lesson(async_session):
     """Test that non-admin gets access denied for edit_lesson."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(
@@ -179,7 +197,10 @@ async def test_non_admin_cannot_edit_lesson(async_session):
 @pytest.mark.asyncio
 async def test_admin_can_delete_lesson(async_session):
     """Test that admin can successfully delete a lesson."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         # Create a lesson first
         from services.lesson_service import LessonService
 
@@ -200,7 +221,10 @@ async def test_admin_can_delete_lesson(async_session):
 @pytest.mark.asyncio
 async def test_non_admin_cannot_delete_lesson(async_session):
     """Test that non-admin gets access denied for delete_lesson."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(
@@ -216,7 +240,10 @@ async def test_non_admin_cannot_delete_lesson(async_session):
 @pytest.mark.asyncio
 async def test_create_lesson_missing_content(async_session):
     """Test that create_lesson fails without content."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(
@@ -232,7 +259,10 @@ async def test_create_lesson_missing_content(async_session):
 @pytest.mark.asyncio
 async def test_edit_lesson_not_found(async_session):
     """Test that editing non-existent lesson returns error."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(
@@ -248,7 +278,10 @@ async def test_edit_lesson_not_found(async_session):
 @pytest.mark.asyncio
 async def test_delete_lesson_not_found(async_session):
     """Test that deleting non-existent lesson returns error."""
-    with patch.dict("os.environ", {"ADMIN_IDS": "123"}):
+    with (
+        patch.dict("os.environ", {"ADMIN_IDS": "123"}),
+        patch("tools.tool_executor.LLMService"),
+    ):
         executor = ToolExecutor(async_session)
 
         result = await executor.execute(

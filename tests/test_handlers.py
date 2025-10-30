@@ -1,8 +1,9 @@
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 from aiogram.types import Message, User, Chat
 
 from handlers import waifu
+from handlers import help as help_handler
 
 
 @pytest.fixture
@@ -37,11 +38,15 @@ async def test_cmd_start(mock_message):
 
 @pytest.mark.asyncio
 async def test_cmd_help(mock_message):
-    """Test /help command."""
-    await waifu.cmd_help(mock_message)
-    mock_message.reply.assert_called_once()
-    call_args = mock_message.reply.call_args[0][0]
-    assert "help" in call_args.lower()
+    """Test /help command (role-aware)."""
+    # Mock auth_service to return non-admin for this test
+    with patch("handlers.help.auth_service.is_admin", return_value=False):
+        await help_handler.cmd_help_role_aware(mock_message)
+        mock_message.reply.assert_called_once()
+        call_args = mock_message.reply.call_args[0][0]
+        assert "help" in call_args.lower()
+        # Non-admin should NOT see admin commands
+        assert "lesson" not in call_args.lower() or "lessons" not in call_args.lower()
 
 
 @pytest.mark.asyncio
