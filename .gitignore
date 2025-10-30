@@ -33,3 +33,9 @@ tests/*.session
 tests/*.session-journal
 *.session
 *.session-journal
+
+# SQLite databases (should never be in version control)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3

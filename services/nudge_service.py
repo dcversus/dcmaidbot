@@ -11,15 +11,37 @@ from typing import Any, Optional
 
 from aiogram import Bot
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 
 from services.llm_service import LLMService
 
 
 class NudgeService:
-    """Service for sending messages to admins via Telegram."""
+    """Service for sending messages to admins via Telegram.
+
+    Note on Bot Instance Lifecycle:
+        This service creates its own Bot instance for /nudge endpoint usage.
+        For the scope of /nudge (infrequent admin notifications), this is acceptable.
+        The Bot instance is lightweight and connection pooling is handled by aiogram.
+
+        For production optimization, consider:
+        - Reusing the main bot instance from bot.py if needed
+        - Adding proper cleanup via context manager pattern
+        - Implementing connection pooling if /nudge usage increases significantly
+
+    Current usage pattern (agent notifications) does not warrant complex lifecycle
+    management, as /nudge is called infrequently and handles cleanup automatically.
+    """
 
     def __init__(self):
-        """Initialize NudgeService with Bot instance."""
+        """Initialize NudgeService with Bot instance.
+
+        Creates a new Bot instance for Telegram API communication.
+        This instance is used exclusively for /nudge endpoint operations.
+
+        Raises:
+            ValueError: If BOT_TOKEN environment variable is not set
+        """
         self.bot_token = os.getenv("BOT_TOKEN")
         if not self.bot_token:
             raise ValueError("BOT_TOKEN not configured in environment")
@@ -79,6 +101,44 @@ class NudgeService:
                         "status": "success",
                     }
                 )
+            except TelegramBadRequest as e:
+                # Handle markdown parse errors with fallback to plain text
+                if "can't parse entities" in str(e).lower():
+                    try:
+                        # Retry without markdown parsing
+                        sent_message = await self.bot.send_message(
+                            chat_id=uid,
+                            text=message,
+                            parse_mode=None,
+                        )
+                        results.append(
+                            {
+                                "user_id": uid,
+                                "message_id": sent_message.message_id,
+                                "status": "success",
+                                "warning": "Markdown parse failed, sent as plain text",
+                            }
+                        )
+                    except Exception as fallback_error:
+                        errors.append(
+                            {
+                                "user_id": uid,
+                                "error": (
+                                    f"Markdown parse failed and fallback failed: "
+                                    f"{fallback_error}"
+                                ),
+                                "status": "failed",
+                            }
+                        )
+                else:
+                    # Other Telegram errors (bot blocked, chat not found, etc.)
+                    errors.append(
+                        {
+                            "user_id": uid,
+                            "error": str(e),
+                            "status": "failed",
+                        }
+                    )
             except Exception as e:
                 errors.append(
                     {
@@ -157,20 +217,41 @@ class NudgeService:
                     final_message = llm_response.content
 
                 # Send LLM-generated message via Telegram
-                sent_message = await self.bot.send_message(
-                    chat_id=uid,
-                    text=final_message,
-                    parse_mode=ParseMode.MARKDOWN,
-                )
+                try:
+                    sent_message = await self.bot.send_message(
+                        chat_id=uid,
+                        text=final_message,
+                        parse_mode=ParseMode.MARKDOWN,
+                    )
 
-                results.append(
-                    {
-                        "user_id": uid,
-                        "message_id": sent_message.message_id,
-                        "llm_response": final_message,
-                        "status": "success",
-                    }
-                )
+                    results.append(
+                        {
+                            "user_id": uid,
+                            "message_id": sent_message.message_id,
+                            "llm_response": final_message,
+                            "status": "success",
+                        }
+                    )
+                except TelegramBadRequest as telegram_error:
+                    # Handle markdown parse errors with fallback
+                    if "can't parse entities" in str(telegram_error).lower():
+                        # Retry without markdown
+                        sent_message = await self.bot.send_message(
+                            chat_id=uid,
+                            text=final_message,
+                            parse_mode=None,
+                        )
+                        results.append(
+                            {
+                                "user_id": uid,
+                                "message_id": sent_message.message_id,
+                                "llm_response": final_message,
+                                "status": "success",
+                                "warning": "Markdown parse failed, sent as plain text",
+                            }
+                        )
+                    else:
+                        raise  # Re-raise other Telegram errors
 
             except Exception as e:
                 errors.append(

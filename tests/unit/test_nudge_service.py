@@ -20,12 +20,15 @@ def mock_env_admin_ids(monkeypatch):
 
 
 @pytest.fixture
-def nudge_service(mock_env_bot_token):
+def nudge_service(mock_env_bot_token, mock_env_admin_ids):
     """Create a NudgeService instance for testing."""
-    with patch("services.nudge_service.Bot"):
+    with patch("services.nudge_service.Bot") as mock_bot_class:
+        # Mock Bot class to return a mock instance
+        mock_bot_instance = AsyncMock()
+        mock_bot_class.return_value = mock_bot_instance
+
         service = NudgeService()
-        # Replace bot with mock
-        service.bot = AsyncMock()
+        # Bot is already mocked by the patch above
         return service
 
 
