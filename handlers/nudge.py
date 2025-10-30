@@ -4,7 +4,7 @@ Nudge endpoint handler for agent-to-user communication.
 Provides POST /nudge endpoint that:
 1. Validates authentication via NUDGE_SECRET
 2. Validates request payload
-3. Forwards request to external LLM endpoint
+3. Sends message directly or via LLM pipeline to Telegram users
 4. Returns response or error
 """
 
@@ -18,27 +18,23 @@ nudge_service = NudgeService()
 
 
 async def nudge_handler(request: web.Request) -> web.Response:
-    """POST /nudge - Forward agent requests to external LLM endpoint.
+    """POST /nudge - Send messages to admins via Telegram.
 
     Authentication:
         Requires Authorization: Bearer <NUDGE_SECRET> header
 
     Request Body (JSON):
         {
-            "user_ids": [123456789],  // Required: Admin Telegram user IDs
-            "message": "...",          // Required: Human-friendly message
-            "pr_url": "...",           // Optional: PR URL
-            "prp_file": "...",         // Optional: PRP file path
-            "prp_section": "...",      // Optional: Section anchor
-            "urgency": "medium"        // Optional: low|medium|high
+            "message": "Rich **markdown** [message](url)",  // Required: Markdown
+            "type": "direct",                                // Required: "direct"|"llm"
+            "user_id": 123456789                            // Optional: specific user
         }
 
     Returns:
-        200: Success - nudge forwarded to external endpoint
+        200: Success - message sent to user(s)
         400: Bad Request - invalid payload
         401: Unauthorized - missing or invalid auth token
-        500: Internal Server Error - NUDGE_SECRET not configured
-        502: Bad Gateway - failed to forward to external endpoint
+        500: Internal Server Error - failed to send message
     """
     # 1. Validate authentication
     auth_header = request.headers.get("Authorization", "")
@@ -75,20 +71,11 @@ async def nudge_handler(request: web.Request) -> web.Response:
             {"status": "error", "error": f"Invalid JSON: {e}"}, status=400
         )
 
-    user_ids = data.get("user_ids")
     message = data.get("message")
+    msg_type = data.get("type")
+    user_id = data.get("user_id")
 
-    if not user_ids or not isinstance(user_ids, list):
-        return web.json_response(
-            {
-                "status": "error",
-                "error": (
-                    "Missing or invalid field: user_ids (must be list of integers)"
-                ),
-            },
-            status=400,
-        )
-
+    # Validate required fields
     if not message or not isinstance(message, str):
         return web.json_response(
             {
@@ -98,30 +85,52 @@ async def nudge_handler(request: web.Request) -> web.Response:
             status=400,
         )
 
-    # 3. Forward to external endpoint
-    try:
-        response_data = await nudge_service.forward_nudge(
-            user_ids=user_ids,
-            message=message,
-            pr_url=data.get("pr_url"),
-            prp_file=data.get("prp_file"),
-            prp_section=data.get("prp_section"),
-            urgency=data.get("urgency", "medium"),
+    if not msg_type or msg_type not in ["direct", "llm"]:
+        return web.json_response(
+            {
+                "status": "error",
+                "error": ("Missing or invalid field: type (must be 'direct' or 'llm')"),
+            },
+            status=400,
         )
+
+    # Validate optional user_id
+    if user_id is not None and not isinstance(user_id, int):
+        return web.json_response(
+            {
+                "status": "error",
+                "error": "Invalid field: user_id (must be integer if provided)",
+            },
+            status=400,
+        )
+
+    # 3. Send message via appropriate mode
+    try:
+        if msg_type == "direct":
+            result = await nudge_service.send_direct(
+                message=message,
+                user_id=user_id,
+            )
+        else:  # msg_type == "llm"
+            result = await nudge_service.send_via_llm(
+                message=message,
+                user_id=user_id,
+            )
 
         return web.json_response(
             {
                 "status": "success",
-                "message": "Nudge forwarded to external endpoint",
-                "forwarded_to": nudge_service.EXTERNAL_ENDPOINT,
-                "user_ids": user_ids,
-                "external_response": response_data,
+                "message": f"Message sent via {msg_type} mode",
+                "result": result,
             },
             status=200,
         )
 
     except Exception as e:
         return web.json_response(
-            {"status": "error", "error": f"Failed to forward nudge: {str(e)}"},
-            status=502,
+            {
+                "status": "error",
+                "error": f"Failed to send message: {str(e)}",
+            },
+            status=500,
         )

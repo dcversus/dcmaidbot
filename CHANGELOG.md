@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **PRP-014 v0.2.0: Direct Telegram Messaging via /nudge** 🔄
+  - **BREAKING**: Removed external endpoint forwarding (dcmaid.theedgestory.org/nudge)
+  - `/nudge` now sends messages DIRECTLY via Telegram Bot API
+  - Two messaging modes:
+    - **direct**: Send markdown-formatted message as-is
+    - **llm**: Process message through dcmaidbot LLM pipeline for personalized responses
+  - New request schema: `{message, type, user_id?}` (simplified)
+  - Removed superfluous fields: urgency, pr_url, prp_file, prp_section
+  - Messages support full Markdown formatting
+  - `user_id` optional - defaults to all ADMIN_IDS
+  - Updated tests: 15 handler tests + 16 service tests
+  - **Why**: Original architecture was incorrect - external endpoint didn't exist
+
 ### Added
 - **PRP-005 Phase 2: Agentic Tools Integration** 🤖🎊
   - Bot is now FULLY AGENTIC - can autonomously use tools!
