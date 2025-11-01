@@ -2,20 +2,21 @@
 
 import json
 import os
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from scripts.providers import (
-    OpenAIProvider,
     HuggingFaceProvider,
     LeonardoProvider,
-    pick_provider,
-    stable_hash,
+    OpenAIProvider,
     content_key,
     ensure_dir,
     load_json,
-    save_json
+    pick_provider,
+    save_json,
+    stable_hash,
 )
 
 
@@ -85,7 +86,7 @@ class TestProviderAbstraction:
         save_json(str(test_file), test_data)
 
         assert test_file.exists()
-        with open(test_file, 'r') as f:
+        with open(test_file, "r") as f:
             loaded_data = json.load(f)
         assert loaded_data == test_data
 
@@ -114,12 +115,12 @@ class TestProviderAbstraction:
         provider = OpenAIProvider(mock_openai_key)
 
         # Test unsupported size gets adjusted
-        with patch.object(provider.client.images, 'generate') as mock_generate:
+        with patch.object(provider.client.images, "generate") as mock_generate:
             mock_response = MagicMock()
             mock_response.data = [MagicMock(url="http://test.com/image.png")]
             mock_generate.return_value = mock_response
 
-            with patch('requests.get') as mock_get:
+            with patch("requests.get") as mock_get:
                 mock_get.return_value.content = b"fake image data"
 
                 result = await provider.txt2img("test prompt", (800, 600), seed=123)
@@ -127,7 +128,7 @@ class TestProviderAbstraction:
                 # Should adjust to closest supported size
                 mock_generate.assert_called_once()
                 call_args = mock_generate.call_args
-                assert call_args[1]['size'] in ["1024x1792", "1792x1024"]
+                assert call_args[1]["size"] in ["1024x1792", "1792x1024"]
 
     @pytest.mark.asyncio
     async def test_openai_inpaint_not_implemented(self, mock_openai_key):
@@ -142,7 +143,7 @@ class TestProviderAbstraction:
         """Test HuggingFace provider txt2img."""
         provider = HuggingFaceProvider(mock_hf_key)
 
-        with patch('requests.post') as mock_post:
+        with patch("requests.post") as mock_post:
             mock_post.return_value.content = b"fake image data"
             mock_post.return_value.raise_for_status = MagicMock()
 
@@ -151,17 +152,18 @@ class TestProviderAbstraction:
             # Should call HuggingFace API
             mock_post.assert_called_once()
             call_args = mock_post.call_args
-            assert "inputs" in call_args[1]['json']
-            assert call_args[1]['json']['inputs'] == "test prompt"
+            assert "inputs" in call_args[1]["json"]
+            assert call_args[1]["json"]["inputs"] == "test prompt"
 
     @pytest.mark.asyncio
     async def test_huggingface_inpaint(self, mock_hf_key):
         """Test HuggingFace provider inpainting."""
         provider = HuggingFaceProvider(mock_hf_key)
 
-        with patch('requests.post') as mock_post, \
-             patch('builtins.open', create=True) as mock_open:
-
+        with (
+            patch("requests.post") as mock_post,
+            patch("builtins.open", create=True) as mock_open,
+        ):
             # Mock file reading
             mock_file = MagicMock()
             mock_file.__enter__.return_value.read.return_value = b"fake data"
@@ -170,21 +172,26 @@ class TestProviderAbstraction:
             mock_post.return_value.content = b"fake inpainted image"
             mock_post.return_value.raise_for_status = MagicMock()
 
-            result = await provider.inpaint("base.png", "mask.png", "test prompt", seed=123)
+            result = await provider.inpaint(
+                "base.png", "mask.png", "test prompt", seed=123
+            )
 
             # Should call HuggingFace API with image data
             mock_post.assert_called_once()
             call_args = mock_post.call_args
-            assert "image" in call_args[1]['json']['parameters']
-            assert "mask_image" in call_args[1]['json']['parameters']
+            assert "image" in call_args[1]["json"]["parameters"]
+            assert "mask_image" in call_args[1]["json"]["parameters"]
 
     def test_pick_provider_txt2img(self):
         """Test provider selection for txt2img."""
-        with patch.dict(os.environ, {
-            'OPENAI_API_KEY': 'test-openai',
-            'HF_API_KEY': 'test-hf',
-            'LEONARDO_API_KEY': 'test-leo'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "test-openai",
+                "HF_API_KEY": "test-hf",
+                "LEONARDO_API_KEY": "test-leo",
+            },
+        ):
             # Test priority order
             provider = pick_provider("txt2img", ["openai", "huggingface", "leonardo"])
             assert isinstance(provider, OpenAIProvider)
@@ -194,11 +201,14 @@ class TestProviderAbstraction:
 
     def test_pick_provider_inpaint(self):
         """Test provider selection for inpainting."""
-        with patch.dict(os.environ, {
-            'OPENAI_API_KEY': 'test-openai',
-            'HF_API_KEY': 'test-hf',
-            'LEONARDO_API_KEY': 'test-leo'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "test-openai",
+                "HF_API_KEY": "test-hf",
+                "LEONARDO_API_KEY": "test-leo",
+            },
+        ):
             # OpenAI should be filtered out for inpainting
             provider = pick_provider("inpaint", ["openai", "huggingface"])
             assert isinstance(provider, HuggingFaceProvider)
@@ -215,10 +225,14 @@ class TestProviderAbstraction:
 
     def test_pick_provider_missing_keys(self):
         """Test provider selection with missing API keys."""
-        with patch.dict(os.environ, {
-            'OPENAI_API_KEY': 'test-openai',
-            # HF and Leonardo keys missing
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "test-openai",
+                # HF and Leonardo keys missing
+            },
+            clear=True,
+        ):
             # Should only use available provider
             provider = pick_provider("txt2img", ["openai", "huggingface", "leonardo"])
             assert isinstance(provider, OpenAIProvider)
@@ -232,7 +246,7 @@ class TestProviderAbstraction:
         """Test provider error handling."""
         provider = HuggingFaceProvider(mock_hf_key)
 
-        with patch('requests.post', side_effect=Exception("API Error")):
+        with patch("requests.post", side_effect=Exception("API Error")):
             with pytest.raises(Exception, match="API Error"):
                 await provider.txt2img("test prompt", (512, 512), seed=123)
 
@@ -245,7 +259,7 @@ class TestProviderAbstraction:
             "static/output/floors/floor_2/liliths_room/overlays",
             "web/app",
             "web/loader",
-            "web/types"
+            "web/types",
         ]
 
         for dir_path in required_dirs:
@@ -257,7 +271,7 @@ class TestProviderAbstraction:
         assert cache_file.exists(), "Cache registry file should exist"
 
         # Should be valid JSON
-        with open(cache_file, 'r') as f:
+        with open(cache_file, "r") as f:
             data = json.load(f)
 
         assert "version" in data

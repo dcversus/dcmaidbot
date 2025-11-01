@@ -40,7 +40,7 @@
           "description_prompt": "Cozy teenage bedroom, pastel pink/purple theme, purple rug center, desk with PC, bed, bookshelf, window; consistent top-down 16-bit pixel art.",
           "bounds": { "cols": 20, "rows": 20 },
           "connections": [
-            { "to": "hall", "type": "door", "grid": { "x": 10, "y": 19 }, "from_side": "bottom", "to_side": "top" }
+            { "to": "hall", "type": "door", "grid": { "x": 10, "y": 19 }, "from_side": "bottom", "to_side": "top", "widget_id": "door_to_hall", "bidirectional": true }
           ],
           "widgets": [
             {
@@ -112,6 +112,18 @@
                 { "state": "idle",  "prompt": "badge plate blank", "render_text": { "text": "version", "font": "PressStart2P", "color": "#ffd37f" } },
                 { "state": "hover", "prompt": "badge plate highlighted", "render_text": { "env": "GIT_COMMIT_SHORT", "font": "PressStart2P", "color": "#ffd37f" } }
               ]
+            },
+            {
+              "id": "door_to_hall",
+              "type": "connection",
+              "name": "Door to Hallway",
+              "grid": { "x": 9, "y": 18, "w": 3, "h": 2 },
+              "prompt_base": "wooden door with handle",
+              "states": [
+                { "state": "idle", "prompt": "closed wooden door, pixel art style" },
+                { "state": "hover", "prompt": "wooden door slightly open with soft glow" },
+                { "state": "click", "prompt": "wooden door open with light coming through" }
+              ]
             }
           ]
         },
@@ -121,7 +133,23 @@
           "seed_offset": 102,
           "description_prompt": "Simple hallway connecting rooms, pastel walls, framed pictures.",
           "bounds": { "cols": 20, "rows": 6 },
-          "widgets": []
+          "connections": [
+            { "to": "liliths_room", "type": "door", "grid": { "x": 10, "y": 0 }, "from_side": "top", "to_side": "bottom", "widget_id": "door_to_liliths_room", "bidirectional": true }
+          ],
+          "widgets": [
+            {
+              "id": "door_to_liliths_room",
+              "type": "connection",
+              "name": "Door to Lilith's Room",
+              "grid": { "x": 9, "y": 0, "w": 3, "h": 2 },
+              "prompt_base": "wooden door with handle",
+              "states": [
+                { "state": "idle", "prompt": "closed wooden door, pixel art style" },
+                { "state": "hover", "prompt": "wooden door slightly open with soft glow" },
+                { "state": "click", "prompt": "wooden door open with warm light coming through" }
+              ]
+            }
+          ]
         }
       ]
     }

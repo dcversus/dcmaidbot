@@ -18,7 +18,10 @@ import type {
   WorldConfig,
   LocationConfig,
   PerformanceMetrics,
-  InteractionEvent
+  InteractionEvent,
+  NavigationState,
+  ConnectionConfig,
+  ConnectionWidget
 } from './types';
 
 export class WorldRenderer {
@@ -26,6 +29,7 @@ export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
   private state: RenderState;
   private worldConfig: WorldConfig | null = null;
+  private navigationState: NavigationState;
   private isInitialized: boolean = false;
   private animationFrameId: number | null = null;
   private lastFrameTime: number = 0;
@@ -75,9 +79,19 @@ export class WorldRenderer {
         world_name: '',
         floor_name: '',
         location_name: '',
-        tracked_at: ''
+        generated_at: ''
       },
       isLoading: false
+    };
+
+    // Initialize navigation state
+    this.navigationState = {
+      currentFloor: '',
+      currentLocation: '',
+      availableConnections: [],
+      transitionProgress: 0,
+      isTransitioning: false,
+      transitionDuration: 800 // 800ms transition duration
     };
 
     // Configure canvas for pixel-perfect rendering
@@ -121,6 +135,11 @@ export class WorldRenderer {
 
       // Start render loop
       this.startRenderLoop();
+
+      // Update navigation state for new location
+      this.navigationState.currentFloor = floorId;
+      this.navigationState.currentLocation = locId;
+      this.updateAvailableConnections();
 
       this.isInitialized = true;
       this.state.isLoading = false;
@@ -213,11 +232,29 @@ export class WorldRenderer {
       this.state.clickWidgetId = clickedWidgetId;
       this.trackInteraction('click', clickedWidgetId, { x, y });
 
+      // Check if clicked widget is a connection widget
+      const connection = this.findConnectionForWidget(clickedWidgetId);
+      if (connection) {
+        console.log(`🚪 Connection clicked: ${connection.type} to ${connection.to}`);
+        this.trackInteraction('connection', clickedWidgetId, { x, y });
+        this.useConnection(connection);
+      }
+
       // Reset click state after a short delay
       setTimeout(() => {
         this.state.clickWidgetId = undefined;
       }, 200);
     }
+  }
+
+  private findConnectionForWidget(widgetId: string): ConnectionConfig | undefined {
+    /** Find connection associated with a widget. */
+    for (const connection of this.navigationState.availableConnections) {
+      if (connection.widget_id === widgetId) {
+        return connection;
+      }
+    }
+    return undefined;
   }
 
   private handleMouseLeave(): void {
@@ -270,6 +307,9 @@ export class WorldRenderer {
       this.lastFrameTime = currentTime;
       this.frameCount++;
 
+      // Update navigation state (handle transitions)
+      this.updateNavigationState();
+
       // Draw frame
       this.draw();
 
@@ -290,6 +330,11 @@ export class WorldRenderer {
 
       // Clear canvas
       this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+      // Apply transition effect if navigating
+      if (this.navigationState.isTransitioning) {
+        this.drawTransitionEffect();
+      }
 
       // Draw base image
       if (base.complete) {
@@ -425,7 +470,7 @@ export class WorldRenderer {
     /** Draw debug information overlay. */
     this.ctx.save();
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    this.ctx.fillRect(10, 10, 200, 100);
+    this.ctx.fillRect(10, 10, 220, 120);
 
     this.ctx.fillStyle = '#00ff00';
     this.ctx.font = '10px monospace';
@@ -436,7 +481,9 @@ export class WorldRenderer {
       `Render: ${this.performanceMetrics.renderTime.toFixed(2)}ms`,
       `Hover: ${this.state.hoverWidgetId || 'none'}`,
       `Click: ${this.state.clickWidgetId || 'none'}`,
-      `Assets: ${Object.keys(this.state.overlays).length}`
+      `Assets: ${Object.keys(this.state.overlays).length}`,
+      `Nav: ${this.navigationState.currentFloor}/${this.navigationState.currentLocation}`,
+      `Transition: ${this.navigationState.isTransitioning ? (this.navigationState.transitionProgress * 100).toFixed(0) + '%' : 'none'}`
     ];
 
     debugInfo.forEach((line, index) => {
@@ -446,7 +493,41 @@ export class WorldRenderer {
     this.ctx.restore();
   }
 
-  private trackInteraction(type: 'hover' | 'click' | 'navigate', widgetId?: string, position?: { x: number; y: number }): void {
+  private drawTransitionEffect(): void {
+    /** Draw transition effect during navigation. */
+    const progress = this.navigationState.transitionProgress;
+
+    // Create a fading overlay effect
+    this.ctx.save();
+
+    // Fade out current room
+    if (progress < 0.5) {
+      const fadeProgress = progress * 2; // 0 to 1 during first half
+      this.ctx.fillStyle = `rgba(0, 0, 0, ${fadeProgress * 0.8})`;
+      this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+      // Add transition text
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${fadeProgress})`;
+      this.ctx.font = 'bold 24px PressStart2P, monospace';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.fillText(
+        'Entering new room...',
+        this.ctx.canvas.width / 2,
+        this.ctx.canvas.height / 2
+      );
+    }
+    // Fade in new room
+    else {
+      const fadeProgress = (progress - 0.5) * 2; // 0 to 1 during second half
+      this.ctx.fillStyle = `rgba(0, 0, 0, ${(1 - fadeProgress) * 0.8})`;
+      this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    }
+
+    this.ctx.restore();
+  }
+
+  private trackInteraction(type: 'hover' | 'click' | 'navigate' | 'connection', widgetId?: string, position?: { x: number; y: number }): void {
     /** Track user interaction for analytics. */
     const event: InteractionEvent = {
       type,
@@ -489,6 +570,128 @@ export class WorldRenderer {
 
     // Initialize new location
     await this.initialize(floorId, locId);
+  }
+
+  public async navigateToLocation(floorId: string, locId: string): Promise<void> {
+    /** Navigate to a location with transition animation. */
+    if (!this.worldConfig) {
+      console.error('❌ World config not loaded');
+      return;
+    }
+
+    // Find target location in world config
+    const targetFloor = this.worldConfig.floors.find(f => f.id === floorId);
+    if (!targetFloor) {
+      console.error(`❌ Floor ${floorId} not found`);
+      return;
+    }
+
+    const targetLocation = targetFloor.locations.find(l => l.id === locId);
+    if (!targetLocation) {
+      console.error(`❌ Location ${locId} not found in floor ${floorId}`);
+      return;
+    }
+
+    // Start transition animation
+    this.navigationState.isTransitioning = true;
+    this.navigationState.targetLocation = { floorId, locationId: locId };
+    this.navigationState.transitionStartTime = performance.now();
+    this.navigationState.transitionProgress = 0;
+
+    console.log(`🚀 Starting navigation transition to ${floorId}/${locId}`);
+
+    // Track navigation event with connection info
+    this.trackInteraction('navigate', undefined, undefined);
+  }
+
+  public updateNavigationState(): void {
+    /** Update navigation state during transition animation. */
+    if (!this.navigationState.isTransitioning || !this.navigationState.targetLocation) {
+      return;
+    }
+
+    const currentTime = performance.now();
+    const elapsed = currentTime - (this.navigationState.transitionStartTime || 0);
+    const progress = Math.min(elapsed / this.navigationState.transitionDuration, 1);
+
+    this.navigationState.transitionProgress = progress;
+
+    // Complete transition when finished
+    if (progress >= 1) {
+      this.completeNavigation();
+    }
+  }
+
+  private async completeNavigation(): Promise<void> {
+    /** Complete navigation transition and load new location. */
+    const target = this.navigationState.targetLocation;
+    if (!target) return;
+
+    console.log(`✅ Navigation transition complete, loading ${target.floorId}/${target.locationId}`);
+
+    // Reset transition state
+    this.navigationState.isTransitioning = false;
+    this.navigationState.transitionProgress = 0;
+    this.navigationState.targetLocation = undefined;
+
+    // Load new location
+    await this.changeLocation(target.floorId, target.locationId);
+
+    // Update navigation connections for new location
+    this.updateAvailableConnections();
+  }
+
+  private updateAvailableConnections(): void {
+    /** Update available connections from current location. */
+    if (!this.worldConfig) {
+      this.navigationState.availableConnections = [];
+      return;
+    }
+
+    const currentFloor = this.worldConfig.floors.find(f => f.id === this.state.floorId);
+    if (!currentFloor) {
+      this.navigationState.availableConnections = [];
+      return;
+    }
+
+    const currentLocation = currentFloor.locations.find(l => l.id === this.state.locId);
+    if (!currentLocation || !currentLocation.connections) {
+      this.navigationState.availableConnections = [];
+      return;
+    }
+
+    this.navigationState.availableConnections = currentLocation.connections;
+    console.log(`🔗 Available connections: ${this.navigationState.availableConnections.length} doors/paths`);
+  }
+
+  public getNavigationState(): NavigationState {
+    /** Get current navigation state. */
+    return { ...this.navigationState };
+  }
+
+  public async useConnection(connection: ConnectionConfig): Promise<void> {
+    /** Use a connection to navigate to connected location. */
+    console.log(`🚪 Using connection: ${connection.type} to ${connection.to}`);
+
+    // Parse target location (format: "floor_id/location_id" or just "location_id" for same floor)
+    const parts = connection.to.split('/');
+    let targetFloorId: string, targetLocationId: string;
+
+    if (parts.length === 2) {
+      [targetFloorId, targetLocationId] = parts;
+    } else {
+      // Same floor
+      targetFloorId = this.state.floorId;
+      targetLocationId = parts[0];
+    }
+
+    // Check if connection is bidirectional and validate
+    if (connection.bidirectional !== false) {
+      // TODO: Validate reverse connection exists
+    }
+
+    // Navigate to target location with transition
+    await this.navigateToLocation(targetFloorId, targetLocationId);
   }
 
   public setInteractionCallback(callback: (event: InteractionEvent) => void): void {

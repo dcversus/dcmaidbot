@@ -16,7 +16,7 @@ export class AssetLoader {
   async loadWorld(): Promise<WorldConfig> {
     /** Load world configuration from JSON file. */
     try {
-      const response = await fetch('/static/world.json');
+      const response = await fetch('/world.json');
       if (!response.ok) {
         throw new Error(`Failed to load world.json: ${response.status}`);
       }
@@ -32,7 +32,7 @@ export class AssetLoader {
   async loadMeta(floorId: string, locId: string): Promise<MapMeta> {
     /** Load map metadata for specific floor and location. */
     try {
-      const url = `/static/output/floors/${floorId}/${locId}/map.meta.json`;
+      const url = `/output/floors/${floorId}/${locId}/map.meta.json`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to load metadata: ${response.status}`);
@@ -88,7 +88,7 @@ export class AssetLoader {
 
     for (const widget of widgets) {
       for (const state of widget.states) {
-        const overlayUrl = `/static/output/floors/${floorId}/${locId}/${state.overlay}`;
+        const overlayUrl = `/output/floors/${floorId}/${locId}/${state.overlay}`;
 
         loadingPromises.push(
           this.loadImage(overlayUrl)
@@ -108,7 +108,7 @@ export class AssetLoader {
 
   async loadBaseImage(floorId: string, locId: string, baseImage: string): Promise<HTMLImageElement> {
     /** Load base scene image for a location. */
-    const baseUrl = `/static/output/floors/${floorId}/${locId}/${baseImage}`;
+    const baseUrl = `/output/floors/${floorId}/${locId}/${baseImage}`;
     return this.loadImage(baseUrl);
   }
 
@@ -173,7 +173,7 @@ export const assetLoader = new AssetLoader();
 // Utility functions for asset management
 export function getAssetUrl(floorId: string, locId: string, assetPath: string): string {
   /** Generate full URL for an asset. */
-  return `/static/output/floors/${floorId}/${locId}/${assetPath}`;
+  return `/output/floors/${floorId}/${locId}/${assetPath}`;
 }
 
 export function getWidgetOverlayUrl(
@@ -183,12 +183,12 @@ export function getWidgetOverlayUrl(
   state: string
 ): string {
   /** Generate URL for specific widget state overlay. */
-  return `/static/output/floors/${floorId}/${locId}/overlays/${widgetId}__${state}.png`;
+  return `/output/floors/${floorId}/${locId}/overlays/${widgetId}__${state}.png`;
 }
 
 export function getBaseImageUrl(floorId: string, locId: string): string {
   /** Generate URL for base scene image. */
-  return `/static/output/floors/${floorId}/${locId}/base.png`;
+  return `/output/floors/${floorId}/${locId}/base.png`;
 }
 
 export async function preloadLocation(

@@ -7,13 +7,13 @@ This module provides a unified interface for multiple AI image generation servic
 - Leonardo AI (fallback)
 """
 
+import hashlib
 import json
 import logging
 import os
-import hashlib
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Dict, Any
 from pathlib import Path
+from typing import Tuple
 
 import requests
 from openai import OpenAI
@@ -36,7 +36,7 @@ class AIProvider(ABC):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """Generate image from text prompt.
 
@@ -62,7 +62,7 @@ class AIProvider(ABC):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """Perform inpainting on base image with mask.
 
@@ -101,7 +101,7 @@ class OpenAIProvider(AIProvider):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """Generate image using DALL-E 3."""
         try:
@@ -121,7 +121,7 @@ class OpenAIProvider(AIProvider):
                 prompt=prompt,
                 size=size_str,
                 n=1,
-                response_format="url"
+                response_format="url",
             )
 
             # Download image
@@ -136,7 +136,7 @@ class OpenAIProvider(AIProvider):
             # Ensure directory exists
             Path(outfile).parent.mkdir(parents=True, exist_ok=True)
 
-            with open(outfile, 'wb') as f:
+            with open(outfile, "wb") as f:
                 f.write(img_response.content)
 
             logger.info(f"Generated image with OpenAI: {outfile}")
@@ -154,10 +154,12 @@ class OpenAIProvider(AIProvider):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """DALL-E 3 does not support inpainting - use fallback."""
-        raise NotImplementedError("OpenAI DALL-E 3 does not support inpainting. Use HuggingFace provider.")
+        raise NotImplementedError(
+            "OpenAI DALL-E 3 does not support inpainting. Use HuggingFace provider."
+        )
 
 
 class HuggingFaceProvider(AIProvider):
@@ -165,7 +167,9 @@ class HuggingFaceProvider(AIProvider):
 
     def __init__(self, api_key: str):
         super().__init__(api_key)
-        self.api_url = "https://api-inference.huggingface.co/models/timbrooks/instructpix2pix"
+        self.api_url = (
+            "https://api-inference.huggingface.co/models/timbrooks/instructpix2pix"
+        )
         self.headers = {"Authorization": f"Bearer {api_key}"}
 
     async def txt2img(
@@ -175,7 +179,7 @@ class HuggingFaceProvider(AIProvider):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """Generate image using InstructPix2Pix."""
         try:
@@ -186,8 +190,8 @@ class HuggingFaceProvider(AIProvider):
                     "guidance_scale": cfg,
                     "seed": seed,
                     "width": size[0],
-                    "height": size[1]
-                }
+                    "height": size[1],
+                },
             }
 
             response = requests.post(self.api_url, headers=self.headers, json=payload)
@@ -200,7 +204,7 @@ class HuggingFaceProvider(AIProvider):
             # Ensure directory exists
             Path(outfile).parent.mkdir(parents=True, exist_ok=True)
 
-            with open(outfile, 'wb') as f:
+            with open(outfile, "wb") as f:
                 f.write(response.content)
 
             logger.info(f"Generated image with HuggingFace: {outfile}")
@@ -218,14 +222,14 @@ class HuggingFaceProvider(AIProvider):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """Perform inpainting using InstructPix2Pix."""
         try:
             # Read base image and mask
-            with open(base_path, 'rb') as f:
+            with open(base_path, "rb") as f:
                 base_data = f.read()
-            with open(mask_path, 'rb') as f:
+            with open(mask_path, "rb") as f:
                 mask_data = f.read()
 
             payload = {
@@ -235,8 +239,8 @@ class HuggingFaceProvider(AIProvider):
                     "guidance_scale": cfg,
                     "seed": seed,
                     "image": base_data,
-                    "mask_image": mask_data
-                }
+                    "mask_image": mask_data,
+                },
             }
 
             response = requests.post(self.api_url, headers=self.headers, json=payload)
@@ -249,7 +253,7 @@ class HuggingFaceProvider(AIProvider):
             # Ensure directory exists
             Path(outfile).parent.mkdir(parents=True, exist_ok=True)
 
-            with open(outfile, 'wb') as f:
+            with open(outfile, "wb") as f:
                 f.write(response.content)
 
             logger.info(f"Generated inpaint with HuggingFace: {outfile}")
@@ -275,7 +279,7 @@ class LeonardoProvider(AIProvider):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """Generate image using Leonardo AI."""
         try:
@@ -290,18 +294,23 @@ class LeonardoProvider(AIProvider):
                 "seed": seed,
                 "guidance_scale": cfg,
                 "num_inference_steps": steps,
-                "presetStyle": "LEONARDO"
+                "presetStyle": "LEONARDO",
             }
 
-            response = requests.post(f"{self.api_url}/generations", headers=self.headers, json=init_payload)
+            response = requests.post(
+                f"{self.api_url}/generations", headers=self.headers, json=init_payload
+            )
             response.raise_for_status()
 
             generation_id = response.json()["sdGenerationJob"]["generationId"]
 
             # Poll for completion
             import asyncio
+
             while True:
-                status_response = requests.get(f"{self.api_url}/generations/{generation_id}", headers=self.headers)
+                status_response = requests.get(
+                    f"{self.api_url}/generations/{generation_id}", headers=self.headers
+                )
                 status_response.raise_for_status()
 
                 status = status_response.json()["sdGenerationJob"]["status"]
@@ -313,7 +322,9 @@ class LeonardoProvider(AIProvider):
                 await asyncio.sleep(2)
 
             # Get image URL
-            image_url = status_response.json()["sdGenerationJob"]["generated_images"][0]["url"]
+            image_url = status_response.json()["sdGenerationJob"]["generated_images"][
+                0
+            ]["url"]
 
             # Download and save
             img_response = requests.get(image_url)
@@ -325,7 +336,7 @@ class LeonardoProvider(AIProvider):
             # Ensure directory exists
             Path(outfile).parent.mkdir(parents=True, exist_ok=True)
 
-            with open(outfile, 'wb') as f:
+            with open(outfile, "wb") as f:
                 f.write(img_response.content)
 
             logger.info(f"Generated image with Leonardo: {outfile}")
@@ -343,7 +354,7 @@ class LeonardoProvider(AIProvider):
         seed: int,
         steps: int = 30,
         cfg: float = 5.0,
-        outfile: str = None
+        outfile: str = None,
     ) -> str:
         """Leonardo inpainting implementation."""
         try:
@@ -389,7 +400,9 @@ def pick_provider(operation: str, priority: list[str]) -> AIProvider:
     if not providers:
         raise RuntimeError(f"No available providers for operation: {operation}")
 
-    logger.info(f"Selected provider: {providers[0].get_provider_name()} for {operation}")
+    logger.info(
+        f"Selected provider: {providers[0].get_provider_name()} for {operation}"
+    )
     return providers[0]
 
 
@@ -412,7 +425,7 @@ def ensure_dir(path: str) -> None:
 def load_json(path: str, default: dict = None) -> dict:
     """Load JSON file with default."""
     try:
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return default or {}
@@ -421,5 +434,5 @@ def load_json(path: str, default: dict = None) -> dict:
 def save_json(path: str, data: dict) -> None:
     """Save data to JSON file."""
     ensure_dir(str(Path(path).parent))
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(data, f, indent=2)

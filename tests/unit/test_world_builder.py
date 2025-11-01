@@ -1,11 +1,10 @@
 """Unit tests for World Builder deterministic pipeline."""
 
 import json
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 from pathlib import Path
-import tempfile
-import shutil
+from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from scripts.world_builder import WorldBuilder
 
@@ -24,15 +23,11 @@ class TestWorldBuilder:
                 "palette": "DB32",
                 "camera": "top-down SNES RPG",
                 "tile_size": 64,
-                "grid": {"cols": 20, "rows": 20}
+                "grid": {"cols": 20, "rows": 20},
             },
             "render": {
                 "provider_priority": ["openai", "huggingface", "leonardo"],
-                "defaults": {
-                    "seed": 424242,
-                    "steps": 30,
-                    "cfg": 5.0
-                }
+                "defaults": {"seed": 424242, "steps": 30, "cfg": 5.0},
             },
             "floors": [
                 {
@@ -57,22 +52,25 @@ class TestWorldBuilder:
                                         {
                                             "state": "idle",
                                             "prompt": "test widget idle",
-                                            "region": {"mode": "cells", "cells": [[2, 2], [3, 2]]}
+                                            "region": {
+                                                "mode": "cells",
+                                                "cells": [[2, 2], [3, 2]],
+                                            },
                                         }
-                                    ]
+                                    ],
                                 }
-                            ]
+                            ],
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
 
     @pytest.fixture
     def world_builder(self, test_config, tmp_path):
         """Create WorldBuilder instance with test config."""
         config_path = tmp_path / "test_world.json"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(test_config, f)
 
         return WorldBuilder(str(config_path))
@@ -112,7 +110,7 @@ class TestWorldBuilder:
         # Check mask properties
         mask = Image.open(mask_path)
         assert mask.size == canvas_size
-        assert mask.mode == 'L'  # Grayscale
+        assert mask.mode == "L"  # Grayscale
 
     def test_make_mask_full(self, world_builder, tmp_path):
         """Test full canvas mask generation."""
@@ -129,7 +127,7 @@ class TestWorldBuilder:
         # Check mask properties
         mask = Image.open(mask_path)
         assert mask.size == (w, h)
-        assert mask.mode == 'L'  # Grayscale
+        assert mask.mode == "L"  # Grayscale
 
     @pytest.mark.asyncio
     async def test_generate_base_scene_cached(self, world_builder):
@@ -143,12 +141,12 @@ class TestWorldBuilder:
             "path": "static/cache/test_cached_image.png"
         }
 
-        with patch('os.path.exists', return_value=True):
-            with patch.object(world_builder, '_load_config') as mock_load:
+        with patch("os.path.exists", return_value=True):
+            with patch.object(world_builder, "_load_config") as mock_load:
                 mock_load.return_value = world_builder.config
 
                 # Mock the content_key function to return our test key
-                with patch('scripts.world_builder.content_key', return_value=cache_key):
+                with patch("scripts.world_builder.content_key", return_value=cache_key):
                     result = await world_builder._generate_base_scene(floor, location)
 
         assert world_builder.stats["cache_hits"] == 1
@@ -160,13 +158,15 @@ class TestWorldBuilder:
         floor = world_builder.config["floors"][0]
         location = floor["locations"][0]
 
-        with patch('scripts.world_builder.pick_provider') as mock_pick_provider:
+        with patch("scripts.world_builder.pick_provider") as mock_pick_provider:
             mock_provider = AsyncMock()
-            mock_provider.txt2img.return_value = "static/output/floors/floor_1/test_room/base.png"
+            mock_provider.txt2img.return_value = (
+                "static/output/floors/floor_1/test_room/base.png"
+            )
             mock_provider.get_provider_name.return_value = "TestProvider"
             mock_pick_provider.return_value = mock_provider
 
-            with patch('scripts.world_builder.ensure_dir'):
+            with patch("scripts.world_builder.ensure_dir"):
                 result = await world_builder._generate_base_scene(floor, location)
 
         assert world_builder.stats["generated_images"] == 1
@@ -180,15 +180,17 @@ class TestWorldBuilder:
         location = floor["locations"][0]
         base_path = "test_base.png"
 
-        with patch('scripts.world_builder.pick_provider') as mock_pick_provider:
+        with patch("scripts.world_builder.pick_provider") as mock_pick_provider:
             mock_provider = AsyncMock()
             mock_provider.txt2img.return_value = "test_overlay.png"
             mock_provider.get_provider_name.return_value = "TestProvider"
             mock_pick_provider.return_value = mock_provider
 
-            with patch.object(world_builder, '_make_mask_cells'):
-                with patch('scripts.world_builder.ensure_dir'):
-                    result = await world_builder._generate_widget_overlays(floor, location, base_path)
+            with patch.object(world_builder, "_make_mask_cells"):
+                with patch("scripts.world_builder.ensure_dir"):
+                    result = await world_builder._generate_widget_overlays(
+                        floor, location, base_path
+                    )
 
         assert len(result) == 1
         assert result[0]["id"] == "test_widget"
@@ -230,9 +232,13 @@ class TestWorldBuilder:
     @pytest.mark.asyncio
     async def test_generate_world_success(self, world_builder):
         """Test successful world generation."""
-        with patch.object(world_builder, '_generate_base_scene', new_callable=AsyncMock) as mock_base:
-            with patch.object(world_builder, '_generate_widget_overlays', new_callable=AsyncMock) as mock_overlays:
-                with patch.object(world_builder, '_save_cache'):
+        with patch.object(
+            world_builder, "_generate_base_scene", new_callable=AsyncMock
+        ) as mock_base:
+            with patch.object(
+                world_builder, "_generate_widget_overlays", new_callable=AsyncMock
+            ) as mock_overlays:
+                with patch.object(world_builder, "_save_cache"):
                     mock_base.return_value = "test_base.png"
                     mock_overlays.return_value = [{"id": "test_widget", "states": []}]
 
@@ -246,7 +252,9 @@ class TestWorldBuilder:
     @pytest.mark.asyncio
     async def test_generate_world_with_errors(self, world_builder):
         """Test world generation with errors."""
-        with patch.object(world_builder, '_generate_base_scene', side_effect=Exception("Test error")):
+        with patch.object(
+            world_builder, "_generate_base_scene", side_effect=Exception("Test error")
+        ):
             result = await world_builder.generate_world()
 
         assert result["success"] is False
@@ -257,7 +265,7 @@ class TestWorldBuilder:
         """Test cache saving functionality."""
         world_builder.cache_db["cache_entries"]["test_key"] = {
             "path": "test.png",
-            "meta": {"prompt": "test"}
+            "meta": {"prompt": "test"},
         }
         world_builder.stats["generated_images"] = 5
         world_builder.stats["cache_hits"] = 3
@@ -265,7 +273,7 @@ class TestWorldBuilder:
         cache_path = tmp_path / "test_cache.json"
         world_builder.config_path = str(tmp_path / "dummy_config.json")
 
-        with patch('scripts.world_builder.save_json') as mock_save:
+        with patch("scripts.world_builder.save_json") as mock_save:
             world_builder._save_cache()
 
             # Verify save was called with updated statistics
@@ -285,7 +293,7 @@ class TestWorldBuilder:
             "static/output",
             "web/app",
             "web/loader",
-            "web/types"
+            "web/types",
         ]
 
         for dir_path in required_dirs:

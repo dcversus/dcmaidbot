@@ -13,18 +13,17 @@ Key Features:
 
 import json
 import logging
-import hashlib
 import os
-from typing import Tuple, List, Dict, Any, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 from scripts.providers import (
-    pick_provider,
-    stable_hash,
     content_key,
+    ensure_dir,
     load_json,
+    pick_provider,
     save_json,
-    ensure_dir
+    stable_hash,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,22 +41,20 @@ class WorldBuilder:
         self.config_path = config_path
         self.config = self._load_config()
         self.cache_db = load_json("static/cache/hashes.json", {"cache_entries": {}})
-        self.stats = {
-            "generated_images": 0,
-            "cache_hits": 0,
-            "errors": 0
-        }
+        self.stats = {"generated_images": 0, "cache_hits": 0, "errors": 0}
 
     def _load_config(self) -> Dict[str, Any]:
         """Load world configuration from JSON file."""
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error(f"Failed to load world config from {self.config_path}: {e}")
             raise
 
-    def _cells_to_px(self, cells: List[List[int]], tile: int) -> Tuple[int, int, int, int]:
+    def _cells_to_px(
+        self, cells: List[List[int]], tile: int
+    ) -> Tuple[int, int, int, int]:
         """Convert grid cells to pixel coordinates.
 
         Args:
@@ -73,8 +70,13 @@ class WorldBuilder:
         y0, y1 = min(ys), max(ys)
         return x0 * tile, y0 * tile, (x1 - x0 + 1) * tile, (y1 - y0 + 1) * tile
 
-    def _make_mask_cells(self, grid_cells: List[List[int]], tile: int,
-                        canvas_size: Tuple[int, int], out: str) -> None:
+    def _make_mask_cells(
+        self,
+        grid_cells: List[List[int]],
+        tile: int,
+        canvas_size: Tuple[int, int],
+        out: str,
+    ) -> None:
         """Generate pixel-perfect mask for grid cells.
 
         Args:
@@ -88,14 +90,15 @@ class WorldBuilder:
 
             W, H = canvas_size
             # Create black canvas
-            mask = Image.new('L', (W, H), 0)
+            mask = Image.new("L", (W, H), 0)
             draw = ImageDraw.Draw(mask)
 
             # Draw white rectangles for each cell
             for cell in grid_cells:
                 x, y = cell
-                draw.rectangle([x * tile, y * tile, (x + 1) * tile, (y + 1) * tile],
-                             fill=255)
+                draw.rectangle(
+                    [x * tile, y * tile, (x + 1) * tile, (y + 1) * tile], fill=255
+                )
 
             # Ensure directory exists
             ensure_dir(str(Path(out).parent))
@@ -117,7 +120,7 @@ class WorldBuilder:
         try:
             from PIL import Image
 
-            mask = Image.new('L', (w, h), 255)
+            mask = Image.new("L", (w, h), 255)
             ensure_dir(str(Path(out).parent))
             mask.save(out)
             logger.info(f"Generated full mask: {out}")
@@ -151,7 +154,9 @@ class WorldBuilder:
             W, H = cols * tile, rows * tile
 
             # Generate deterministic seed
-            loc_seed = base_seed + floor.get("seed_offset", 0) + stable_hash(location["id"])
+            loc_seed = (
+                base_seed + floor.get("seed_offset", 0) + stable_hash(location["id"])
+            )
             base_prompt = location["description_prompt"]
 
             # Generate cache key
@@ -162,9 +167,10 @@ class WorldBuilder:
                 location["id"],
                 base_prompt,
                 loc_seed,
-                W, H,
+                W,
+                H,
                 steps,
-                cfg_scale
+                cfg_scale,
             )
 
             # Check cache
@@ -186,16 +192,21 @@ class WorldBuilder:
                 seed=loc_seed,
                 steps=steps,
                 cfg=cfg_scale,
-                outfile=base_path
+                outfile=base_path,
             )
 
             # Update cache
-            cache_put(self.cache_db["cache_entries"], cache_key, generated_path, {
-                "prompt": base_prompt,
-                "seed": loc_seed,
-                "size": (W, H),
-                "provider": provider.get_provider_name()
-            })
+            cache_put(
+                self.cache_db["cache_entries"],
+                cache_key,
+                generated_path,
+                {
+                    "prompt": base_prompt,
+                    "seed": loc_seed,
+                    "size": (W, H),
+                    "provider": provider.get_provider_name(),
+                },
+            )
 
             self.stats["generated_images"] += 1
             logger.info(f"Generated base scene: {generated_path}")
@@ -206,7 +217,9 @@ class WorldBuilder:
             logger.error(f"Failed to generate base scene for {location['id']}: {e}")
             raise
 
-    async def _generate_widget_overlays(self, floor: Dict, location: Dict, base_path: str) -> List[Dict]:
+    async def _generate_widget_overlays(
+        self, floor: Dict, location: Dict, base_path: str
+    ) -> List[Dict]:
         """Generate overlay images for all widgets in a location.
 
         Args:
@@ -234,9 +247,11 @@ class WorldBuilder:
                 grid = widget["grid"]  # x, y, w, h in cells
 
                 # Calculate all cells for this widget
-                cells = [[grid["x"] + dx, grid["y"] + dy]
-                        for dy in range(grid["h"])
-                        for dx in range(grid["w"])]
+                cells = [
+                    [grid["x"] + dx, grid["y"] + dy]
+                    for dy in range(grid["h"])
+                    for dx in range(grid["w"])
+                ]
 
                 # Default region if state doesn't specify one
                 default_region = {"mode": "cells", "cells": cells}
@@ -245,7 +260,11 @@ class WorldBuilder:
                     state_name = state["state"]
                     region = state.get("region", default_region)
                     prompt = state.get("prompt", widget.get("prompt_base", ""))
-                    seed = base_seed + floor.get("seed_offset", 0) + stable_hash(f"{location['id']}|{widget['id']}|{state_name}")
+                    seed = (
+                        base_seed
+                        + floor.get("seed_offset", 0)
+                        + stable_hash(f"{location['id']}|{widget['id']}|{state_name}")
+                    )
 
                     out_name = f"{widget['id']}__{state_name}.png"
                     out_path = f"{out_dir}/{out_name}"
@@ -258,26 +277,48 @@ class WorldBuilder:
                         W, H = cols * tile, rows * tile
 
                         cache_key = content_key(
-                            "full", floor["id"], location["id"], widget["id"],
-                            state_name, prompt, seed, W, H, steps, cfg_scale
+                            "full",
+                            floor["id"],
+                            location["id"],
+                            widget["id"],
+                            state_name,
+                            prompt,
+                            seed,
+                            W,
+                            H,
+                            steps,
+                            cfg_scale,
                         )
 
                         if cache_hit(self.cache_db["cache_entries"], cache_key):
                             self.stats["cache_hits"] += 1
-                            cached_path = self.cache_db["cache_entries"][cache_key]["path"]
+                            cached_path = self.cache_db["cache_entries"][cache_key][
+                                "path"
+                            ]
                             bbox = [0, 0, W, H]
                         else:
                             # Generate new full image
                             provider = pick_provider("txt2img", provider_priority)
                             generated_path = await provider.txt2img(
-                                prompt=prompt, size=(W, H), seed=seed,
-                                steps=steps, cfg=cfg_scale, outfile=out_path
+                                prompt=prompt,
+                                size=(W, H),
+                                seed=seed,
+                                steps=steps,
+                                cfg=cfg_scale,
+                                outfile=out_path,
                             )
 
-                            cache_put(self.cache_db["cache_entries"], cache_key, generated_path, {
-                                "prompt": prompt, "seed": seed, "size": (W, H),
-                                "provider": provider.get_provider_name()
-                            })
+                            cache_put(
+                                self.cache_db["cache_entries"],
+                                cache_key,
+                                generated_path,
+                                {
+                                    "prompt": prompt,
+                                    "seed": seed,
+                                    "size": (W, H),
+                                    "provider": provider.get_provider_name(),
+                                },
+                            )
 
                             self.stats["generated_images"] += 1
                             bbox = [0, 0, W, H]
@@ -285,47 +326,80 @@ class WorldBuilder:
                     else:
                         # Region-based inpainting
                         mask_path = f"static/cache/widgets/{floor['id']}__{location['id']}__{widget['id']}__{state_name}.mask.png"
-                        self._make_mask_cells(region["cells"], tile,
-                                          (location["bounds"]["cols"] * tile, location["bounds"]["rows"] * tile),
-                                          mask_path)
+                        self._make_mask_cells(
+                            region["cells"],
+                            tile,
+                            (
+                                location["bounds"]["cols"] * tile,
+                                location["bounds"]["rows"] * tile,
+                            ),
+                            mask_path,
+                        )
 
                         # Calculate bounding box
                         x, y, w, h = self._cells_to_px(region["cells"], tile)
                         bbox = [x, y, w, h]
 
                         cache_key = content_key(
-                            "inpaint", floor["id"], location["id"], widget["id"],
-                            state_name, prompt, seed,
-                            (location["bounds"]["cols"] * tile, location["bounds"]["rows"] * tile),
-                            steps, cfg_scale, open(mask_path, 'rb').read()
+                            "inpaint",
+                            floor["id"],
+                            location["id"],
+                            widget["id"],
+                            state_name,
+                            prompt,
+                            seed,
+                            (
+                                location["bounds"]["cols"] * tile,
+                                location["bounds"]["rows"] * tile,
+                            ),
+                            steps,
+                            cfg_scale,
+                            open(mask_path, "rb").read(),
                         )
 
                         if cache_hit(self.cache_db["cache_entries"], cache_key):
                             self.stats["cache_hits"] += 1
-                            cached_path = self.cache_db["cache_entries"][cache_key]["path"]
+                            cached_path = self.cache_db["cache_entries"][cache_key][
+                                "path"
+                            ]
                         else:
                             # Generate inpainted image
                             provider = pick_provider("inpaint", provider_priority)
                             generated_path = await provider.inpaint(
-                                base_path=base_path, mask_path=mask_path, prompt=prompt,
-                                seed=seed, steps=steps, cfg=cfg_scale, outfile=out_path
+                                base_path=base_path,
+                                mask_path=mask_path,
+                                prompt=prompt,
+                                seed=seed,
+                                steps=steps,
+                                cfg=cfg_scale,
+                                outfile=out_path,
                             )
 
-                            cache_put(self.cache_db["cache_entries"], cache_key, generated_path, {
-                                "prompt": prompt, "seed": seed, "base_path": base_path,
-                                "mask_path": mask_path, "provider": provider.get_provider_name()
-                            })
+                            cache_put(
+                                self.cache_db["cache_entries"],
+                                cache_key,
+                                generated_path,
+                                {
+                                    "prompt": prompt,
+                                    "seed": seed,
+                                    "base_path": base_path,
+                                    "mask_path": mask_path,
+                                    "provider": provider.get_provider_name(),
+                                },
+                            )
 
                             self.stats["generated_images"] += 1
 
                     # Add state metadata
-                    widget_entry["states"].append({
-                        "state": state_name,
-                        "overlay": f"overlays/{out_name}",
-                        "bbox": bbox,
-                        "render_text": state.get("render_text"),
-                        "region": region
-                    })
+                    widget_entry["states"].append(
+                        {
+                            "state": state_name,
+                            "overlay": f"overlays/{out_name}",
+                            "bbox": bbox,
+                            "render_text": state.get("render_text"),
+                            "region": region,
+                        }
+                    )
 
                 widget_data.append(widget_entry)
 
@@ -333,7 +407,9 @@ class WorldBuilder:
 
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Failed to generate widget overlays for {location['id']}: {e}")
+            logger.error(
+                f"Failed to generate widget overlays for {location['id']}: {e}"
+            )
             raise
 
     async def generate_world(self) -> Dict[str, Any]:
@@ -355,7 +431,9 @@ class WorldBuilder:
                     base_path = await self._generate_base_scene(floor, location)
 
                     # Generate widget overlays
-                    widget_data = await self._generate_widget_overlays(floor, location, base_path)
+                    widget_data = await self._generate_widget_overlays(
+                        floor, location, base_path
+                    )
 
                     # Create location metadata
                     tile = self.config["style"]["tile_size"]
@@ -368,7 +446,7 @@ class WorldBuilder:
                         "world_name": self.config["world_name"],
                         "floor_name": floor["name"],
                         "location_name": location["name"],
-                        "generated_at": str(Path().resolve())
+                        "generated_at": str(Path().resolve()),
                     }
 
                     # Save metadata
@@ -382,7 +460,7 @@ class WorldBuilder:
             self._save_cache()
 
             # Log final statistics
-            logger.info(f"World generation complete!")
+            logger.info("World generation complete!")
             logger.info(f"Images generated: {self.stats['generated_images']}")
             logger.info(f"Cache hits: {self.stats['cache_hits']}")
             logger.info(f"Errors: {self.stats['errors']}")
@@ -392,21 +470,21 @@ class WorldBuilder:
                 "stats": self.stats,
                 "world_name": self.config["world_name"],
                 "floors_processed": len(self.config["floors"]),
-                "locations_processed": sum(len(f["locations"]) for f in self.config["floors"])
+                "locations_processed": sum(
+                    len(f["locations"]) for f in self.config["floors"]
+                ),
             }
 
         except Exception as e:
             logger.error(f"World generation failed: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "stats": self.stats
-            }
+            return {"success": False, "error": str(e), "stats": self.stats}
 
     def _save_cache(self) -> None:
         """Save updated cache database."""
         # Update statistics
-        self.cache_db["statistics"]["total_entries"] = len(self.cache_db["cache_entries"])
+        self.cache_db["statistics"]["total_entries"] = len(
+            self.cache_db["cache_entries"]
+        )
         self.cache_db["statistics"]["cache_hits"] = self.stats["cache_hits"]
         self.cache_db["statistics"]["cache_misses"] = self.stats["generated_images"]
 
@@ -426,7 +504,6 @@ def cache_put(cache_db: Dict, key: str, path: str, meta: Dict) -> None:
 
 async def main():
     """Main entry point for world generation."""
-    import asyncio
 
     logging.basicConfig(level=logging.INFO)
 
@@ -435,7 +512,9 @@ async def main():
 
     if result["success"]:
         print(f"✅ {result['world_name']} generated successfully!")
-        print(f"📊 Processed {result['floors_processed']} floors, {result['locations_processed']} locations")
+        print(
+            f"📊 Processed {result['floors_processed']} floors, {result['locations_processed']} locations"
+        )
         print(f"🖼️  Generated {result['stats']['generated_images']} new images")
         print(f"💾 Cache hits: {result['stats']['cache_hits']}")
     else:

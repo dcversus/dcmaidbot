@@ -76,6 +76,8 @@ export type ConnectionConfig = {
   grid: { x: number; y: number };
   from_side: string;
   to_side: string;
+  widget_id?: string;
+  bidirectional?: boolean;
 };
 
 export type WidgetConfig = {
@@ -114,13 +116,6 @@ export type RenderState = {
   error?: string;
 };
 
-export type NavigationState = {
-  currentFloor: string;
-  currentLocation: string;
-  availableLocations: LocationConfig[];
-  transitionProgress: number;
-  isTransitioning: boolean;
-};
 
 export type PerformanceMetrics = {
   loadTime: number;
@@ -137,10 +132,31 @@ export type WorldRendererOptions = {
   pixelPerfectRendering?: boolean;
 };
 
+export type NavigationState = {
+  currentFloor: string;
+  currentLocation: string;
+  availableConnections: ConnectionConfig[];
+  transitionProgress: number;
+  isTransitioning: boolean;
+  targetLocation?: { floorId: string; locationId: string };
+  transitionStartTime?: number;
+  transitionDuration: number;
+};
+
+export type ConnectionWidget = {
+  id: string;
+  type: "connection";
+  connection: ConnectionConfig;
+  name: string;
+  grid: { x: number; y: number; w: number; h: number };
+  states: WidgetStateConfig[];
+};
+
 export type InteractionEvent = {
-  type: "hover" | "click" | "navigate";
+  type: "hover" | "click" | "navigate" | "connection";
   widgetId?: string;
   location?: { floorId: string; locationId: string };
+  connection?: ConnectionConfig;
   timestamp: number;
   position: { x: number; y: number };
 };

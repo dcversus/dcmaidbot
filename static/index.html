@@ -648,6 +648,7 @@
                 <label style="color: #fff; display: block; margin-bottom: 5px;">Location:</label>
                 <select id="location-select" style="width: 100%; padding: 5px; background: #333; color: #fff; border: 1px solid #555;">
                     <option value="liliths_room">Lilith's Room</option>
+                    <option value="hall">Hallway</option>
                 </select>
             </div>
             <button onclick="PRP016.navigateToLocation(document.getElementById('floor-select').value, document.getElementById('location-select').value)"
@@ -4192,6 +4193,80 @@
                 }
             }
         }
+
+        // ============================================
+        // PRP-016 Canvas Renderer Integration
+        // ============================================
+
+        window.PRP016 = {
+            renderer: null,
+            isInitialized: false,
+
+            async init() {
+                try {
+                    console.log('🚀 Initializing PRP-016 Canvas Renderer...');
+
+                    // Import TypeScript modules
+                    const { createWorldRenderer } = await import('./web/app.js');
+                    const { assetLoader } = await import('./web/loader.js');
+
+                    // Create renderer instance
+                    this.renderer = await createWorldRenderer(
+                        'prp016-canvas',
+                        'floor_2',
+                        'liliths_room',
+                        {
+                            enableDebugMode: false,
+                            enablePerformanceMonitoring: true,
+                            pixelPerfectRendering: true
+                        }
+                    );
+
+                    // Set up interaction callback
+                    this.renderer.setInteractionCallback((event) => {
+                        console.log('🎯 Interaction:', event);
+                    });
+
+                    this.isInitialized = true;
+                    console.log('✅ PRP-016 Canvas Renderer initialized successfully!');
+
+                } catch (error) {
+                    console.error('❌ Failed to initialize PRP-016 Canvas Renderer:', error);
+                }
+            },
+
+            async navigateToLocation(floorId, locationId) {
+                if (!this.isInitialized) {
+                    console.warn('⚠️ PRP-016 not initialized, cannot navigate');
+                    return;
+                }
+
+                try {
+                    console.log(`🧭 Navigating to ${floorId}/${locationId}`);
+                    await this.renderer.navigateToLocation(floorId, locationId);
+                } catch (error) {
+                    console.error('❌ Navigation failed:', error);
+                }
+            },
+
+            getNavigationState() {
+                if (!this.isInitialized) {
+                    return null;
+                }
+
+                return this.renderer.getNavigationState();
+            },
+
+            show() {
+                document.getElementById('prp016-container').style.display = 'block';
+                document.getElementById('prp016-navigation').style.display = 'block';
+            },
+
+            hide() {
+                document.getElementById('prp016-container').style.display = 'none';
+                document.getElementById('prp016-navigation').style.display = 'none';
+            }
+        };
 
         // ============================================
         // INITIALIZATION
