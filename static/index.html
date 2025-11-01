@@ -4206,29 +4206,49 @@
                 try {
                     console.log('🚀 Initializing PRP-016 Canvas Renderer...');
 
-                    // Import TypeScript modules
-                    const { createWorldRenderer } = await import('./web/app.js');
-                    const { assetLoader } = await import('./web/loader.js');
+                    // Simple test first - check if assets load
+                    const worldResponse = await fetch('/world.json');
+                    if (!worldResponse.ok) {
+                        throw new Error(`Failed to load world.json: ${worldResponse.status}`);
+                    }
+                    const worldConfig = await worldResponse.json();
+                    console.log('✅ World config loaded:', worldConfig.world_name);
 
-                    // Create renderer instance
-                    this.renderer = await createWorldRenderer(
-                        'prp016-canvas',
-                        'floor_2',
-                        'liliths_room',
-                        {
-                            enableDebugMode: false,
-                            enablePerformanceMonitoring: true,
-                            pixelPerfectRendering: true
-                        }
-                    );
+                    const metaResponse = await fetch('/output/floors/floor_2/liliths_room/map.meta.json');
+                    if (!metaResponse.ok) {
+                        throw new Error(`Failed to load metadata: ${metaResponse.status}`);
+                    }
+                    const mapMeta = await metaResponse.json();
+                    console.log('✅ Map metadata loaded:', mapMeta.location_name);
 
-                    // Set up interaction callback
-                    this.renderer.setInteractionCallback((event) => {
-                        console.log('🎯 Interaction:', event);
+                    // Load base image
+                    const baseImg = new Image();
+                    baseImg.src = '/output/floors/floor_2/liliths_room/base.png';
+                    await new Promise((resolve, reject) => {
+                        baseImg.onload = resolve;
+                        baseImg.onerror = reject;
                     });
+                    console.log('✅ Base image loaded');
+
+                    // Simple canvas setup
+                    const canvas = document.getElementById('prp016-canvas');
+                    if (!canvas) {
+                        throw new Error('Canvas not found');
+                    }
+
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = mapMeta.W;
+                    canvas.height = mapMeta.H;
+                    canvas.style.width = mapMeta.W + 'px';
+                    canvas.style.height = mapMeta.H + 'px';
+                    ctx.imageSmoothingEnabled = false;
+
+                    // Draw base image
+                    ctx.drawImage(baseImg, 0, 0, mapMeta.W, mapMeta.H);
+                    console.log('✅ Canvas setup complete');
 
                     this.isInitialized = true;
-                    console.log('✅ PRP-016 Canvas Renderer initialized successfully!');
+                    console.log('✅ PRP-016 Simple Renderer initialized successfully!');
 
                 } catch (error) {
                     console.error('❌ Failed to initialize PRP-016 Canvas Renderer:', error);
@@ -4332,6 +4352,15 @@
                 // Start background music
                 console.log('🎵 Starting background music...');
                 window.worldManager.audioManager.playBackgroundMusic();
+
+                // Initialize PRP-016 Canvas Renderer
+                console.log('🚀 Starting PRP-016 Canvas Renderer...');
+                window.PRP016.init().then(() => {
+                    console.log('✅ PRP-016 Canvas Renderer ready!');
+                    window.PRP016.show();
+                }).catch(error => {
+                    console.error('❌ PRP-016 initialization failed:', error);
+                });
             }, 100);
         });
     </script>
