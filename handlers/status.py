@@ -8,7 +8,9 @@ Provides /version and /health endpoints for:
 """
 
 import html
+
 from aiohttp import web
+
 from services.status_service import StatusService
 
 # Initialize status service with database engine

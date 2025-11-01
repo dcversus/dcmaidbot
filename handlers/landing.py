@@ -5,6 +5,7 @@ Serves the interactive chibi anime landing page at /.
 """
 
 import os
+
 from aiohttp import web
 
 

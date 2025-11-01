@@ -2,11 +2,13 @@
 
 import logging
 import sys
-from alembic import command  # type: ignore[attr-defined]
+
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import AsyncEngine
+
+from alembic import command  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,13 @@ async def check_migrations(engine: AsyncEngine) -> bool:
         SystemExit: If migrations are not up to date (prevents bot startup)
     """
     try:
+        # Skip migration checks for SQLite in test mode
+        # Test fixtures create tables from models using Base.metadata
+        if engine.url.drivername == "sqlite+aiosqlite":
+            logger.info("🧪 SQLite detected - skipping migration check (test mode)")
+            logger.info("   Tables will be created by test fixtures from models")
+            return True
+
         # Get alembic config
         alembic_cfg = Config("alembic.ini")
         script_dir = ScriptDirectory.from_config(alembic_cfg)

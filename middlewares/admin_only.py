@@ -1,6 +1,7 @@
-from typing import Callable, Dict, Any, Awaitable, Union
+from typing import Any, Awaitable, Callable, Dict, Union
+
 from aiogram import BaseMiddleware
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 
 class AdminOnlyMiddleware(BaseMiddleware):

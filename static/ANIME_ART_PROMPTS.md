@@ -92,7 +92,7 @@ Cute round robot vacuum cleaner in anime chibi style, happy face on top, small w
 
 #### v0.1.0 - Plushie (🧸)
 ```
-Cute anime plushie of Lilith (orange-red wavy hair chibi character) sitting/lying on bed, soft pastel colors, kawaii face expression, small and huggable, transparent PNG, 200x200px
+Cute anime plushie of Lilit (orange-red wavy hair chibi character) sitting/lying on bed, soft pastel colors, kawaii face expression, small and huggable, transparent PNG, 200x200px
 ```
 
 #### v0.0.9-canary - Canary Bird (🐤)
@@ -102,7 +102,7 @@ Adorable yellow canary bird in a cute decorative cage, anime chibi style, bird s
 
 #### Initial - Seed Packet (🌱)
 ```
-Decorative seed packet in anime style, colorful illustration on front, "Lilith Seeds" branding, cute mascot on package, pastel colors, slightly open with seeds visible, transparent PNG, 200x200px
+Decorative seed packet in anime style, colorful illustration on front, "Lilit Seeds" branding, cute mascot on package, pastel colors, slightly open with seeds visible, transparent PNG, 200x200px
 ```
 
 ### 9. The Edge Story Ad Widget (📰)

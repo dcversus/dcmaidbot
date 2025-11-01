@@ -1,10 +1,11 @@
 """Unit tests for lesson tools and tool executor with role-based access."""
 
-import pytest
 from unittest.mock import patch
 
-from tools.tool_executor import ToolExecutor
+import pytest
+
 from tools.lesson_tools import LESSON_TOOLS
+from tools.tool_executor import ToolExecutor
 
 
 # Test tool definitions

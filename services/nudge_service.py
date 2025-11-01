@@ -2,72 +2,74 @@
 Nudge Service for agent-to-user communication.
 
 Provides two modes of messaging:
-1. Direct: Send Markdown message directly via Telegram API
+1. Direct: Send Markdown message via messenger abstraction
 2. LLM: Process through dcmaidbot LLM pipeline for personalized messages
 """
 
 import os
-from typing import Any, Optional
-
-from aiogram import Bot
-from aiogram.enums import ParseMode
-from aiogram.exceptions import TelegramBadRequest
+from typing import Any, Dict, List, Optional
 
 from services.llm_service import LLMService
+from services.messenger_service import (
+    EmbedField,
+    MessageType,
+    RichContent,
+    get_messenger_service,
+)
 
 
 class NudgeService:
-    """Service for sending messages to admins via Telegram.
+    """Service for sending messages to admins via messenger abstraction.
 
-    Note on Bot Instance Lifecycle:
-        This service creates its own Bot instance for /nudge endpoint usage.
-        For the scope of /nudge (infrequent admin notifications), this is acceptable.
-        The Bot instance is lightweight and connection pooling is handled by aiogram.
-
-        For production optimization, consider:
-        - Reusing the main bot instance from bot.py if needed
-        - Adding proper cleanup via context manager pattern
-        - Implementing connection pooling if /nudge usage increases significantly
-
-    Current usage pattern (agent notifications) does not warrant complex lifecycle
-    management, as /nudge is called infrequently and handles cleanup automatically.
+    Uses the messenger service abstraction for platform-agnostic messaging.
+    This allows for easy switching between messaging platforms and provides
+    rich content rendering capabilities.
     """
 
-    def __init__(self):
-        """Initialize NudgeService with Bot instance.
+    def __init__(self, platform: str = "telegram"):
+        """Initialize NudgeService with messenger abstraction.
 
-        Creates a new Bot instance for Telegram API communication.
-        This instance is used exclusively for /nudge endpoint operations.
+        Creates messenger service instance for rich content communication.
+        This instance handles platform-specific message formatting and delivery.
+
+        Args:
+            platform: Messaging platform to use ("telegram" or "discord")
 
         Raises:
-            ValueError: If BOT_TOKEN environment variable is not set
+            ValueError: If required environment variables are not configured
         """
-        self.bot_token = os.getenv("BOT_TOKEN")
-        if not self.bot_token:
-            raise ValueError("BOT_TOKEN not configured in environment")
-
-        self.bot = Bot(token=self.bot_token)
+        self.platform = platform
+        self.messenger_service = get_messenger_service(platform)
         self.llm_service = LLMService()
 
     def _get_admin_ids(self) -> list[int]:
-        """Get admin IDs from ADMIN_IDS environment variable."""
-        admin_ids_str = os.getenv("ADMIN_IDS", "")
+        """Get admin IDs from platform-specific environment variables."""
+        if self.platform.lower() == "discord":
+            env_var = "DISCORD_ADMIN_IDS"
+            fallback_var = "ADMIN_IDS"
+        else:
+            env_var = "ADMIN_IDS"
+            fallback_var = None
+
+        admin_ids_str = os.getenv(env_var, "") or (
+            os.getenv(fallback_var, "") if fallback_var else ""
+        )
         if not admin_ids_str:
-            raise ValueError("ADMIN_IDS not configured in environment")
+            raise ValueError(f"{env_var} not configured in environment")
 
         # Parse comma-separated list of IDs
         try:
             admin_ids = [int(id_str.strip()) for id_str in admin_ids_str.split(",")]
             return admin_ids
         except ValueError as e:
-            raise ValueError(f"Invalid ADMIN_IDS format: {e}")
+            raise ValueError(f"Invalid {env_var} format: {e}")
 
     async def send_direct(
         self,
         message: str,
         user_id: Optional[int] = None,
     ) -> dict[str, Any]:
-        """Send message directly via Telegram API with Markdown formatting.
+        """Send message via messenger abstraction with rich content rendering.
 
         Args:
             message: Markdown-formatted message to send
@@ -77,8 +79,8 @@ class NudgeService:
             dict: Results with sent message IDs
 
         Raises:
-            ValueError: If BOT_TOKEN or ADMIN_IDS not configured
-            TelegramAPIError: If sending message fails
+            ValueError: If ADMIN_IDS not configured
+            Exception: If sending message fails
         """
         # Determine target user IDs
         target_ids = [user_id] if user_id else self._get_admin_ids()
@@ -86,59 +88,33 @@ class NudgeService:
         results = []
         errors = []
 
-        # Send message to each target user
+        # Send message to each target user via messenger service
         for uid in target_ids:
             try:
-                sent_message = await self.bot.send_message(
-                    chat_id=uid,
-                    text=message,
-                    parse_mode=ParseMode.MARKDOWN,
+                # Parse markdown to platform-specific rich content
+                rich_content = self.messenger_service.parse_markdown_to_platform(
+                    message
                 )
+
+                # Send via messenger abstraction
+                send_result = await self.messenger_service.send_rich_content(
+                    uid, rich_content
+                )
+
                 results.append(
                     {
                         "user_id": uid,
-                        "message_id": sent_message.message_id,
-                        "status": "success",
+                        "message_id": send_result.get("message_id"),
+                        "status": send_result.get("status", "unknown"),
+                        "content_length": send_result.get("content_length", 0),
+                        "has_buttons": send_result.get("has_buttons", False),
                     }
                 )
-            except TelegramBadRequest as e:
-                # Handle markdown parse errors with fallback to plain text
-                if "can't parse entities" in str(e).lower():
-                    try:
-                        # Retry without markdown parsing
-                        sent_message = await self.bot.send_message(
-                            chat_id=uid,
-                            text=message,
-                            parse_mode=None,
-                        )
-                        results.append(
-                            {
-                                "user_id": uid,
-                                "message_id": sent_message.message_id,
-                                "status": "success",
-                                "warning": "Markdown parse failed, sent as plain text",
-                            }
-                        )
-                    except Exception as fallback_error:
-                        errors.append(
-                            {
-                                "user_id": uid,
-                                "error": (
-                                    f"Markdown parse failed and fallback failed: "
-                                    f"{fallback_error}"
-                                ),
-                                "status": "failed",
-                            }
-                        )
-                else:
-                    # Other Telegram errors (bot blocked, chat not found, etc.)
-                    errors.append(
-                        {
-                            "user_id": uid,
-                            "error": str(e),
-                            "status": "failed",
-                        }
-                    )
+
+                # Add warning if present
+                if send_result.get("status") == "warning":
+                    results[-1]["warning"] = send_result.get("error", "Unknown warning")
+
             except Exception as e:
                 errors.append(
                     {
@@ -155,6 +131,7 @@ class NudgeService:
             "failed_count": len(errors),
             "results": results,
             "errors": errors if errors else None,
+            "platform": self.platform,
         }
 
     async def send_via_llm(
@@ -172,8 +149,8 @@ class NudgeService:
             dict: Results with sent message IDs and LLM responses
 
         Raises:
-            ValueError: If BOT_TOKEN or ADMIN_IDS not configured
-            TelegramAPIError: If sending message fails
+            ValueError: If ADMIN_IDS not configured
+            Exception: If sending message fails
         """
         # Determine target user IDs
         target_ids = [user_id] if user_id else self._get_admin_ids()
@@ -216,42 +193,27 @@ class NudgeService:
                 if hasattr(llm_response, "content"):
                     final_message = llm_response.content
 
-                # Send LLM-generated message via Telegram
-                try:
-                    sent_message = await self.bot.send_message(
-                        chat_id=uid,
-                        text=final_message,
-                        parse_mode=ParseMode.MARKDOWN,
-                    )
+                # Send LLM-generated message via messenger abstraction
+                rich_content = self.messenger_service.parse_markdown_to_platform(
+                    final_message
+                )
+                send_result = await self.messenger_service.send_rich_content(
+                    uid, rich_content
+                )
 
-                    results.append(
-                        {
-                            "user_id": uid,
-                            "message_id": sent_message.message_id,
-                            "llm_response": final_message,
-                            "status": "success",
-                        }
-                    )
-                except TelegramBadRequest as telegram_error:
-                    # Handle markdown parse errors with fallback
-                    if "can't parse entities" in str(telegram_error).lower():
-                        # Retry without markdown
-                        sent_message = await self.bot.send_message(
-                            chat_id=uid,
-                            text=final_message,
-                            parse_mode=None,
-                        )
-                        results.append(
-                            {
-                                "user_id": uid,
-                                "message_id": sent_message.message_id,
-                                "llm_response": final_message,
-                                "status": "success",
-                                "warning": "Markdown parse failed, sent as plain text",
-                            }
-                        )
-                    else:
-                        raise  # Re-raise other Telegram errors
+                results.append(
+                    {
+                        "user_id": uid,
+                        "message_id": send_result.get("message_id"),
+                        "llm_response": final_message,
+                        "status": send_result.get("status", "unknown"),
+                        "content_length": send_result.get("content_length", 0),
+                    }
+                )
+
+                # Add warning if present
+                if send_result.get("status") == "warning":
+                    results[-1]["warning"] = send_result.get("error", "Unknown warning")
 
             except Exception as e:
                 errors.append(
@@ -269,4 +231,96 @@ class NudgeService:
             "failed_count": len(errors),
             "results": results,
             "errors": errors if errors else None,
+            "platform": self.platform,
+        }
+
+    async def send_embed(
+        self,
+        title: str,
+        description: Optional[str] = None,
+        color: Optional[int] = None,
+        fields: Optional[List[Dict[str, Any]]] = None,
+        footer_text: Optional[str] = None,
+        thumbnail_url: Optional[str] = None,
+        user_id: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Send Discord embed message (works on Telegram as formatted text)."""
+        if self.platform.lower() != "discord":
+            # Fallback to regular message for non-Discord platforms
+            embed_content = f"**{title}**\n"
+            if description:
+                embed_content += f"{description}\n"
+            if fields:
+                for field in fields:
+                    embed_content += f"• **{field['name']}**: {field['value']}\n"
+            return await self.send_direct(embed_content, user_id)
+
+        target_ids = [user_id] if user_id else self._get_admin_ids()
+        results = []
+        errors = []
+
+        # Create embed fields
+        embed_fields = []
+        if fields:
+            for field in fields:
+                embed_field = EmbedField(
+                    name=field["name"],
+                    value=field["value"],
+                    inline=field.get("inline", False),
+                )
+                embed_fields.append(embed_field)
+
+        # Create embed using messenger service
+        embed = self.messenger_service.create_embed(
+            title=title,
+            description=description,
+            color=color,
+            fields=embed_fields,
+            footer_text=footer_text,
+            thumbnail_url=thumbnail_url,
+        )
+
+        for uid in target_ids:
+            try:
+                # Create rich content with embed
+                rich_content = RichContent(
+                    content="",  # Main content can be empty when using embeds
+                    message_type=MessageType.EMBED,
+                    embeds=[embed],
+                )
+
+                send_result = await self.messenger_service.send_rich_content(
+                    uid, rich_content
+                )
+
+                results.append(
+                    {
+                        "user_id": uid,
+                        "message_id": send_result.get("message_id"),
+                        "status": send_result.get("status", "unknown"),
+                        "embed_title": title,
+                        "has_embed": True,
+                    }
+                )
+
+                if send_result.get("status") == "warning":
+                    results[-1]["warning"] = send_result.get("error", "Unknown warning")
+
+            except Exception as e:
+                errors.append(
+                    {
+                        "user_id": uid,
+                        "error": str(e),
+                        "status": "failed",
+                    }
+                )
+
+        return {
+            "success": len(errors) == 0,
+            "mode": "embed",
+            "sent_count": len(results),
+            "failed_count": len(errors),
+            "results": results,
+            "errors": errors if errors else None,
+            "platform": self.platform,
         }

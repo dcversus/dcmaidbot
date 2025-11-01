@@ -1,0 +1,28 @@
+# Exclude directories and files
+exclude = [
+    ".git",
+    "__pycache__",
+    "*.pyc",
+    ".venv",
+    "venv",
+    "dev-scripts",
+    "music",
+    "*.db",
+    "*.session",
+    "static/world",
+    "test_results",
+]
+
+# Line length
+line-length = 88
+
+# Target Python version
+target-version = "py313"
+
+# Enable autofix
+fix = true
+
+# Rules configuration
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # Ignore line length for generated code

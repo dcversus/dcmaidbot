@@ -7,7 +7,7 @@ Stores all bot and user messages to database for conversation context.
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.message import Message

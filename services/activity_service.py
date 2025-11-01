@@ -1,5 +1,7 @@
 from typing import List
+
 from models.data import Activity
+
 from services.pool_service import _get_storage, _save_storage
 
 

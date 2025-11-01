@@ -3,11 +3,12 @@
 Script to verify webhook configuration with Telegram.
 """
 
+import argparse
+import json
 import os
 import sys
+
 import requests
-import json
-import argparse
 from dotenv import load_dotenv
 
 # Load environment variables
