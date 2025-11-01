@@ -1,11 +1,13 @@
 """Unit tests for database models (PRP-003)."""
 
-import pytest
 from datetime import datetime
-from models.user import User
-from models.message import Message
+
+import pytest
+
 from models.fact import Fact
+from models.message import Message
 from models.stat import Stat
+from models.user import User
 
 # async_session fixture provided by tests/conftest.py (PostgreSQL)
 

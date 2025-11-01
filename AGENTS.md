@@ -33,6 +33,28 @@ docker run --env-file .env dcmaidbot:latest
 
 ## Code Quality Rules
 
+### 🚨 MANDATORY: No --no-verify Flag
+
+**RULE**: Using `--no-verify` or `--no-hooks` with git commit is **STRICTLY FORBIDDEN**.
+
+**Why**:
+- Pre-commit hooks ensure code quality
+- E2E tests validate all endpoints work
+- LLM judge validates bot behavior
+- Skipping hooks leads to broken production deploys
+
+**Pre-commit automatically**:
+- ✅ Lints and formats code (ruff)
+- ✅ Type checks with mypy
+- ✅ Runs unit tests
+- ✅ **Auto-starts dev server**
+- ✅ **Runs E2E tests with LLM judge**
+- ✅ **Cleans up server after tests**
+
+**If pre-commit fails**: Fix the actual issue, don't bypass it.
+
+**Enforcement**: ANY commit with `--no-verify` will be reverted immediately.
+
 ### 🚨 MANDATORY: No Linter Suppression
 
 **RULE**: Using `# noqa`, `# type: ignore`, `# ruff: noqa`, or any linter/type checker suppression comments is **STRICTLY FORBIDDEN**.
@@ -555,12 +577,37 @@ Summary of key steps:
    - Story should: Explain feature, show benefits, be engaging
    - Commit landing page changes separately
 
-4. **PR Ready Signal**
+4. **Pre-Release Nudge to Vasilisa**
+   - Send pre-release warning to VASILISA_TG_ID (122657093) via /nudge
+   - Use production nudge endpoint: `https://dcmaidbot.theedgestory.org/nudge`
+   - Include comprehensive pre-release checklist status
+   - Message format:
+     ```
+     🚨 **PRE-RELEASE WARNING** 🚨
+
+     **Release**: [PR Name] - v[version]
+     **Target User**: Vasilisa (ID: 122657093)
+
+     ### 📋 Pre-Release Checklist Status:
+     - [x] [Critical requirements completed]
+     - [x] [Test results summary]
+     - [x] [User requirements met]
+
+     ### 🎯 **Ready for Review**:
+     [Detailed status of implementation]
+
+     *This is an automated pre-release notification. Review and provide feedback before production deployment.*
+     ```
+   - Authentication: Use NUDGE_SECRET from kubernetes (`dcmaidbot-nudge-secret`)
+   - Test with E2E test: `tests/e2e/test_nudge_pre_release.py`
+   - Verify success: Message ID returned, status: success
+
+5. **PR Ready Signal**
    - Commit all changes with message including `[PR]` signal
    - This signals PR is ready for review
    - Example: `[PR] PRP-005 Phase 2 - Agentic Tools Integration`
 
-5. **CI Checks**
+6. **CI Checks**
    - Wait for ALL CI checks to pass
    - DO NOT proceed until all checks are green
    - If checks fail: Fix immediately and re-run
@@ -605,7 +652,35 @@ Summary of key steps:
    - Verify feature works as expected
    - Check logs for errors or warnings
 
-4. **Post-Release Signal**
+4. **Post-Release Nudge to All Admins**
+   - Send post-release notification to all ADMIN_IDS via /nudge
+   - Use production nudge endpoint: `https://dcmaidbot.theedgestory.org/nudge`
+   - Include comprehensive changelog in markdown format
+   - Message format:
+     ```
+     🎉 **RELEASE DEPLOYED SUCCESSFULLY** 🎉
+
+     **Version**: [PR Name] - v[version]
+     **Status**: ✅ **PRODUCTION LIVE**
+
+     ---
+
+     [Full changelog content in markdown]
+
+     ---
+
+     🔗 **Live Demo**: https://dcmaidbot.theedgestory.org
+     📊 **Health Check**: https://dcmaidbot.theedgestory.org/health
+     📋 **Changelog**: https://dcmaidbot.theedgestory.org/changelog
+
+     *Automated post-release notification sent to all administrators*
+     ```
+   - Include deployment details (Docker image, Kubernetes status)
+   - Include test results summary
+   - Test with E2E test: `tests/e2e/test_nudge_pre_release.py`
+   - Verify success: All admins receive message, status: success
+
+5. **Post-Release Signal**
    - Update PR with comment: `[POST-RELEASE-VALIDATED]`
    - Include: Production test results, links to logs/metrics
    - Example: `[POST-RELEASE-VALIDATED] Feature tested in production, all working correctly. Logs: <link>`

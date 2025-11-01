@@ -5,22 +5,23 @@ Kawai waifu bot with webhook support for production deployment.
 
 import logging
 import os
-from aiohttp import web
+
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 from dotenv import load_dotenv
 
-from handlers import waifu
-from handlers import admin_lessons
-from handlers.status import health_handler, api_version_handler
-from handlers.nudge import nudge_handler
-from handlers.landing import landing_handler
+from database import engine
+from handlers import admin_lessons, waifu
 from handlers.call import call_handler
+from handlers.event import event_handler, options_handler
+from handlers.landing import landing_handler
+from handlers.nudge import nudge_handler
+from handlers.status import api_version_handler, health_handler
 from handlers.waifu import setup_bot_commands
 from middlewares.admin_only import AdminOnlyMiddleware
-from services.redis_service import redis_service
 from services.migration_service import check_migrations
-from database import engine
+from services.redis_service import redis_service
 
 load_dotenv()
 
@@ -188,6 +189,11 @@ def main():
     # Add direct bot logic testing endpoint
     app.router.add_post("/call", call_handler)
     logging.info("Direct bot logic testing endpoint registered: /call")
+
+    # Add event collection endpoint
+    app.router.add_post("/event", event_handler)
+    app.router.add_options("/event", options_handler)
+    logging.info("Event collection endpoint registered: /event")
 
     # Setup application
     setup_application(app, dp, bot=bot)

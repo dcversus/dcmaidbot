@@ -10,13 +10,13 @@ Based on research:
 """
 
 from datetime import datetime
-from typing import Optional, Any
+from typing import Any, Optional
 
-from sqlalchemy import select, and_, or_
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from models.memory import Memory, Category, MemoryLink
+from models.memory import Category, Memory, MemoryLink
 from services.redis_service import redis_service
 
 

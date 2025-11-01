@@ -136,7 +136,7 @@ async def test_landing_page():
             html = response.text
 
             # Check for key elements
-            if "Lilit" not in html or "DCMaidBot" not in html:
+            if "Lilith" not in html or "DCMaidBot" not in html:
                 log_test("Landing Page", "FAIL", "Missing bot name")
                 return False
 

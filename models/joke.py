@@ -1,8 +1,10 @@
 """Joke model for dcmaidbot."""
 
 from datetime import datetime
-from sqlalchemy import BigInteger, String, Text, Integer, DateTime
+
+from sqlalchemy import BigInteger, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
 
 

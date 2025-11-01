@@ -1,8 +1,10 @@
 """Message model for dcmaidbot."""
 
 from datetime import datetime
-from sqlalchemy import BigInteger, String, Text, DateTime, ForeignKey, Integer
+
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
 
 

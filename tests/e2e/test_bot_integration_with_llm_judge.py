@@ -10,12 +10,13 @@ This is the RIGHT way to test - we test what the user experiences!
 """
 
 import os
-import pytest
-import aiohttp
 
-from services.memory_service import MemoryService
-from services.llm_service import LLMService
+import aiohttp
+import pytest
+
 from models.user import User
+from services.llm_service import LLMService
+from services.memory_service import MemoryService
 
 # Test configuration
 BASE_URL = "http://localhost:8080"  # Bot running locally
@@ -281,6 +282,7 @@ async def test_bot_creates_memories_from_conversation(
     # NOTE: This requires implementing get_user_memories() in MemoryService
     # For now, we'll query directly
     from sqlalchemy import select
+
     from models.memory import Memory
 
     stmt = (
@@ -338,9 +340,9 @@ async def test_bot_uses_vad_emotions_in_context(
         created_by=TEST_ADMIN_ID,
         category_ids=[test_categories[2].id],  # project category
         keywords=["refactoring", "legacy", "frustrated", "burnout"],
-        valence=-0.7,  # Negative emotion
-        arousal=0.4,  # Moderate arousal
-        dominance=-0.3,  # Feeling out of control
+        emotion_valence=-0.7,  # Negative emotion
+        emotion_arousal=0.4,  # Moderate arousal
+        emotion_dominance=-0.3,  # Feeling out of control
     )
 
     # Step 2: User mentions the project

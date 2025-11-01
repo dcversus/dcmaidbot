@@ -1,8 +1,10 @@
 """User model for dcmaidbot."""
 
 from datetime import datetime
-from sqlalchemy import BigInteger, String, Boolean, DateTime, Integer
+
+from sqlalchemy import BigInteger, Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
 
 

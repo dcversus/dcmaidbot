@@ -7,10 +7,11 @@ This implementation is based on cutting-edge research:
 - Social Graph AI: Relationship and personality modeling
 """
 
-from datetime import datetime
-from typing import Any, Optional, cast
 import json
 import os
+from datetime import datetime
+from typing import Any, Optional, cast
+
 from sqlalchemy import (
     BigInteger,
     Boolean,

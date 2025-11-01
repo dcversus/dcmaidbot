@@ -28,9 +28,22 @@ aioredis>=2.0.0
 # Scheduling (PRP-008)
 apscheduler>=3.10.0
 
+# Browser testing (PRP-016 interactive location system)
+playwright>=1.40.0
+pytest-playwright>=0.4.3
+
 # E2E Testing with User Client (PRP-013)
 pyrogram[fast]>=2.0.0
 tgcrypto>=1.2.0
 
 # Web Search (PRP-005)
 duckduckgo-search>=6.0.0
+
+# Image Generation (PRP-016 tile system)
+replicate>=0.15.0
+pillow>=9.0.0
+numpy>=1.21.0
+
+# Discord Integration (PRP-XXX: Discord Integration)
+discord.py>=2.3.0
+discord-py-interactions>=5.0.0

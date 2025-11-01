@@ -10,10 +10,11 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.memory_service import MemoryService
-from services.llm_service import LLMService
-from services.lesson_service import LessonService
 from services.auth_service import AuthService
+from services.lesson_service import LessonService
+from services.llm_service import LLMService
+from services.memory_service import MemoryService
+from tools.telegram_tools import TelegramTools
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,9 @@ class ToolExecutor:
         self.lesson_service = LessonService(session)
         self.auth_service = AuthService()
         self.llm_service = LLMService()
+
+        # Initialize Telegram tools (bot will be set later if available)
+        self.telegram_tools = None
 
     async def execute(
         self, tool_name: str, arguments: dict[str, Any], user_id: int
@@ -103,6 +107,22 @@ class ToolExecutor:
             elif tool_name == "delete_lesson":
                 return await self._execute_delete_lesson(arguments)
 
+            # Telegram rich feature tools
+            elif tool_name == "send_telegram_message":
+                return await self._execute_send_telegram_message(arguments, user_id)
+            elif tool_name == "create_inline_keyboard":
+                return await self._execute_create_inline_keyboard(arguments, user_id)
+            elif tool_name == "create_reply_keyboard":
+                return await self._execute_create_reply_keyboard(arguments, user_id)
+            elif tool_name == "manage_events":
+                return await self._execute_manage_events(arguments, user_id)
+            elif tool_name == "create_api_key":
+                return await self._execute_create_api_key(arguments, user_id)
+            elif tool_name == "game_master_action":
+                return await self._execute_game_master_action(arguments, user_id)
+            elif tool_name == "edit_message":
+                return await self._execute_edit_message(arguments, user_id)
+
             else:
                 return {
                     "success": False,
@@ -140,8 +160,9 @@ class ToolExecutor:
         zettel_attrs = await self.llm_service.generate_zettelkasten_attributes(content)
 
         # Get category IDs from category names
-        from models.memory import Category
         from sqlalchemy import select
+
+        from models.memory import Category
 
         category_ids = []
         if categories:
@@ -192,8 +213,9 @@ class ToolExecutor:
             return {"success": False, "error": "Query is required"}
 
         # Get category IDs if categories specified
-        from models.memory import Category
         from sqlalchemy import select
+
+        from models.memory import Category
 
         category_ids = None
         if categories:
@@ -467,3 +489,94 @@ class ToolExecutor:
                 "success": False,
                 "error": f"Failed to delete lesson: {str(e)}",
             }
+
+    # Telegram rich feature tools execution methods
+
+    def set_bot(self, bot):
+        """Set the bot instance for Telegram tools."""
+        if not self.telegram_tools:
+            self.telegram_tools = TelegramTools(self.session, bot, self)
+
+    async def _execute_send_telegram_message(
+        self, arguments: dict[str, Any], user_id: int
+    ) -> dict[str, Any]:
+        """Execute send_telegram_message tool."""
+        if not self.telegram_tools:
+            return {
+                "success": False,
+                "error": "Telegram tools not available - bot not initialized",
+            }
+
+        return await self.telegram_tools.send_telegram_message(**arguments)
+
+    async def _execute_create_inline_keyboard(
+        self, arguments: dict[str, Any], user_id: int
+    ) -> dict[str, Any]:
+        """Execute create_inline_keyboard tool."""
+        if not self.telegram_tools:
+            return {
+                "success": False,
+                "error": "Telegram tools not available - bot not initialized",
+            }
+
+        return await self.telegram_tools.create_inline_keyboard(**arguments)
+
+    async def _execute_create_reply_keyboard(
+        self, arguments: dict[str, Any], user_id: int
+    ) -> dict[str, Any]:
+        """Execute create_reply_keyboard tool."""
+        if not self.telegram_tools:
+            return {
+                "success": False,
+                "error": "Telegram tools not available - bot not initialized",
+            }
+
+        return await self.telegram_tools.create_reply_keyboard(**arguments)
+
+    async def _execute_manage_events(
+        self, arguments: dict[str, Any], user_id: int
+    ) -> dict[str, Any]:
+        """Execute manage_events tool."""
+        if not self.telegram_tools:
+            return {
+                "success": False,
+                "error": "Telegram tools not available - bot not initialized",
+            }
+
+        return await self.telegram_tools.manage_events(**arguments)
+
+    async def _execute_create_api_key(
+        self, arguments: dict[str, Any], user_id: int
+    ) -> dict[str, Any]:
+        """Execute create_api_key tool."""
+        if not self.telegram_tools:
+            return {
+                "success": False,
+                "error": "Telegram tools not available - bot not initialized",
+            }
+
+        return await self.telegram_tools.create_api_key(**arguments)
+
+    async def _execute_game_master_action(
+        self, arguments: dict[str, Any], user_id: int
+    ) -> dict[str, Any]:
+        """Execute game_master_action tool."""
+        if not self.telegram_tools:
+            return {
+                "success": False,
+                "error": "Telegram tools not available - bot not initialized",
+            }
+
+        return await self.telegram_tools.game_master_action(**arguments)
+
+    async def _execute_edit_message(
+        self, arguments: dict[str, Any], user_id: int
+    ) -> dict[str, Any]:
+        """Execute edit_message tool."""
+        if not self.telegram_tools:
+            return {
+                "success": False,
+                "error": "Telegram tools not available - bot not initialized",
+            }
+
+        return await self.telegram_tools.edit_message(**arguments)

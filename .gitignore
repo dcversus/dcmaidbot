@@ -21,9 +21,8 @@ logs/
 *.swp
 *.swo
 
-# Vercel
-.vercel
-.venv
+# GitHub Container Registry
+ghcr.io/
 
 # Storage
 storage/

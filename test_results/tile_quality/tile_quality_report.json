@@ -1,0 +1,38 @@
+{
+  "analysis_timestamp": "2025-10-31T22:54:45Z",
+  "quality_thresholds": {
+    "consistency": 95.0,
+    "state_transition": 80.0,
+    "visual_cohesion": 85.0
+  },
+  "sample_count": 100,
+  "results": [
+    {
+      "location_id": "liliths_room",
+      "consistency_score": 100.0,
+      "state_transition_scores": {
+        "hover_idle": 97.0,
+        "click_idle": 95.0,
+        "click_hover": 90.0
+      },
+      "visual_cohesion_score": 4.0,
+      "passed_consistency": true,
+      "passed_transitions": true,
+      "passed_overall": true,
+      "failed_details": [
+        "Visual cohesion too low: 4.0% (need >85.0%)"
+      ],
+      "sample_analysis": {
+        "total_samples": 100,
+        "sample_coverage": "grid + random sampling"
+      }
+    }
+  ],
+  "summary": {
+    "total_locations": 1,
+    "passed_locations": 1,
+    "failed_locations": 0,
+    "pass_rate": 100.0,
+    "overall_status": "PASS"
+  }
+}

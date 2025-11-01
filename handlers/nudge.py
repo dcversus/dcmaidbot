@@ -9,6 +9,7 @@ Provides POST /nudge endpoint that:
 """
 
 import os
+
 from aiohttp import web
 
 from services.nudge_service import NudgeService
