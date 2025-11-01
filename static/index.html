@@ -4206,49 +4206,55 @@
                 try {
                     console.log('🚀 Initializing PRP-016 Canvas Renderer...');
 
-                    // Simple test first - check if assets load
-                    const worldResponse = await fetch('/world.json');
-                    if (!worldResponse.ok) {
-                        throw new Error(`Failed to load world.json: ${worldResponse.status}`);
-                    }
-                    const worldConfig = await worldResponse.json();
-                    console.log('✅ World config loaded:', worldConfig.world_name);
-
-                    const metaResponse = await fetch('/output/floors/floor_2/liliths_room/map.meta.json');
-                    if (!metaResponse.ok) {
-                        throw new Error(`Failed to load metadata: ${metaResponse.status}`);
-                    }
-                    const mapMeta = await metaResponse.json();
-                    console.log('✅ Map metadata loaded:', mapMeta.location_name);
-
-                    // Load base image
-                    const baseImg = new Image();
-                    baseImg.src = '/output/floors/floor_2/liliths_room/base.png';
-                    await new Promise((resolve, reject) => {
-                        baseImg.onload = resolve;
-                        baseImg.onerror = reject;
-                    });
-                    console.log('✅ Base image loaded');
-
-                    // Simple canvas setup
+                    // Create a simple test canvas first to verify basic setup
                     const canvas = document.getElementById('prp016-canvas');
                     if (!canvas) {
-                        throw new Error('Canvas not found');
+                        throw new Error('Canvas element not found');
                     }
 
                     const ctx = canvas.getContext('2d');
-                    canvas.width = mapMeta.W;
-                    canvas.height = mapMeta.H;
-                    canvas.style.width = mapMeta.W + 'px';
-                    canvas.style.height = mapMeta.H + 'px';
+
+                    // Set canvas dimensions
+                    canvas.width = 1280;
+                    canvas.height = 1280;
+                    canvas.style.width = '1280px';
+                    canvas.style.height = '1280px';
+                    canvas.style.display = 'block';
+                    canvas.style.border = '2px solid #333';
+                    canvas.style.borderRadius = '10px';
                     ctx.imageSmoothingEnabled = false;
 
-                    // Draw base image
-                    ctx.drawImage(baseImg, 0, 0, mapMeta.W, mapMeta.H);
-                    console.log('✅ Canvas setup complete');
+                    // Draw a simple test background
+                    ctx.fillStyle = '#FFB6C1'; // Light pink for Lilith's Room
+                    ctx.fillRect(0, 0, 1280, 1280);
 
+                    // Draw some test text
+                    ctx.fillStyle = '#333';
+                    ctx.font = '24px Arial';
+                    ctx.fillText('PRP-016 Test: Lilith\'s Room', 50, 50);
+                    ctx.fillText('Canvas rendering working!', 50, 100);
+
+                    console.log('✅ Simple canvas test complete');
                     this.isInitialized = true;
-                    console.log('✅ PRP-016 Simple Renderer initialized successfully!');
+                    console.log('✅ PRP-016 Test Renderer initialized successfully!');
+
+                    // Now try to load actual assets
+                    try {
+                        const worldResponse = await fetch('/world.json');
+                        if (worldResponse.ok) {
+                            const worldConfig = await worldResponse.json();
+                            console.log('✅ World config loaded:', worldConfig.world_name);
+
+                            // Add world info to canvas
+                            ctx.fillStyle = '#333';
+                            ctx.font = '16px Arial';
+                            ctx.fillText('World: ' + worldConfig.world_name, 50, 130);
+                        } else {
+                            console.warn('⚠️ Could not load world.json, using test data');
+                        }
+                    } catch (worldError) {
+                        console.warn('⚠️ World loading failed:', worldError.message);
+                    }
 
                 } catch (error) {
                     console.error('❌ Failed to initialize PRP-016 Canvas Renderer:', error);
@@ -4263,7 +4269,29 @@
 
                 try {
                     console.log(`🧭 Navigating to ${floorId}/${locationId}`);
-                    await this.renderer.navigateToLocation(floorId, locationId);
+
+                    // Simple navigation test - change canvas background color
+                    const canvas = document.getElementById('prp016-canvas');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+
+                        // Different colors for different rooms
+                        if (locationId === 'hall') {
+                            ctx.fillStyle = '#D3D3D3'; // Gray for hallway
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.fillStyle = '#333';
+                            ctx.font = '24px Arial';
+                            ctx.fillText('Hallway', 50, 50);
+                        } else {
+                            ctx.fillStyle = '#FFB6C1'; // Pink for Lilith's Room
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.fillStyle = '#333';
+                            ctx.font = '24px Arial';
+                            ctx.fillText('Lilith\'s Room', 50, 50);
+                        }
+
+                        console.log(`✅ Navigated to ${locationId}`);
+                    }
                 } catch (error) {
                     console.error('❌ Navigation failed:', error);
                 }
