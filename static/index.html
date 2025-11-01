@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lilith's House - Interactive Exploration 💕</title>
+    <title>Lilith's House - Multi-Room Interactive Exploration 🏠💕</title>
     <style>
         /* ============================================
            PIXEL-ART MINIMALISTIC DESIGN SYSTEM
@@ -633,7 +633,34 @@
         </div>
     </div>
 
-    <!-- Dark Souls Location Discovery -->
+    <!-- PRP-016 Canvas System -->
+    <div id="prp016-container" style="display: none;">
+        <!-- Navigation Controls -->
+        <div id="prp016-navigation" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 1000; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px;">
+            <h3 style="color: #ffd700; margin: 0 0 10px 0; font-family: 'Cinzel', serif;">🏠 Navigation</h3>
+            <div id="floor-selector" style="margin-bottom: 10px;">
+                <label style="color: #fff; display: block; margin-bottom: 5px;">Floor:</label>
+                <select id="floor-select" style="width: 100%; padding: 5px; background: #333; color: #fff; border: 1px solid #555;">
+                    <option value="floor_2">Second Floor</option>
+                </select>
+            </div>
+            <div id="location-selector">
+                <label style="color: #fff; display: block; margin-bottom: 5px;">Location:</label>
+                <select id="location-select" style="width: 100%; padding: 5px; background: #333; color: #fff; border: 1px solid #555;">
+                    <option value="liliths_room">Lilith's Room</option>
+                </select>
+            </div>
+            <button onclick="PRP016.navigateToLocation(document.getElementById('floor-select').value, document.getElementById('location-select').value)"
+                    style="width: 100%; padding: 8px; background: #4a90e2; color: #fff; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                🚀 Navigate
+            </button>
+        </div>
+
+        <!-- Main Canvas -->
+        <canvas id="prp016-canvas" style="display: none; border: 2px solid #333; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></canvas>
+    </div>
+
+    <!-- Dark Souls Location Discovery (Fallback) -->
     <div class="location-discovery" id="locationDiscovery">
         <div class="discovery-text">
             <div class="location-name" id="discoveryLocationName">LOCATION</div>
