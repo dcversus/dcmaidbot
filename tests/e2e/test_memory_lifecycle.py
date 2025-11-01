@@ -9,11 +9,12 @@ Tests the complete memory workflow:
 """
 
 import os
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from services.memory_service import MemoryService
+import pytest
+
 from services.llm_service import LLMService
+from services.memory_service import MemoryService
 
 # async_session and test_categories fixtures provided by tests/conftest.py (PostgreSQL)
 

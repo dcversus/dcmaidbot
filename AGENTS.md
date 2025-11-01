@@ -1,8 +1,137 @@
 # AGENTS.md
 
+## 🚨 MANDATORY: Read CONTRIBUTING.md First!
+
+**ALL AGENTS AND DEVELOPERS MUST READ [CONTRIBUTING.md](CONTRIBUTING.md) BEFORE ANY WORK!**
+
+**Why**: CONTRIBUTING.md contains:
+- 🏗️ Complete architecture overview and platform abstraction strategy
+- 🛠️ Development setup and environment configuration
+- 🧪 Testing strategy with E2E LLM judge system
+- 📱 API testing examples for all endpoints
+- 🔄 Complete development workflows
+- 🐛 Debugging guides and troubleshooting
+- 📊 Current test status (80 unit tests + 77 E2E tests)
+- 🎯 Discord extension blueprint
+- 🚀 Deployment and quality standards
+
+**Enforcement**: Any work done without reading CONTRIBUTING.md will be rejected and must be redone.
+
+---
+
 ## Core Goal
 
 make deep analyse of current domaidbot prototype of service configuration. refactor project, clean all old-vercel related staff, now we need improve each featuture and provide biggest ai-driven waifu with a lot tools and games to play to talk with. What should be deployed to github container registry and then DEPloy dhould be copy-pasted from here https://github.com/uz0/core-pipeline this domaidbot created to be a real myaw, myaw in public chats to dear guests, to help them learn, kawai! also domaidbot should be in love with vasilisa versus and her beloved Daniil shark nyaf! with whom also in love like virtual daughter to them. Danil+Vasilisa nyaaaa, all their friends nya! All enimies of vasilisa or danill- go out imidiatly! admin kick! she protector. also if she see what there is any way to make some joke nya kawai! she should joke about text! in any languages vasilisa's friends talk! but if jokes have no likes, then you need memory to learn what that jokes has no reactions, if reactions come you need take that info and learn and create more and more often jokes with simular ditalis, each joke is setup and panchline or another formulas, domaidbot main purpuse is create seample bot what will joke to messages, but with RAG across all chat history to search, with memories about important things, should be instrument to determ who vasilisa versus is and who daniil shark is. we need make them also edit memories to do configuration. but only vasilisa and daniil from .env settings id accounts. can edit memories. memories its just a list of prompts with some matching expression. vasilisa goes to chat to dm and message to from admin vasilisa versus account what demaidbot should make a joke and domaidbot should call joke, also daniil and vasilisa as admin can add instruction "send mesage fuu if any sasha mention you from any sasha" this example of funny memory what danill or vasilisa can send as message, detail "send message" can be edit or delete or ban. agent should be able to have exposed all non-admin telegram api from this bot. actualy all friends (who should be friend from memory added by daniil or vasilisa as friend in memory) can ask a favor of doing ALL what bot can do with telegram api, web search, and more fetaures later. and bot will try, if someone ask with kawai, nya. and then bot should be able 99% ignore most users, can be able to set cron tasks to himself what can be executed. bot manages different telegram chats and private communication BUT: it should be always work with daniil or vasilisa from .env in chat or messages. the rest people she should hardcoded from 11m be ignored. if in chat one of admin - then reads and setup task for herself with basic prompt + all recorded in psql database. also there you need keep stats about users, some info about them, all possible facts. just linear text history. and then create simple cron task what will make RAG with all history messages and facts into short summaries, what will always be important instrument of domaid. you need take all my instructions here and in exact copy move it to AGENTS.md and below start Product Requirements Request process where in AGENTS.md what will be used as force to process direct project context flow from PRPs/*.md contains all requirests and each of them can be easily implemented by middle for 3-4 working days with testing and unit tests and one e2e test. i need you take this as example of complexity level of each PRPs/*.md what you should always read with agents.md and execute and agent should left comments there about progress and rely on DOR, DOD and auto testing go to excelent execute and public test our bot! start AGENTS.md creation. Creating list of needed PRP, to implement all above. keep all this content in AGENTS.md as "core goal"
+
+## 🤖 Agent Requirements & Development Workflow
+
+### 🚨 MANDATORY: Agent Development Requirements
+
+**ALL AGENTS MUST:**
+
+1. **📚 Read CONTRIBUTING.md First** - Before ANY work!
+   - Architecture overview and platform abstraction strategy
+   - Complete development setup and environment configuration
+   - Testing strategy with E2E LLM judge system
+   - API testing examples for `/call`, `/nudge`, `/event` endpoints
+   - Debugging guides and troubleshooting
+   - Current test status: **80 unit tests + 77 E2E tests**
+   - Discord extension blueprint
+   - Deployment and quality standards
+
+2. **🧪 Master Testing Requirements**
+   - Run `pytest tests/ -v` before any commit
+   - Run `pytest tests/e2e/ -v --llm-judge` for E2E validation
+   - Ensure >80% code coverage
+   - Write unit tests for new features
+   - Write at least one E2E test with LLM judge
+
+3. **🔄 Follow Development Workflows**
+   - Local development: `python3 bot.py`
+   - Webhook development: `lt --port 8080` + webhook server
+   - Testing mode: `DISABLE_TG=true` for API testing
+   - Pre-commit hooks: Auto-run before commits
+   - Quality checks: `ruff check . && ruff format . && mypy bot.py`
+
+4. **📝 Follow Documentation Standards**
+   - Update CHANGELOG.md for all changes
+   - Leave progress comments in PRPs with emotional context
+   - Use proper commit messages
+   - Document new features and APIs
+
+5. **🎯 Use Development Resources**
+   - Platform abstraction for Discord support
+   - Markdown renderer for rich formatting
+   - API key and nudge token management systems
+   - Event collection system for UI interactions
+   - LLM integration for intelligent responses
+
+### 🔗 Quick Development Links
+
+- **📖 [CONTRIBUTING.md](CONTRIBUTING.md)** - Complete development guide
+- **🧪 [TESTING.md](TESTING.md)** - Testing strategy and documentation
+- **📋 [CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+- **🔧 [Development Setup](CONTRIBUTING.md#development-setup)** - Environment configuration
+- **🧪 [Testing Strategy](CONTRIBUTING.md#testing-strategy)** - E2E with LLM judge
+- **📱 [API Testing Examples](CONTRIBUTING.md#api-testing)** - All endpoints documented
+- **🐛 [Debugging Guide](CONTRIBUTING.md#debugging)** - Common issues and solutions
+- **🚀 [Deployment Guide](CONTRIBUTING.md#deployment)** - Local and production deployment
+
+### 🎭 Agent Development Workflow
+
+```bash
+# 1. Setup Development Environment (first time only)
+git clone https://github.com/dcversus/dcmaidbot.git
+cd dcmaidbot
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+pre-commit install
+cp .env.example .env  # Edit with your credentials
+
+# 2. Read Documentation (MANDATORY!)
+cat CONTRIBUTING.md  # Read COMPLETELY
+cat TESTING.md        # Read COMPLETELY
+cat AGENTS.md         # Read COMPLETELY (you're here!)
+
+# 3. Choose Development Mode
+# Local development (polling)
+python3 bot.py
+
+# OR webhook development (production-like)
+lt --port 8080
+WEBHOOK_MODE=true WEBHOOK_URL=https://your-tunnel.loca.lt/webhook python3 bot_webhook.py
+
+# 4. Test Your Changes
+pytest tests/unit/ -v              # Unit tests
+pytest tests/e2e/ -v --llm-judge  # E2E tests with LLM judge
+ruff check . && ruff format .      # Code quality
+mypy bot.py                       # Type checking
+
+# 5. Commit Changes (pre-commit hooks run automatically)
+git add .
+git commit -m "feat: implement new feature with tests"
+```
+
+### 🎯 Agent Success Criteria
+
+**Agent is successful when:**
+- ✅ Read CONTRIBUTING.md completely before starting work
+- ✅ All tests pass (unit + E2E with LLM judge)
+- ✅ Code passes all quality checks (ruff, mypy)
+- ✅ Documentation is updated (CHANGELOG.md, PRPs)
+- ✅ Changes follow architecture patterns
+- ✅ No linter suppression comments used
+- ✅ Pre-commit hooks pass automatically
+
+**Agent fails when:**
+- ❌ Skips reading CONTRIBUTING.md
+- ❌ Uses `--no-verify` or linter suppression
+- ❌ Tests fail or are skipped
+- ❌ Code quality checks fail
+- ❌ Documentation is outdated
+- ❌ Violates project architecture
+
+---
 
 ## Product Requirements Processes (PRPs)
 
@@ -18,11 +147,11 @@ ruff format .
 # Type checking
 mypy bot.py
 
-# Run tests
+# Run tests (see TESTING.md for detailed testing strategy)
 pytest tests/ -v
 
-# Run E2E tests
-pytest tests/e2e/ -v
+# Run E2E tests with LLM judge (see TESTING.md for details)
+pytest tests/e2e/ -v --llm-judge
 
 # Build Docker image
 docker build -t dcmaidbot:latest .
@@ -31,7 +160,34 @@ docker build -t dcmaidbot:latest .
 docker run --env-file .env dcmaidbot:latest
 ```
 
+**📚 Testing Resources:**
+- **[TESTING.md](TESTING.md)** - Complete testing strategy and documentation
+- **[Testing Strategy](CONTRIBUTING.md#testing-strategy)** - E2E with LLM judge
+- **[Current Test Status](TESTING.md#test-categories--current-status)** - 80 unit tests + 77 E2E tests
+
 ## Code Quality Rules
+
+### 🚨 MANDATORY: No --no-verify Flag
+
+**RULE**: Using `--no-verify` or `--no-hooks` with git commit is **STRICTLY FORBIDDEN**.
+
+**Why**:
+- Pre-commit hooks ensure code quality
+- E2E tests validate all endpoints work
+- LLM judge validates bot behavior
+- Skipping hooks leads to broken production deploys
+
+**Pre-commit automatically**:
+- ✅ Lints and formats code (ruff)
+- ✅ Type checks with mypy
+- ✅ Runs unit tests
+- ✅ **Auto-starts dev server**
+- ✅ **Runs E2E tests with LLM judge**
+- ✅ **Cleans up server after tests**
+
+**If pre-commit fails**: Fix the actual issue, don't bypass it.
+
+**Enforcement**: ANY commit with `--no-verify` will be reverted immediately.
 
 ### 🚨 MANDATORY: No Linter Suppression
 
@@ -555,12 +711,37 @@ Summary of key steps:
    - Story should: Explain feature, show benefits, be engaging
    - Commit landing page changes separately
 
-4. **PR Ready Signal**
+4. **Pre-Release Nudge to Vasilisa**
+   - Send pre-release warning to VASILISA_TG_ID (122657093) via /nudge
+   - Use production nudge endpoint: `https://dcmaidbot.theedgestory.org/nudge`
+   - Include comprehensive pre-release checklist status
+   - Message format:
+     ```
+     🚨 **PRE-RELEASE WARNING** 🚨
+
+     **Release**: [PR Name] - v[version]
+     **Target User**: Vasilisa (ID: 122657093)
+
+     ### 📋 Pre-Release Checklist Status:
+     - [x] [Critical requirements completed]
+     - [x] [Test results summary]
+     - [x] [User requirements met]
+
+     ### 🎯 **Ready for Review**:
+     [Detailed status of implementation]
+
+     *This is an automated pre-release notification. Review and provide feedback before production deployment.*
+     ```
+   - Authentication: Use NUDGE_SECRET from kubernetes (`dcmaidbot-nudge-secret`)
+   - Test with E2E test: `tests/e2e/test_nudge_pre_release.py`
+   - Verify success: Message ID returned, status: success
+
+5. **PR Ready Signal**
    - Commit all changes with message including `[PR]` signal
    - This signals PR is ready for review
    - Example: `[PR] PRP-005 Phase 2 - Agentic Tools Integration`
 
-5. **CI Checks**
+6. **CI Checks**
    - Wait for ALL CI checks to pass
    - DO NOT proceed until all checks are green
    - If checks fail: Fix immediately and re-run
@@ -605,7 +786,35 @@ Summary of key steps:
    - Verify feature works as expected
    - Check logs for errors or warnings
 
-4. **Post-Release Signal**
+4. **Post-Release Nudge to All Admins**
+   - Send post-release notification to all ADMIN_IDS via /nudge
+   - Use production nudge endpoint: `https://dcmaidbot.theedgestory.org/nudge`
+   - Include comprehensive changelog in markdown format
+   - Message format:
+     ```
+     🎉 **RELEASE DEPLOYED SUCCESSFULLY** 🎉
+
+     **Version**: [PR Name] - v[version]
+     **Status**: ✅ **PRODUCTION LIVE**
+
+     ---
+
+     [Full changelog content in markdown]
+
+     ---
+
+     🔗 **Live Demo**: https://dcmaidbot.theedgestory.org
+     📊 **Health Check**: https://dcmaidbot.theedgestory.org/health
+     📋 **Changelog**: https://dcmaidbot.theedgestory.org/changelog
+
+     *Automated post-release notification sent to all administrators*
+     ```
+   - Include deployment details (Docker image, Kubernetes status)
+   - Include test results summary
+   - Test with E2E test: `tests/e2e/test_nudge_pre_release.py`
+   - Verify success: All admins receive message, status: success
+
+5. **Post-Release Signal**
    - Update PR with comment: `[POST-RELEASE-VALIDATED]`
    - Include: Production test results, links to logs/metrics
    - Example: `[POST-RELEASE-VALIDATED] Feature tested in production, all working correctly. Logs: <link>`

@@ -1,14 +1,15 @@
 import asyncio
 import logging
 import os
+
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
-from handlers import waifu, help as help_handler
+from database import engine
+from handlers import waifu
 from middlewares.admin_only import AdminOnlyMiddleware
 from services.migration_service import check_migrations
-from database import engine
 
 # Load environment variables first
 load_dotenv()
@@ -69,8 +70,7 @@ def setup_dispatcher() -> Dispatcher:
     dp.message.middleware(AdminOnlyMiddleware(admin_ids))
     dp.callback_query.middleware(AdminOnlyMiddleware(admin_ids))
 
-    # Register routers
-    dp.include_router(help_handler.router)  # Help handler first (role-aware)
+    # Register waifu router
     dp.include_router(waifu.router)
 
     return dp

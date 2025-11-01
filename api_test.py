@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-import os
-import logging
 import asyncio
+import logging
+import os
+
 from aiohttp import web
 from dotenv import load_dotenv
 

@@ -6,10 +6,10 @@ Extended with PRP-005 capabilities:
 - Dynamic memory link suggestion
 """
 
-import os
 import json
+import os
 from pathlib import Path
-from typing import Any, Optional, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 
 from openai import AsyncOpenAI
 

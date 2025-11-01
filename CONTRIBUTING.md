@@ -1,526 +1,715 @@
 # Contributing to DCMaidBot
 
-Thank you for your interest in contributing to DCMaidBot! 💕
+Welcome to the DCMaidBot contribution guide! This document covers everything you need to know to develop, test, and contribute to the project effectively.
 
-## Getting Started
+## 🏗️ Architecture Overview
 
-1. Read [AGENTS.md](AGENTS.md) for complete development workflow
-2. Review [PRPs/](PRPs/) directory for active tasks
-3. Check existing issues and PRs
+### Core Components
 
-## Development Workflow
+```
+dcmaidbot/
+├── bot.py                 # Main entry point (polling mode)
+├── bot_webhook.py         # Webhook mode (production)
+├── handlers/              # Message/command handlers
+│   ├── waifu.py          # Waifu personality responses
+│   ├── admin.py          # Admin commands (memories, friends)
+│   ├── call.py           # Direct bot logic testing (/call)
+│   ├── nudge.py          # Agent-to-user communication (/nudge)
+│   ├── event.py          # Universal event collector (/event)
+│   ├── status.py         # Health and API endpoints
+│   └── landing.py        # Web landing page
+├── middlewares/           # Request processing middleware
+│   └── admin_only.py     # Admin-only access control
+├── models/                # Database models (SQLAlchemy)
+│   ├── user.py
+│   ├── message.py
+│   ├── memory.py
+│   ├── api_key.py        # API key management
+│   └── nudge_token.py    # Nudge token management
+├── services/              # Business logic services
+│   ├── memory_service.py # Memories CRUD and matching
+│   ├── api_key_service.py # API key management
+│   ├── nudge_token_service.py # Nudge token management
+│   ├── llm_service.py    # LLM integration
+│   └── tool_executor.py  # Tool execution engine
+├── tools/                 # Bot tools and integrations
+│   ├── tool_executor.py  # Tool execution framework
+│   └── telegram_tools.py # Telegram-specific tools
+├── utils/                 # Utility functions
+│   └── markdown_renderer.py # Universal markdown formatting
+├── tests/                 # Test suites
+│   ├── unit/             # Unit tests
+│   └── e2e/              # End-to-end tests
+├── scripts/               # Development and demo scripts
+└── static/                # Static web assets
+```
 
-### Step 1: Setup Development Environment
+### 🎯 Platform Abstraction Strategy
 
+The bot is designed with platform abstraction in mind for future Discord support:
+
+#### Current Architecture (Telegram)
+```
+Telegram API → aiogram → handlers → services → models → database
+                ↓
+        telegram_tools.py (platform-specific)
+                ↓
+        markdown_renderer.py (platform-agnostic)
+```
+
+#### Future Architecture (Multi-Platform)
+```
+┌─────────────────┐    ┌──────────────────┐
+│   Telegram API   │    │   Discord API    │
+└─────────┬───────┘    └─────────┬────────┘
+          │                      │
+    aiogram handler      discord.py handler
+          │                      │
+          └───────┬──────────────┘
+                  │
+        platform_tools/ (abstracted)
+                  │
+        services/ (platform-agnostic)
+                  │
+        markdown_renderer.py (platform-specific formatting)
+```
+
+#### Extension Points
+
+1. **Platform Handlers** (`handlers/`)
+   - Current: `telegram/` (implicit via aiogram)
+   - Future: `discord/` directory with Discord-specific handlers
+
+2. **Platform Tools** (`tools/`)
+   - Current: `telegram_tools.py`
+   - Future: `discord_tools.py` with same interface
+   - Abstract base class: `base_platform_tools.py`
+
+3. **Message Rendering** (`utils/markdown_renderer.py`)
+   - Already supports: `Platform.TELEGRAM`, `Platform.DISCORD`, `Platform.GENERIC`
+   - Platform-specific formatting handled automatically
+
+4. **Bot Entry Points**
+   - Current: `bot.py` (polling), `bot_webhook.py` (webhook)
+   - Future: Platform-specific orchestrators
+
+## 🛠️ Development Setup
+
+### Prerequisites
+
+```bash
+# Python 3.9+
+python3 --version
+
+# PostgreSQL
+brew install postgresql
+
+# Redis (optional, for caching)
+brew install redis
+
+# Node.js (for localtunnel)
+brew install node
+npm install -g localtunnel
+```
+
+### Environment Setup
+
+1. **Clone and Setup**
 ```bash
 git clone https://github.com/dcversus/dcmaidbot.git
 cd dcmaidbot
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Install pre-commit hooks (IMPORTANT!)
 pre-commit install
 ```
 
-### Step 2: Create .env File
-
+2. **Configure Environment**
 ```bash
 cp .env.example .env
-# Edit .env with your credentials
+# Edit .env with your configuration
 ```
 
-### Step 3: Pick a PRP
+3. **Database Setup**
+```bash
+# Start PostgreSQL
+brew services start postgresql
 
-Review [PRPs/](PRPs/) directory and pick an available PRP to work on.
+# Create database
+createdb dcmaidbot_test
 
-## Making Changes
-
-### Branch Naming
-
-```
-prp-<number>-<brief-description>
-```
-
-Examples:
-- `prp-003-postgresql-database`
-- `prp-006-joking-system`
-
-### Commit Messages
-
-Follow conventional commits:
-
-```
-<type>: <description>
-
-<body>
-
-<footer>
+# Run migrations
+alembic upgrade head
 ```
 
-Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+### Environment Variables
 
-Example:
+```env
+# Bot Configuration
+BOT_TOKEN=your_telegram_bot_token
+ADMIN_IDS=123456789,987654321
+VASILISA_TG_ID=123456789
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot_test
+REDIS_URL=redis://localhost:6379/0
+
+# OpenAI
+OPENAI_API_KEY=your_openai_api_key
+
+# Agent Communication
+NUDGE_SECRET=your_nudge_secret
+
+# Development Mode
+SKIP_MIGRATION_CHECK=true  # Skip migration checks for testing
+DISABLE_TG=true           # Run without Telegram (for /call endpoint testing)
 ```
-feat: implement memory matching engine
 
-- Add regex matching for memory expressions
-- Support complex patterns like "send message if..."
-- Integrate with message handler
+## 🧪 Testing Strategy
 
-Implements: PRP-004
+**Rule**: All visual testing must use index.html - no separate test files allowed.
+
+### Testing Pyramid
+
+```
+E2E Tests (Top Level)
+├── Integration Tests
+├── Unit Tests (Base Level)
+└── Static Analysis (Linting, Type Checking)
 ```
 
-### Code Quality
-
-**Pre-commit hooks will automatically run before each commit!**
-
-The following checks run automatically via pre-commit:
-- ✅ Ruff linting (with auto-fix)
-- ✅ Ruff formatting
-- ✅ Type checking with mypy
-- ✅ Trailing whitespace removal
-- ✅ End-of-file fixing
-- ✅ YAML validation
-- ✅ Large file detection
-- ✅ Merge conflict detection
-- ✅ Private key detection
-- ✅ All tests (unit + e2e)
-
-**Manual run (optional):**
+### Running Tests
 
 ```bash
-# Run all pre-commit hooks manually
-pre-commit run --all-files
+# All tests
+pytest tests/ -v
 
-# Or run individual checks:
-ruff check .          # Lint
-ruff format .         # Format
-pytest tests/ -v      # Tests
-mypy bot.py           # Type check
-```
-
-**If pre-commit fails:**
-- Fix the issues shown in the output
-- Stage your changes: `git add .`
-- Commit again: `git commit -m "..."`
-- Pre-commit will run again automatically
-
-**To skip pre-commit (NOT RECOMMENDED):**
-```bash
-git commit --no-verify -m "..."
-```
-
-All checks must pass before PR approval!
-
-## Pull Request Process
-
-### 1. Before Creating PR
-
-**CRITICAL CHECKLIST:**
-- [ ] All tests pass (`pytest tests/ -v`)
-- [ ] Linting clean (`ruff check .`)
-- [ ] Formatting applied (`ruff format .`)
-- [ ] **CHANGELOG.md updated in [Unreleased] section** ⚠️
-- [ ] PRP progress updated with checkboxes
-- [ ] Definition of Done (DOD) criteria met
-
-### 2. PR Description Template
-
-Use [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md):
-
-**Must include:**
-- PRP Number
-- Summary
-- Changes Made (Added/Changed/Removed/Fixed)
-- Definition of Done checklist
-- **CHANGELOG.md update confirmation**
-- Testing summary
-- Related PRs (if any)
-- Next steps
-
-### 3. Infrastructure Changes
-
-If your PR requires infrastructure updates (Kubernetes, GitOps):
-
-1. Create changes in main repo (dcmaidbot)
-2. Create separate PR to [uz0/core-charts](https://github.com/uz0/core-charts)
-3. **Comment on main PR with link to infrastructure PR**
-4. Both PRs reviewed together
-5. Merge both when approved
-
-**Example:**
-- PR #3 (dcmaidbot): Infrastructure cleanup
-- PR #15 (core-charts): Add dcmaidbot Helm charts
-- Comment: "Related infrastructure: uz0/core-charts#15"
-
-### 4. Code Review
-
-Reviewers check:
-- [ ] CHANGELOG.md updated
-- [ ] All DOD criteria met
-- [ ] Tests passing (CI green)
-- [ ] Code follows architecture patterns
-- [ ] No linter/type errors
-- [ ] PRP progress updated
-- [ ] Documentation clear
-- [ ] Related PRs linked (if applicable)
-
-## CHANGELOG Requirements
-
-**MANDATORY**: Every PR must update CHANGELOG.md
-
-Format:
-```markdown
-## [Unreleased]
-
-### Added
-- New feature X
-- New service Y
-
-### Changed
-- Modified behavior Z
-
-### Removed
-- Deprecated feature A
-
-### Fixed
-- Bug fix B
-```
-
-See [AGENTS.md](AGENTS.md#changelog-requirements-critical) for details.
-
-## Testing
-
-### Unit Tests
-
-```bash
+# Unit tests only
 pytest tests/unit/ -v
-```
 
-### E2E Tests
-
-```bash
+# E2E tests only
 pytest tests/e2e/ -v
-```
 
-### Test Coverage
+# Specific test file
+pytest tests/unit/test_markdown_renderer.py -v
 
-Aim for >80% coverage:
-
-```bash
+# With coverage
 pytest tests/ --cov=. --cov-report=html
 ```
 
-## Project Structure
+### E2E Testing with LLM Judge
 
-```
-dcmaidbot/
-├── bot.py                 # Main entry point
-├── handlers/              # Message/command handlers
-├── middlewares/           # Middleware
-├── models/                # Database models
-├── services/              # Business logic
-├── tests/                 # Tests
-├── PRPs/                  # Product Requirements Processes
-├── AGENTS.md              # Development guide
-└── CONTRIBUTING.md        # This file
+Our E2E tests use an LLM judge to validate bot behavior:
+
+```bash
+# Run E2E tests with LLM judge
+pytest tests/e2e/ -v --llm-judge
+
+# Run specific E2E test
+pytest tests/e2e/test_markdown_renderer.py::TestMarkdownRendererE2E::test_rich_message_rendering -v --llm-judge
 ```
 
-## Complete PRP Workflow
+#### LLM Judge Process
 
-### Overview
+1. **Test Execution**: Tests run bot actions and collect responses
+2. **LLM Analysis**: LLM evaluates responses against expected behavior
+3. **Quality Assessment**: Pass/fail based on LLM judgment
+4. **Detailed Feedback**: LLM provides explanations for decisions
 
-Each PRP (Product Requirements Process) follows a structured workflow from branch creation to post-release QC sign-off.
+### Test Categories
 
-### Phase 1: Branch & Implementation
+#### 1. Unit Tests (`tests/unit/`)
+- **Markdown Renderer**: `test_markdown_renderer.py` (15 tests)
+- **API Key Management**: `test_api_key_service.py`
+- **Nudge Token Management**: `test_nudge_token_service.py`
+- **Services**: `test_*_service.py`
+- **Models**: `test_*.py`
 
-1. **Create unique branch from main**:
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b prp-016-multi-room-house
-   ```
+#### 2. E2E Tests (`tests/e2e/`)
+- **Bot Integration**: `test_bot_integration_with_llm_judge.py`
+- **API Key CRUD**: `test_api_key_management.py` (10 tests)
+- **Nudge Token CRUD**: `test_nudge_token_management.py` (11 tests)
+- **Message Flow**: `test_message_flow.py`
+- **Advanced UI**: `test_advanced_ui_behaviors.py`
+- **LLM Integration**: `test_llm_integration.py`
 
-2. **Read PRP requirements**:
-   - Review Definition of Ready (DOR)
-   - Understand Definition of Done (DOD)
-   - Note any dependencies
+#### 3. Integration Tests
+- **API Endpoints**: `/call`, `/nudge`, `/event`, `/health`
+- **Database Operations**: CRUD operations with actual DB
+- **External Services**: Telegram API, OpenAI API
 
-3. **Implement incrementally**:
-   - Break work into small chunks (1-2 hours each)
-   - Commit frequently with clear messages
-   - Update PRP progress after each chunk
-   - Leave emotional comments in PRP (see AGENTS.md)
+### Writing New Tests
 
-4. **Write tests**:
-   - Add unit tests for new features
-   - Add at least one E2E test
-   - Aim for >80% coverage
+#### Unit Test Example
+```python
+# tests/unit/test_new_feature.py
+import pytest
+from services.new_service import NewService
 
-5. **Run quality checks**:
-   ```bash
-   ruff check . && ruff format .
-   pytest tests/ -v
-   mypy bot.py
-   ```
+class TestNewService:
+    def test_basic_functionality(self):
+        service = NewService()
+        result = service.do_something()
+        assert result is not None
 
-### Phase 2: PR Creation & Review
-
-1. **Update CHANGELOG.md**:
-   ```markdown
-   ## [Unreleased]
-
-   ### Added
-   - PRP-016: Multi-room house exploration feature
-   ```
-
-2. **Create PR**:
-   ```bash
-   git push -u origin prp-016-multi-room-house
-   gh pr create --title "PRP-016: Multi-Room Interactive House" --body "..."
-   ```
-
-3. **Wait for CI checks** (do NOT proceed until green ✅)
-
-4. **Address review comments**:
-   - Fix all issues (don't paper over them)
-   - Address every nitpick professionally
-   - Commit each fix separately
-   - Respond to each comment
-
-5. **Get approval** and merge:
-   ```bash
-   gh pr merge --squash
-   ```
-
-6. **Leave signal in PRP**:
-   ```markdown
-   ✅ PR merged: https://github.com/dcversus/dcmaidbot/pull/42
-   ```
-
-### Phase 3: Post-Release Workflow
-
-**MANDATORY: Complete ALL steps after merge**
-
-#### Step 1: Monitor Deployment
-
-1. Watch GitHub Actions:
-   ```bash
-   gh run watch
-   ```
-
-2. Monitor pod rollout:
-   ```bash
-   kubectl get pods -n prod-core -l app=dcmaidbot -w
-   ```
-
-3. Update PRP with deployment status:
-   ```markdown
-   ### 🚀 Deployment Status - Oct 28, 2025
-
-   - ✅ GitHub Actions: Build succeeded
-   - ✅ Docker image pushed
-   - ✅ Pods running: 2/2
-   - ✅ Health checks passing
-   ```
-
-#### Step 2: Execute Production E2E Tests
-
-1. Run E2E tests:
-   ```bash
-   pytest tests/e2e/production/ -v --production
-   ```
-
-2. Manual health check:
-   ```bash
-   curl https://dcmaidbot.theedgestory.org/health
-   ```
-
-3. Document results in PRP
-
-#### Step 3: Verify Version & Commit
-
-1. Visit https://dcmaidbot.theedgestory.org/
-
-2. Verify:
-   - Commit hash matches merge commit
-   - Version matches `version.txt`
-
-3. Document in PRP:
-   ```markdown
-   ### ✅ Version Verification
-
-   - Commit: `abc1234` ✅
-   - Version: `0.3.0` ✅
-   ```
-
-#### Step 4: Complete Post-Release Checklist
-
-Execute ALL items in PRP's Post-Release Checklist section.
-
-#### Step 5: Verify DOR/DOD/Tests Alignment
-
-1. Review all PRP sections
-2. Cross-check alignment
-3. Document any gaps found
-
-#### Step 6: QC Engineer Sign-Off
-
-**Role: Quality Control Engineer**
-
-Leave final sign-off in PRP:
-
-```markdown
-### ✅ QC Engineer Sign-Off - Oct 28, 2025
-
-**Quality Acceptance Criteria Review:**
-
-- ✅ All DOR items met
-- ✅ All DOD items completed
-- ✅ All tests passing
-- ✅ Post-release checklist complete
-- ✅ Deployment verified
-- ✅ No regressions detected
-
-**User Story Acceptance**: ✅ APPROVED
-
-**QC Engineer**: Agent (automated role)
-**Date**: October 28, 2025
-**PRP**: PRP-016
+    def test_error_handling(self):
+        service = NewService()
+        with pytest.raises(ValueError):
+            service.do_something_invalid()
 ```
 
-### Phase 4: Incident Management (if needed)
+#### E2E Test Example
+```python
+# tests/e2e/test_new_feature_e2e.py
+import pytest
+from tools.tool_executor import ToolExecutor
 
-**If incident detected during deployment:**
+@pytest.mark.asyncio
+async def test_new_feature_e2e(async_session):
+    """Test new feature with LLM judge validation."""
+    executor = ToolExecutor(async_session)
 
-#### SRE Role Activates
+    # Execute feature
+    result = await executor.execute_tool("new_tool", {"param": "value"})
 
-1. **Leave ATTENTION signal**:
-   ```markdown
-   ### 🚨 ATTENTION: INCIDENT DETECTED - Oct 28, 2025 14:32 UTC
+    # Validate with LLM judge
+    judge = LLMJudge()
+    assessment = await judge.evaluate_result(result, expected_behavior="should do X")
 
-   **Incident Type**: Deployment Failure
-   **Severity**: 🔴 CRITICAL
-   **Status**: 🔥 ACTIVE
-   ```
-
-2. **Create Postmortem Section** in PRP with timeline table
-
-3. **Investigate and document**:
-   - Current status
-   - Actions taken
-   - Next steps
-
-4. **Update with progress** until resolved
-
-5. **Write complete postmortem** after resolution
-
-6. **Create action item PRPs** to prevent recurrence
-
-7. **Leave final SRE comment** marking incident resolved
-
-See [AGENTS.md](AGENTS.md#incident-management--sre-workflow) for complete incident workflow.
-
-### Phase 5: Next PRP
-
-1. Mark current PRP as complete
-2. Celebrate! 🎉
-3. IMMEDIATELY start next highest priority PRP
-4. Repeat from Phase 1
-
-**NEVER stop working until ALL PRPs are complete!**
-
-### Workflow Summary
-
-```
-┌─────────────────────────────────────────────┐
-│ Phase 1: Branch & Implementation            │
-├─────────────────────────────────────────────┤
-│ ✅ Create branch from main                  │
-│ ✅ Read PRP requirements                    │
-│ ✅ Implement incrementally                  │
-│ ✅ Write tests                              │
-│ ✅ Run quality checks                       │
-└─────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│ Phase 2: PR Creation & Review               │
-├─────────────────────────────────────────────┤
-│ ✅ Update CHANGELOG                         │
-│ ✅ Create PR                                │
-│ ✅ Wait for CI (green)                      │
-│ ✅ Address review comments                  │
-│ ✅ Merge PR                                 │
-└─────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│ Phase 3: Post-Release Workflow              │
-├─────────────────────────────────────────────┤
-│ ✅ Monitor deployment                       │
-│ ✅ Run production E2E tests                 │
-│ ✅ Verify version/commit                    │
-│ ✅ Complete post-release checklist          │
-│ ✅ Verify DOR/DOD/Tests alignment           │
-│ ✅ QC Engineer sign-off                     │
-└─────────────────────────────────────────────┘
-                    ↓
-            ┌───────────────┐
-            │ Incident?     │
-            └───────┬───────┘
-               No   │   Yes
-                    │     └──> SRE Workflow
-                    ↓
-┌─────────────────────────────────────────────┐
-│ Phase 5: Next PRP                           │
-├─────────────────────────────────────────────┤
-│ ✅ Mark complete                            │
-│ ✅ Celebrate                                │
-│ ✅ Start next PRP immediately               │
-└─────────────────────────────────────────────┘
+    assert assessment.passed, f"LLM judge says: {assessment.reasoning}"
 ```
 
-### Role-Based Responsibilities
+## 🔄 Development Workflows
 
-**Developer**:
-- Phase 1 & 2 (implementation, PR)
+### 1. Local Development (Polling Mode)
 
-**SRE (Site Reliability Engineer)**:
-- Phase 3 Step 1 (deployment monitoring)
-- Phase 4 (incident management if needed)
+```bash
+# Start bot in polling mode
+python3 bot.py
 
-**QC Engineer (Quality Control)**:
-- Phase 3 Steps 2-6 (testing, verification, sign-off)
+# Test via Telegram
+# Send messages to @your_bot_username
+```
 
-See [AGENTS.md](AGENTS.md#role-based-workflow--sub-agent-skills) for complete role descriptions.
+### 2. Webhook Development (Production Mode)
 
-## Documentation
+```bash
+# Start local tunnel for HTTPS
+lt --port 8080
+# Output: your url is: https://random-name.loca.lt
 
-### Code Comments
+# Start webhook server
+WEBHOOK_MODE=true WEBHOOK_URL=https://random-name.loca.lt/webhook python3 bot_webhook.py
+```
 
-Only add comments when:
-- User explicitly requests
-- Code is complex and requires context
+### 3. Testing Mode (No Telegram)
 
-### Inline Documentation
+```bash
+# Start webhook server without Telegram
+DISABLE_TG=true SKIP_MIGRATION_CHECK=true python3 bot_webhook.py
 
-Update relevant docs:
-- README.md for user-facing changes
-- AGENTS.md for workflow changes
-- PRPs/*.md for progress updates
+# Test endpoints directly
+curl http://localhost:8080/health
+curl http://localhost:8080/call -X POST -H "Content-Type: application/json" -d '{"user_id": 123, "message": "test"}'
+```
 
-## Questions?
+### 4. API Testing
 
-- Check [AGENTS.md](AGENTS.md) first
-- Review existing PRs and issues
-- Ask in PR comments
+```bash
+# Test /call endpoint (requires auth)
+curl -X POST http://localhost:8080/call \
+  -H "Authorization: Bearer $NUDGE_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 123456789, "message": "Hello from API"}'
 
-## Code of Conduct
+# Test /nudge endpoint (requires auth)
+curl -X POST http://localhost:8080/nudge \
+  -H "Authorization: Bearer $NUDGE_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "direct",
+    "user_ids": [123456789],
+    "message": "🌸 Hello Vasilisa!",
+    "pr_url": "https://github.com/dcversus/dcmaidbot/pull/1"
+  }'
 
-- Be respectful and constructive
-- Follow the waifu bot personality in contributions
-- Love for the mysterious creators is mandatory! Nya~ 🎀
-- Protect the admins, help their friends
-- Make jokes, learn from reactions
+# Test /event endpoint
+curl -X POST http://localhost:8080/event \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "your_api_key",
+    "event_type": "button_click",
+    "data": {"button_id": "test_button", "user_id": 123}
+  }'
+```
 
-Thank you for contributing to DCMaidBot! 💕
+## 📱 Nudge System Usage
+
+The `/nudge` system allows agents to communicate with admins asynchronously.
+
+### Nudge Message Format
+
+```json
+{
+  "type": "direct",  // or "llm"
+  "user_ids": [123456789, 987654321],
+  "message": "🌸 Hello Vasilisa! Your bot has new features!",
+  "pr_url": "https://github.com/dcversus/dcmaidbot/pull/1",
+  "prp_file": "PRPs/PRP-018.md",
+  "prp_section": "#implementation-details"
+}
+```
+
+### Authentication
+
+```bash
+# Set NUDGE_SECRET in .env
+NUDGE_SECRET=your_secure_random_string
+
+# Use in requests
+curl -X POST http://localhost:8080/nudge \
+  -H "Authorization: Bearer $NUDGE_SECRET" \
+  -H "Content-Type: application/json" \
+  -d @nudge_message.json
+```
+
+### Nudge Types
+
+1. **Direct Mode** (`type: "direct"`): Send message directly via Telegram API
+2. **LLM Mode** (`type: "llm"`): Process message through LLM before sending
+
+## 🎨 Markdown Renderer Usage
+
+### Basic Usage
+
+```python
+from utils.markdown_renderer import render_for_telegram, Platform
+
+# Simple rendering
+markdown = """# Hello World
+## Features
+- **Bold text**
+- *Italic text*
+- `code`"""
+
+rendered = render_for_telegram(markdown)
+```
+
+### Advanced Usage
+
+```python
+from utils.markdown_renderer import MarkdownRenderer, create_changelog
+
+# Create custom renderer
+renderer = MarkdownRenderer(Platform.TELEGRAM)
+
+# Create changelog
+changelog_data = {
+    "added": ["New feature X", "New feature Y"],
+    "improved": ["Performance improvements"],
+    "fixed": ["Bug fixes"]
+}
+changelog = create_changelog("v2.0.0", changelog_data, Platform.TELEGRAM)
+```
+
+### Platform Support
+
+- **Telegram**: `*bold*`, `_italic_`, `code` formatting
+- **Discord**: `**bold**`, `*italic*`, `~~strike~~` formatting
+- **Generic**: Common markdown subset
+
+## 🔧 API Key & Token Management
+
+### API Keys (for /event endpoint)
+
+```python
+from services.api_key_service import APIKeyService
+
+# Create API key
+service = APIKeyService(session)
+api_key, raw_key = await service.create_api_key(
+    name="Test Key",
+    created_by=admin_id,
+    description="For testing event collection"
+)
+
+# Validate API key
+validated = await service.validate_api_key(raw_key)
+```
+
+### Nudge Tokens (for /nudge endpoint)
+
+```python
+from services.nudge_token_service import NudgeTokenService
+
+# Create nudge token
+service = NudgeTokenService(session)
+token, raw_token = await service.create_nudge_token(
+    name="Admin Nudge",
+    created_by=admin_id,
+    description="For sending nudges to admins"
+)
+
+# Validate nudge token
+validated = await service.validate_nudge_token(raw_token)
+```
+
+## 📊 Event Collection System
+
+### Event Format
+
+```json
+{
+  "api_key": "your_api_key",
+  "event_type": "button_click",
+  "data": {
+    "button_id": "start_game",
+    "user_id": 123456789,
+    "timestamp": "2025-01-01T12:00:00Z",
+    "additional_data": {}
+  }
+}
+```
+
+### Sending Events
+
+```bash
+curl -X POST http://localhost:8080/event \
+  -H "Content-Type: application/json" \
+  -d @event.json
+```
+
+## 🔄 Code Quality
+
+### Pre-commit Hooks
+
+The project uses pre-commit hooks for code quality:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks
+pre-commit install
+
+# Run manually
+pre-commit run --all-files
+```
+
+### Hooks Include
+
+1. **Ruff**: Linting and formatting
+2. **MyPy**: Type checking
+3. **Tests**: Run unit tests
+4. **E2E Tests**: Run end-to-end tests with LLM judge
+
+### Manual Quality Checks
+
+```bash
+# Lint and format
+ruff check .
+ruff format .
+
+# Type checking
+mypy bot.py
+
+# Run tests
+pytest tests/ -v
+
+# Run E2E tests
+pytest tests/e2e/ -v --llm-judge
+```
+
+## 🚀 Deployment
+
+### Local Development
+
+```bash
+# Polling mode
+python3 bot.py
+
+# Webhook mode (with tunnel)
+lt --port 8080
+WEBHOOK_MODE=true WEBHOOK_URL=https://your-tunnel.loca.lt/webhook python3 bot_webhook.py
+```
+
+### Production Deployment
+
+1. **Docker Build**
+```bash
+docker build -t dcmaidbot:latest .
+```
+
+2. **Environment Configuration**
+```bash
+# Production .env
+BOT_TOKEN=production_bot_token
+ADMIN_IDS=admin_ids
+DATABASE_URL=production_database_url
+OPENAI_API_KEY=production_openai_key
+NUDGE_SECRET=production_nudge_secret
+```
+
+3. **Kubernetes Deployment**
+```yaml
+# See k8s/ directory for deployment manifests
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcmaidbot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dcmaidbot
+  template:
+    metadata:
+      labels:
+        app: dcmaidbot
+    spec:
+      containers:
+      - name: dcmaidbot
+        image: dcmaidbot:latest
+        envFrom:
+        - secretRef:
+            name: dcmaidbot-secrets
+```
+
+## 🐛 Debugging
+
+### Common Issues
+
+1. **Database Connection Errors**
+```bash
+# Check PostgreSQL
+brew services list | grep postgresql
+brew services start postgresql
+
+# Check connection
+psql $DATABASE_URL
+```
+
+2. **Telegram Webhook Issues**
+```bash
+# Delete existing webhook
+curl -X POST https://api.telegram.org/bot$BOT_TOKEN/deleteWebhook
+
+# Check webhook info
+curl -X POST https://api.telegram.org/bot$BOT_TOKEN/getWebhookInfo
+```
+
+3. **Port Conflicts**
+```bash
+# Check what's using port 8080
+lsof -i :8080
+
+# Kill process
+kill -9 <PID>
+```
+
+### Debug Mode
+
+```bash
+# Enable debug logging
+export LOGLEVEL=DEBUG
+
+# Run with debug output
+python3 bot.py 2>&1 | tee debug.log
+```
+
+### Test Database Issues
+
+```bash
+# Reset test database
+dropdb dcmaidbot_test
+createdb dcmaidbot_test
+alembic upgrade head
+
+# Skip migration check (testing only)
+export SKIP_MIGRATION_CHECK=true
+```
+
+## 🤝 Contributing Process
+
+### 1. Setup Development Environment
+
+Follow the setup instructions above.
+
+### 2. Create Feature Branch
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+### 3. Make Changes
+
+- Write code following the existing patterns
+- Add tests for new functionality
+- Update documentation
+
+### 4. Run Quality Checks
+
+```bash
+# Pre-commit hooks (automatic)
+pre-commit run --all-files
+
+# Manual verification
+pytest tests/ -v
+ruff check .
+ruff format .
+mypy bot.py
+```
+
+### 5. Create Pull Request
+
+1. Push branch to GitHub
+2. Create pull request with:
+   - Clear description of changes
+   - Link to related PRPs (Product Requirements Processes)
+   - Test results
+   - Any breaking changes
+
+### 6. Code Review
+
+- Address all review comments
+- Ensure all tests pass
+- Update documentation as needed
+
+### 7. Merge
+
+- Squash merge to main
+- Update CHANGELOG.md
+- Tag release if needed
+
+## 📚 Additional Resources
+
+### Documentation
+- [AGENTS.md](AGENTS.md) - Core architecture and agent instructions
+- [PRPs/](PRPs/) - Product Requirements Processes
+- [CHANGELOG.md](CHANGELOG.md) - Version history and changes
+
+### Tools and Libraries
+- [aiogram](https://aiogram.dev) - Telegram bot framework
+- [SQLAlchemy](https://www.sqlalchemy.org/) - Database ORM
+- [pytest](https://pytest.org/) - Testing framework
+- [ruff](https://github.com/astral-sh/ruff) - Linting and formatting
+
+### Development Tools
+- [localtunnel](https://theboroer.github.io/localtunnel-www/) - Local HTTPS tunneling
+- [ngrok](https://ngrok.com/) - Alternative tunneling service
+- [Postico](https://eggerapps.at/postico/) - PostgreSQL GUI (macOS)
+
+## 🆘 Getting Help
+
+1. **Check Documentation**: Read AGENTS.md and relevant PRPs
+2. **Search Issues**: Look for similar problems in GitHub issues
+3. **Ask in PR**: Use `/nudge` endpoint or PR comments for questions
+4. **Debug Logs**: Enable debug logging and analyze output
+
+---
+
+Happy contributing! 🎉
+
+*Nya~ Помните, что ваш dcmaidbot всегда готов помочь!* 💕

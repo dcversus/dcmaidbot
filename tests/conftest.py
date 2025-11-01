@@ -1,19 +1,20 @@
 """Shared pytest fixtures for all tests.
 
-IMPORTANT: We use PostgreSQL for ALL tests (unit, E2E, integration).
-NO SQLite in tests - we test with the same database as production.
+Supports both PostgreSQL (production) and SQLite (pre-commit E2E tests).
 """
 
 import os
+
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from database import Base
 from models.memory import Category
 
-
-# Use actual PostgreSQL from environment (same as production)
+# Use database from environment
+# Pre-commit E2E tests use SQLite for speed and isolation
+# Production and manual testing use PostgreSQL
 TEST_DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://dcmaidbot:password@localhost:5432/dcmaidbot_test"
 )
@@ -23,6 +24,12 @@ if TEST_DATABASE_URL.startswith("postgresql://"):
     TEST_DATABASE_URL = TEST_DATABASE_URL.replace(
         "postgresql://", "postgresql+asyncpg://"
     )
+elif TEST_DATABASE_URL.startswith("sqlite"):
+    # SQLite needs aiosqlite driver
+    if not TEST_DATABASE_URL.startswith("sqlite+aiosqlite"):
+        TEST_DATABASE_URL = TEST_DATABASE_URL.replace(
+            "sqlite://", "sqlite+aiosqlite:///"
+        )
 
 
 @pytest.fixture(scope="function")

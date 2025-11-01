@@ -1,10 +1,11 @@
 """
-Landing page handler for Lilit's Room.
+Landing page handler for Lilith's Room.
 
 Serves the interactive chibi anime landing page at /.
 """
 
 import os
+
 from aiohttp import web
 
 

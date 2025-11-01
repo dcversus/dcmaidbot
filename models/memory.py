@@ -7,10 +7,11 @@ This implementation is based on cutting-edge research:
 - Social Graph AI: Relationship and personality modeling
 """
 
-from datetime import datetime
-from typing import Any, Optional, cast
 import json
 import os
+from datetime import datetime
+from typing import Any, Optional, cast
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -28,6 +29,16 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
+
+# Import pgvector for vector embeddings
+try:
+    from pgvector.sqlalchemy import Vector
+
+    PGVECTOR_AVAILABLE = True
+except ImportError:
+    # Fallback for environments without pgvector
+    PGVECTOR_AVAILABLE = False
+    Vector = None
 
 # Detect database type from environment
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./dcmaidbot_test.db")
@@ -124,6 +135,11 @@ class Memory(Base):
     )
     last_accessed: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     access_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Vector embedding for semantic search (PRP-007)
+    # Always use Text column to avoid database compatibility issues
+    # Vector data is stored as JSON string and converted to vectors in code
+    embedding: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
     categories: Mapped[list["Category"]] = relationship(

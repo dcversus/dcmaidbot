@@ -1,7 +1,9 @@
 import random
 from datetime import datetime
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
+
 from models.data import Activity, Pool
+
 from services.pool_service import _get_storage, _save_storage, get_pool
 
 # Constants for penalty calculation
