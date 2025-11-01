@@ -36,10 +36,7 @@ class Event(Base):
 
     # Event status tracking
     status: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False,
-        default="unread",
-        index=True
+        String(20), nullable=False, default="unread", index=True
     )  # unread, read, completed, failed
 
     # Processing metadata
@@ -49,14 +46,12 @@ class Event(Base):
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
-        server_default=text("CURRENT_TIMESTAMP"),
-        nullable=False,
-        index=True
+        server_default=text("CURRENT_TIMESTAMP"), nullable=False, index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
         onupdate=text("CURRENT_TIMESTAMP"),
-        nullable=False
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -79,7 +74,9 @@ class Event(Base):
             "button_text": self.button_text,
             "callback_data": self.callback_data,
             "status": self.status,
-            "processed_at": self.processed_at.isoformat() if self.processed_at else None,
+            "processed_at": self.processed_at.isoformat()
+            if self.processed_at
+            else None,
             "processing_attempts": self.processing_attempts,
             "error_message": self.error_message,
             "created_at": self.created_at.isoformat(),

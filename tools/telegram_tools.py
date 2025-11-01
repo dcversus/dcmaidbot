@@ -5,6 +5,7 @@ Telegram UI elements, handle events, and create interactive experiences.
 """
 
 import logging
+from datetime import datetime
 from typing import Any, Optional
 
 from aiogram import Bot
@@ -16,8 +17,9 @@ from aiogram.types import (
 )
 
 from services.event_service import ApiKeyService, EventService
+from services.nudge_token_service import NudgeTokenService
 from services.rpg_service import RPGService
-from tools.tool_executor import ToolExecutor
+from utils.markdown_renderer import MarkdownRenderer, Platform
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +27,16 @@ logger = logging.getLogger(__name__)
 class TelegramTools:
     """Collection of Telegram-rich feature tools for LLM use."""
 
-    def __init__(self, session, bot: Bot, tool_executor: ToolExecutor):
+    def __init__(self, session, bot: Bot, tool_executor=None):
         """Initialize Telegram tools with dependencies."""
         self.session = session
         self.bot = bot
         self.tool_executor = tool_executor
         self.event_service = EventService(session)
         self.api_key_service = ApiKeyService(session)
+        self.nudge_token_service = NudgeTokenService(session)
         self.rpg_service = RPGService(session)
+        self.markdown_renderer = MarkdownRenderer(Platform.TELEGRAM)
 
     async def send_telegram_message(
         self,
@@ -41,6 +45,7 @@ class TelegramTools:
         parse_mode: str = "HTML",
         reply_markup: Optional[dict] = None,
         disable_web_page_preview: bool = False,
+        use_markdown_renderer: bool = True,
     ) -> dict[str, Any]:
         """Send a message with rich formatting and keyboards."""
         try:
@@ -49,9 +54,17 @@ class TelegramTools:
             if reply_markup:
                 keyboard = self._build_keyboard(reply_markup)
 
+            # Apply markdown rendering if requested and not already HTML
+            formatted_text = text
+            if use_markdown_renderer and parse_mode != "HTML":
+                formatted_text = self.markdown_renderer.parse_and_render_markdown(text)
+            elif use_markdown_renderer and parse_mode == "HTML":
+                # If parse_mode is HTML but we want markdown, we still render but keep HTML
+                formatted_text = self.markdown_renderer.parse_and_render_markdown(text)
+
             message = await self.bot.send_message(
                 chat_id=chat_id,
-                text=text,
+                text=formatted_text,
                 parse_mode=parse_mode,
                 reply_markup=keyboard,
                 disable_web_page_preview=disable_web_page_preview,
@@ -62,12 +75,156 @@ class TelegramTools:
                 "message_id": message.message_id,
                 "chat_id": message.chat.id,
                 "text": message.text,
+                "formatted_text": formatted_text,
                 "message": "Message sent successfully",
             }
 
         except Exception as e:
             logger.error(f"Error sending Telegram message: {e}", exc_info=True)
             return {"success": False, "error": f"Failed to send message: {str(e)}"}
+
+    async def send_rich_message_to_user(
+        self,
+        user_id: int,
+        title: str,
+        content: str,
+        sections: Optional[list[str]] = None,
+        status: str = "info",
+        include_separator: bool = True,
+    ) -> dict[str, Any]:
+        """Send a richly formatted message to a specific user (like Vasilisa!)."""
+        try:
+            # Build the rich message
+            message_parts = []
+
+            # Add title
+            if title:
+                message_parts.append(
+                    self.markdown_renderer.render_heading(title, 1, "info")
+                )
+
+            # Add main content
+            if content:
+                message_parts.append(content)
+
+            # Add sections if provided
+            if sections:
+                for section in sections:
+                    message_parts.append("")
+                    message_parts.append(
+                        self.markdown_renderer.render_heading(section, 2, "info")
+                    )
+
+            # Add status line
+            if status:
+                message_parts.append("")
+                message_parts.append(
+                    self.markdown_renderer.format_status_line(status, status)
+                )
+
+            # Add separator
+            if include_separator:
+                message_parts.append("")
+                message_parts.append(self.markdown_renderer.format_separator())
+
+            # Join all parts
+            full_message = "\n".join(message_parts)
+
+            # Send the message
+            return await self.send_telegram_message(
+                chat_id=user_id,
+                text=full_message,
+                parse_mode="HTML",
+                use_markdown_renderer=True,
+                disable_web_page_preview=True,
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Error sending rich message to user {user_id}: {e}", exc_info=True
+            )
+            return {
+                "success": False,
+                "error": f"Failed to send rich message: {str(e)}",
+            }
+
+    async def send_changelog_to_user(
+        self,
+        user_id: int,
+        version: str,
+        sections: dict[str, list[str]],
+        title: str = None,
+    ) -> dict[str, Any]:
+        """Send a formatted changelog to a specific user."""
+        try:
+            # Create changelog using the markdown renderer
+            changelog = self.markdown_renderer.render_changelog_entry(
+                version, sections, title
+            )
+
+            # Add a nice header
+            header_emoji = self.markdown_renderer.get_next_emoji(["🎉", "🚀", "⭐"])
+            if not title:
+                title = f"Update Release {version}"
+
+            full_message = f"{header_emoji} {title}\n\n{changelog}"
+
+            # Send the changelog
+            return await self.send_telegram_message(
+                chat_id=user_id,
+                text=full_message,
+                parse_mode="HTML",
+                use_markdown_renderer=True,
+                disable_web_page_preview=True,
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Error sending changelog to user {user_id}: {e}", exc_info=True
+            )
+            return {
+                "success": False,
+                "error": f"Failed to send changelog: {str(e)}",
+            }
+
+    async def send_status_update(
+        self,
+        user_id: int,
+        status: str,
+        details: str = "",
+        include_emoji: bool = True,
+    ) -> dict[str, Any]:
+        """Send a quick status update to a specific user."""
+        try:
+            if details:
+                message = f"{status}\n\n{details}"
+            else:
+                message = status
+
+            # Format with markdown if emoji is requested
+            if include_emoji:
+                formatted_message = self.markdown_renderer.format_status_line(
+                    message, status
+                )
+            else:
+                formatted_message = message
+
+            return await self.send_telegram_message(
+                chat_id=user_id,
+                text=formatted_message,
+                parse_mode="HTML",
+                use_markdown_renderer=include_emoji,
+                disable_web_page_preview=True,
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Error sending status update to user {user_id}: {e}", exc_info=True
+            )
+            return {
+                "success": False,
+                "error": f"Failed to send status update: {str(e)}",
+            }
 
     async def create_inline_keyboard(
         self, buttons: list[dict[str, Any]], row_width: int = 2
@@ -246,11 +403,13 @@ class TelegramTools:
         rate_limit_per_minute: int = 60,
         rate_limit_per_hour: int = 1000,
         description: Optional[str] = None,
+        admin_id: Optional[int] = None,
     ) -> dict[str, Any]:
         """Create an API key for event collection."""
         try:
-            # Get admin user ID from context (this would be passed in real implementation)
-            admin_id = 1  # Placeholder - should come from user context
+            # Get admin user ID from context or parameter
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
 
             api_key, raw_key = await self.api_key_service.create_api_key(
                 name=name,
@@ -279,6 +438,299 @@ class TelegramTools:
         except Exception as e:
             logger.error(f"Error creating API key: {e}", exc_info=True)
             return {"success": False, "error": f"Failed to create API key: {str(e)}"}
+
+    async def list_api_keys(self, admin_id: Optional[int] = None) -> dict[str, Any]:
+        """List all API keys created by an admin."""
+        try:
+            # Get admin user ID from context or parameter
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
+
+            api_keys = await self.api_key_service.get_api_keys_by_creator(admin_id)
+
+            keys_data = []
+            for key in api_keys:
+                key_data = {
+                    "id": key.id,
+                    "name": key.name,
+                    "key_prefix": key.key_prefix,
+                    "allowed_event_types": key.allowed_event_types,
+                    "rate_limit_per_minute": key.rate_limit_per_minute,
+                    "rate_limit_per_hour": key.rate_limit_per_hour,
+                    "is_active": key.is_active,
+                    "usage_count": key.usage_count,
+                    "last_used_at": key.last_used_at.isoformat()
+                    if key.last_used_at
+                    else None,
+                    "created_at": key.created_at.isoformat(),
+                    "expires_at": key.expires_at.isoformat()
+                    if key.expires_at
+                    else None,
+                    "description": key.description,
+                }
+                keys_data.append(key_data)
+
+            return {
+                "success": True,
+                "count": len(keys_data),
+                "api_keys": keys_data,
+                "message": f"Found {len(keys_data)} API keys",
+            }
+
+        except Exception as e:
+            logger.error(f"Error listing API keys: {e}", exc_info=True)
+            return {"success": False, "error": f"Failed to list API keys: {str(e)}"}
+
+    async def deactivate_api_key(
+        self, api_key_id: int, admin_id: Optional[int] = None
+    ) -> dict[str, Any]:
+        """Deactivate an API key."""
+        try:
+            # Verify admin is the creator of this key (security check)
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
+
+            api_key = await self.api_key_service.get_api_key_by_id(api_key_id)
+            if not api_key:
+                return {"success": False, "error": "API key not found"}
+
+            if api_key.created_by != admin_id:
+                return {
+                    "success": False,
+                    "error": "Permission denied - you can only deactivate your own keys",
+                }
+
+            success = await self.api_key_service.deactivate_api_key(api_key_id)
+
+            return {
+                "success": success,
+                "api_key_id": api_key_id,
+                "message": "API key deactivated successfully"
+                if success
+                else "Failed to deactivate API key",
+            }
+
+        except Exception as e:
+            logger.error(f"Error deactivating API key: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Failed to deactivate API key: {str(e)}",
+            }
+
+    async def get_api_key_info(
+        self, api_key_id: int, admin_id: Optional[int] = None
+    ) -> dict[str, Any]:
+        """Get detailed information about an API key."""
+        try:
+            # Verify admin is the creator of this key (security check)
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
+
+            api_key = await self.api_key_service.get_api_key_by_id(api_key_id)
+            if not api_key:
+                return {"success": False, "error": "API key not found"}
+
+            if api_key.created_by != admin_id:
+                return {
+                    "success": False,
+                    "error": "Permission denied - you can only view your own keys",
+                }
+
+            return {
+                "success": True,
+                "api_key": {
+                    "id": api_key.id,
+                    "name": api_key.name,
+                    "key_prefix": api_key.key_prefix,
+                    "allowed_event_types": api_key.allowed_event_types,
+                    "rate_limit_per_minute": api_key.rate_limit_per_minute,
+                    "rate_limit_per_hour": api_key.rate_limit_per_hour,
+                    "is_active": api_key.is_active,
+                    "usage_count": api_key.usage_count,
+                    "last_used_at": api_key.last_used_at.isoformat()
+                    if api_key.last_used_at
+                    else None,
+                    "created_at": api_key.created_at.isoformat(),
+                    "expires_at": api_key.expires_at.isoformat()
+                    if api_key.expires_at
+                    else None,
+                    "description": api_key.description,
+                },
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting API key info: {e}", exc_info=True)
+            return {"success": False, "error": f"Failed to get API key info: {str(e)}"}
+
+    async def create_nudge_token(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        expires_at: Optional[datetime] = None,
+        admin_id: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Create a nudge token for /nudge endpoint authentication."""
+        try:
+            # Get admin user ID from context or parameter
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
+
+            nudge_token, raw_token = await self.nudge_token_service.create_nudge_token(
+                name=name,
+                created_by=admin_id,
+                description=description,
+                expires_at=expires_at,
+            )
+
+            return {
+                "success": True,
+                "nudge_token": {
+                    "id": nudge_token.id,
+                    "name": nudge_token.name,
+                    "token_prefix": nudge_token.token_prefix,
+                    "raw_token": raw_token,  # Only shown once!
+                    "description": nudge_token.description,
+                    "expires_at": nudge_token.expires_at.isoformat()
+                    if nudge_token.expires_at
+                    else None,
+                    "created_at": nudge_token.created_at.isoformat(),
+                },
+                "warning": "Store the raw_token securely - it will not be shown again!",
+                "usage": f"Use as: Authorization: Bearer {raw_token}",
+            }
+
+        except Exception as e:
+            logger.error(f"Error creating nudge token: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Failed to create nudge token: {str(e)}",
+            }
+
+    async def list_nudge_tokens(self, admin_id: Optional[int] = None) -> dict[str, Any]:
+        """List all nudge tokens created by an admin."""
+        try:
+            # Get admin user ID from context or parameter
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
+
+            nudge_tokens = await self.nudge_token_service.get_nudge_tokens_by_creator(
+                admin_id
+            )
+
+            tokens_data = []
+            for token in nudge_tokens:
+                token_data = {
+                    "id": token.id,
+                    "name": token.name,
+                    "token_prefix": token.token_prefix,
+                    "description": token.description,
+                    "is_active": token.is_active,
+                    "is_expired": token.is_expired(),
+                    "is_valid": token.is_valid(),
+                    "usage_count": token.usage_count,
+                    "last_used_at": token.last_used_at.isoformat()
+                    if token.last_used_at
+                    else None,
+                    "created_at": token.created_at.isoformat(),
+                    "expires_at": token.expires_at.isoformat()
+                    if token.expires_at
+                    else None,
+                }
+                tokens_data.append(token_data)
+
+            return {
+                "success": True,
+                "count": len(tokens_data),
+                "nudge_tokens": tokens_data,
+                "message": f"Found {len(tokens_data)} nudge tokens",
+            }
+
+        except Exception as e:
+            logger.error(f"Error listing nudge tokens: {e}", exc_info=True)
+            return {"success": False, "error": f"Failed to list nudge tokens: {str(e)}"}
+
+    async def deactivate_nudge_token(
+        self, token_id: int, admin_id: Optional[int] = None
+    ) -> dict[str, Any]:
+        """Deactivate a nudge token."""
+        try:
+            # Verify admin is the creator of this token (security check)
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
+
+            nudge_token = await self.nudge_token_service.get_nudge_token_by_id(token_id)
+            if not nudge_token:
+                return {"success": False, "error": "Nudge token not found"}
+
+            if nudge_token.created_by != admin_id:
+                return {
+                    "success": False,
+                    "error": "Permission denied - you can only deactivate your own tokens",
+                }
+
+            success = await self.nudge_token_service.deactivate_nudge_token(token_id)
+
+            return {
+                "success": success,
+                "token_id": token_id,
+                "message": "Nudge token deactivated successfully"
+                if success
+                else "Failed to deactivate nudge token",
+            }
+
+        except Exception as e:
+            logger.error(f"Error deactivating nudge token: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Failed to deactivate nudge token: {str(e)}",
+            }
+
+    async def get_nudge_token_info(
+        self, token_id: int, admin_id: Optional[int] = None
+    ) -> dict[str, Any]:
+        """Get detailed information about a nudge token."""
+        try:
+            # Verify admin is the creator of this token (security check)
+            if not admin_id:
+                admin_id = 1  # Placeholder - should come from user context
+
+            nudge_token = await self.nudge_token_service.get_nudge_token_by_id(token_id)
+            if not nudge_token:
+                return {"success": False, "error": "Nudge token not found"}
+
+            if nudge_token.created_by != admin_id:
+                return {
+                    "success": False,
+                    "error": "Permission denied - you can only view your own tokens",
+                }
+
+            return {
+                "success": True,
+                "nudge_token": {
+                    "id": nudge_token.id,
+                    "name": nudge_token.name,
+                    "token_prefix": nudge_token.token_prefix,
+                    "description": nudge_token.description,
+                    "is_active": nudge_token.is_active,
+                    "is_expired": nudge_token.is_expired(),
+                    "is_valid": nudge_token.is_valid(),
+                    "usage_count": nudge_token.usage_count,
+                    "last_used_at": nudge_token.last_used_at.isoformat()
+                    if nudge_token.last_used_at
+                    else None,
+                    "created_at": nudge_token.created_at.isoformat(),
+                    "expires_at": nudge_token.expires_at.isoformat()
+                    if nudge_token.expires_at
+                    else None,
+                },
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting nudge token info: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Failed to get nudge token info: {str(e)}",
+            }
 
     async def game_master_action(
         self,

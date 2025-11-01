@@ -89,6 +89,63 @@ class RedisService:
             print(f"Redis SET_JSON error: {e}")
             return False
 
+    async def incr(self, key: str) -> int:
+        """Increment value in Redis."""
+        if not self.redis:
+            return 0
+        try:
+            return await self.redis.incr(key)
+        except Exception as e:
+            print(f"Redis INCR error: {e}")
+            return 0
+
+    async def expire(self, key: str, seconds: int) -> bool:
+        """Set expiration on key."""
+        if not self.redis:
+            return False
+        try:
+            await self.redis.expire(key, seconds)
+            return True
+        except Exception as e:
+            print(f"Redis EXPIRE error: {e}")
+            return False
+
+    async def smembers(self, key: str) -> set:
+        """Get set members."""
+        if not self.redis:
+            return set()
+        try:
+            result = await self.redis.smembers(key)
+            return set(result) if result else set()
+        except Exception as e:
+            print(f"Redis SMEMBERS error: {e}")
+            return set()
+
+    async def sadd(self, key: str, *values) -> int:
+        """Add member(s) to set."""
+        if not self.redis:
+            return 0
+        try:
+            return await self.redis.sadd(key, *values)
+        except Exception as e:
+            print(f"Redis SADD error: {e}")
+            return 0
+
+    async def srem(self, key: str, *values) -> int:
+        """Remove member(s) from set."""
+        if not self.redis:
+            return 0
+        try:
+            return await self.redis.srem(key, *values)
+        except Exception as e:
+            print(f"Redis SREM error: {e}")
+            return 0
+
 
 # Global Redis instance
 redis_service = RedisService()
+
+
+def get_redis_client():
+    """Get the global Redis client instance."""
+    return redis_service

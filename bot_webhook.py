@@ -95,7 +95,14 @@ def setup_dispatcher() -> Dispatcher:
 async def on_startup(bot: Bot, webhook_url: str, secret: str):
     """Set webhook on startup."""
     # Check database migrations FIRST (blocks startup if not up to date)
-    await check_migrations(engine)
+    # Skip migration check for testing with SKIP_MIGRATION_CHECK=true
+    skip_migration_check = os.getenv("SKIP_MIGRATION_CHECK", "false").lower() == "true"
+    if not skip_migration_check:
+        await check_migrations(engine)
+    else:
+        logging.warning(
+            "⚠️  SKIP_MIGRATION_CHECK=true: Skipping migration check for testing"
+        )
 
     # Connect to Redis
     await redis_service.connect()

@@ -133,10 +133,7 @@
             z-index: 10;
         }
 
-        .widget-area:hover {
-            transform: scale(1.05);
-            filter: brightness(1.2) drop-shadow(0 0 10px var(--accent-pink));
-        }
+        /* REMOVED: Location-level hover effects - now using individual widget overlays */
 
         .widget-area:active {
             transform: scale(0.95);
@@ -272,7 +269,7 @@
             right: 0;
             bottom: 0;
             background: rgba(255, 255, 255, 0.001);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(2px);
             z-index: 1000;
             display: flex;
             justify-content: center;
@@ -289,14 +286,14 @@
         }
 
         .modal-container {
-            background: var(--bg-dark);
-            border: 4px solid var(--accent-pink);
+            background: transparent;
+            border: none;
             border-radius: 0;
-            max-width: 800px;
-            max-height: 80vh;
+            max-width: 90vw;
+            max-height: 90vh;
             width: 100%;
             overflow: hidden;
-            box-shadow: 0 0 40px rgba(255, 105, 180, 0.5);
+            box-shadow: none;
             position: relative;
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
@@ -332,11 +329,15 @@
         }
 
         .modal-content {
-            padding: 20px;
-            max-height: calc(80vh - 80px);
+            padding: 30px;
+            max-height: calc(90vh - 100px);
             overflow-y: auto;
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(4px);
+            border: 2px solid var(--accent-pink);
+            color: var(--text-light);
         }
 
         .modal-content img {
@@ -391,6 +392,30 @@
             border-radius: 8px;
             overflow-x: auto;
             margin: 12px 0;
+        }
+
+        .modal-background-cover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 999;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;  /* Completely transparent - no blocking */
+            filter: brightness(0.7) saturate(0.8);
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            transition: opacity var(--transition-normal);
+            pointer-events: none;  /* Allow clicks to pass through */
+        }
+
+        .modal-background-cover.active {
+            opacity: 0;  /* Keep transparent even when active */
+            pointer-events: none;  /* Ensure clicks pass through */
         }
 
         .modal-content pre code {
@@ -532,6 +557,28 @@
             to { transform: rotate(360deg); }
         }
 
+        @keyframes widgetHoverPulse {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes widgetClickRipple {
+            0% {
+                opacity: 0.8;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.5);
+            }
+        }
+
         .error {
             position: fixed;
             top: 50%;
@@ -570,6 +617,9 @@
     <!-- Audio Toggle -->
     <div class="audio-toggle" id="audioToggle">🔊 SOUND</div>
 
+    <!-- Modal Background Cover -->
+    <div class="modal-background-cover" id="modalBackgroundCover"></div>
+
     <!-- Modal System -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-container">
@@ -602,34 +652,34 @@
                 this.assetLoader = worldManager.assetLoader;
                 this.tiles = new Map(); // locationId -> tile states
                 this.currentLocation = null;
-                this.tilesPath = 'static/world/';
+                this.tilesPath = 'static/scenes/';
+                console.log(`🔧 TileManager tilesPath set to: ${this.tilesPath}`);
             }
 
             async loadTilesForLocation(location) {
-                if (!location.tiles) {
-                    console.warn(`No tiles defined for location: ${location.id}`);
-                    return;
-                }
+                // DISABLED: Tile manager system conflicts with widget overlay system
+                // We want individual widget overlays, not entire background changes
+                console.log(`🚫 Tile Manager DISABLED for location ${location.id} - using widget overlay system instead`);
 
-                const tileStates = {
-                    idle: null,
-                    hover: null,
-                    click: null
-                };
+                // Store only the base image for the location background (never changes)
+                if (location.tiles && location.tiles.idle) {
+                    const tileStates = {
+                        idle: null,
+                        hover: null,  // Never use location-level hover
+                        click: null   // Never use location-level click
+                    };
 
-                // Load each tile state
-                for (const [state, tilePath] of Object.entries(location.tiles)) {
                     try {
-                        const tileUrl = `${this.tilesPath}${tilePath}`;
+                        const tileUrl = `${this.tilesPath}${location.tiles.idle}`;
                         const tile = await this.assetLoader.loadAsset(tileUrl);
-                        tileStates[state] = tile;
+                        tileStates.idle = tile;
                     } catch (error) {
-                        console.error(`Failed to load tile ${state} for location ${location.id}:`, error);
+                        console.error(`Failed to load base tile for location ${location.id}:`, error);
                     }
-                }
 
-                this.tiles.set(location.id, tileStates);
-                console.log(`Loaded tiles for location: ${location.id}`);
+                    this.tiles.set(location.id, tileStates);
+                    console.log(`✅ Loaded base tile only for location ${location.id} (widget overlays will handle hover/click)`);
+                }
             }
 
             async preloadLocationTiles(location) {
@@ -665,18 +715,10 @@
             }
 
             setLocationTile(locationId, state) {
-                // Set tile for a location container in the main view
-                const container = document.querySelector(`.location-container[data-location-id="${locationId}"]`);
-                if (container && this.tiles.has(locationId)) {
-                    const tileStates = this.tiles.get(locationId);
-                    const tile = tileStates[state];
-                    if (tile) {
-                        container.style.backgroundImage = `url('${tile.src}')`;
-                        container.dataset.currentTile = state;
-                        return true;
-                    }
-                }
-                return false;
+                // DISABLED: This function changes the entire background which conflicts with widget overlays
+                // Widget overlay system handles individual widget states
+                console.log(`🚫 setLocationTile DISABLED for ${locationId} state ${state} - widget overlays handle individual states`);
+                return false; // Always return false to prevent background changes
             }
 
             getCurrentTile(locationId) {
@@ -2006,27 +2048,29 @@
                 widgetArea.dataset.widgetType = widget.type;
                 widgetArea.dataset.locationId = location.id;
 
-                // Add hover and click events
+                // Add hover and click events - individual widget effects
                 widgetArea.addEventListener('mouseenter', () => {
-                    this.handleWidgetHover(widget.id, true, location.id);
-                    widgetInstance.onHover();
+                    this.createWidgetHoverEffect(widget.id, true, location.id);
+                    this.audioManager.playHover();
                 });
                 widgetArea.addEventListener('mouseleave', () => {
-                    this.handleWidgetHover(widget.id, false, location.id);
+                    this.createWidgetHoverEffect(widget.id, false, location.id);
                 });
                 widgetArea.addEventListener('mousedown', () => {
-                    this.handleWidgetClick(widget.id, true, location.id);
+                    this.createWidgetClickEffect(widget.id, true, location.id);
+                    this.audioManager.playClick();
                 });
                 widgetArea.addEventListener('mouseup', () => {
-                    this.handleWidgetClick(widget.id, false, location.id);
+                    this.createWidgetClickEffect(widget.id, false, location.id);
                 });
                 widgetArea.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    this.handleWidgetClick(widget.id, true, location.id);
+                    this.createWidgetClickEffect(widget.id, true, location.id);
+                    this.audioManager.playClick();
                 });
                 widgetArea.addEventListener('touchend', (e) => {
                     e.preventDefault();
-                    this.handleWidgetClick(widget.id, false, location.id);
+                    this.createWidgetClickEffect(widget.id, false, location.id);
                 });
 
                 container.appendChild(widgetGroup);
@@ -2064,28 +2108,50 @@
                     group.classList.toggle('hover', isHovering);
                 });
 
-                // Change location tile background
-                const locationContainer = document.querySelector(`.location-container[data-location-id="${locationId}"]`);
-                console.log(`📦 Location container found:`, !!locationContainer);
+                // Create widget-specific hover effect instead of changing entire location
+                this.createWidgetHoverEffect(widgetId, isHovering, locationId);
 
-                if (locationContainer) {
-                    console.log(`🖼️ Current tile: ${locationContainer.dataset.currentTile}`);
-                    console.log(`🖼️ Tile URLs: idle=${locationContainer.dataset.tileIdle}, hover=${locationContainer.dataset.tileHover}`);
+                if (isHovering) {
+                    this.audioManager.playHover();
+                }
+            }
 
-                    if (isHovering) {
-                        const newBg = `url('${locationContainer.dataset.tileHover}')`;
-                        console.log(`🔄 Changing to hover: ${newBg}`);
-                        locationContainer.style.backgroundImage = newBg;
-                        locationContainer.dataset.currentTile = 'hover';
-                        this.audioManager.playHover();
+            createWidgetHoverEffect(widgetId, isHovering, locationId) {
+                console.log(`🎯 createWidgetHoverEffect called: widget=${widgetId}, hovering=${isHovering}, location=${locationId}`);
+
+                // Get location and widget data from world data
+                const location = this.worldData.locations.find(loc => loc.id === locationId);
+                const widget = location?.widgets?.find(w => w.id === widgetId);
+
+                if (!widget) {
+                    console.error(`❌ Widget data not found: ${widgetId} in location ${locationId}`);
+                    return;
+                }
+
+                console.log(`📋 Widget data found: ${widget.name}`);
+
+                // STATE-BASED BACKGROUND REPLACEMENT
+                if (isHovering) {
+                    // Check if widget has hover state in tiles
+                    if (widget.tiles && widget.tiles.hover) {
+                        const hoverImagePath = widget.tiles.hover;
+                        console.log(`🎨 Using widget hover scene: ${hoverImagePath}`);
+
+                        // Replace entire location background with hover state scene
+                        this.replaceLocationBackground(locationId, hoverImagePath, 'hover');
                     } else {
-                        // Only revert to idle if not currently clicking
-                        if (locationContainer.dataset.currentTile !== 'click') {
-                            const newBg = `url('${locationContainer.dataset.tileIdle}')`;
-                            console.log(`🔄 Reverting to idle: ${newBg}`);
-                            locationContainer.style.backgroundImage = newBg;
-                            locationContainer.dataset.currentTile = 'idle';
-                        }
+                        console.log(`⚠️  No hover state found for ${widgetId}, using fallback`);
+                        // Fallback: create simple overlay effect
+                        this.createSimpleHoverOverlay(widgetId, locationId);
+                    }
+                } else {
+                    // Restore to idle state when not hovering
+                    console.log(`🔄 Restoring ${widgetId} to idle state`);
+                    if (widget.tiles && widget.tiles.idle) {
+                        const idleImagePath = widget.tiles.idle;
+                        this.replaceLocationBackground(locationId, idleImagePath, 'idle');
+                    } else {
+                        this.restoreLocationBackground(locationId);
                     }
                 }
             }
@@ -2097,19 +2163,128 @@
                     group.classList.toggle('click', isClicking);
                 });
 
-                // Change location tile background
-                const locationContainer = document.querySelector(`.location-container[data-location-id="${locationId}"]`);
-                if (locationContainer) {
-                    if (isClicking) {
-                        locationContainer.style.backgroundImage = `url('${locationContainer.dataset.tileClick}')`;
-                        locationContainer.dataset.currentTile = 'click';
-                        this.audioManager.playClick();
-                        this.executeWidgetAction(widgetId, locationId);
+                // Create widget-specific click effect instead of changing entire location
+                this.createWidgetClickEffect(widgetId, isClicking, locationId);
+
+                if (isClicking) {
+                    this.audioManager.playClick();
+                    this.executeWidgetAction(widgetId, locationId);
+                }
+            }
+
+            createWidgetClickEffect(widgetId, isClicking, locationId) {
+                console.log(`🎯 createWidgetClickEffect called: widget=${widgetId}, clicking=${isClicking}, location=${locationId}`);
+
+                // Get location and widget data from world data
+                const location = this.worldData.locations.find(loc => loc.id === locationId);
+                const widget = location?.widgets?.find(w => w.id === widgetId);
+
+                if (!widget) {
+                    console.error(`❌ Widget data not found: ${widgetId} in location ${locationId}`);
+                    return;
+                }
+
+                console.log(`📋 Widget data found for click: ${widget.name}`);
+
+                // STATE-BASED BACKGROUND REPLACEMENT
+                if (isClicking) {
+                    // Check if widget has click state in tiles
+                    if (widget.tiles && widget.tiles.click) {
+                        const clickImagePath = widget.tiles.click;
+                        console.log(`🎨 Using widget click scene: ${clickImagePath}`);
+
+                        // Replace entire location background with click state scene
+                        this.replaceLocationBackground(locationId, clickImagePath, 'click');
                     } else {
-                        // Revert to idle state on release (not hover)
-                        locationContainer.style.backgroundImage = `url('${locationContainer.dataset.tileIdle}')`;
-                        locationContainer.dataset.currentTile = 'idle';
+                        console.log(`⚠️  No click state found for ${widgetId}, using fallback`);
+                        // Fallback: create simple click effect
+                        this.createSimpleClickEffect(widgetId, locationId);
                     }
+                } else {
+                    // Restore to idle state when not clicking
+                    console.log(`🔄 Restoring ${widgetId} to idle state after click`);
+                    if (widget.tiles && widget.tiles.idle) {
+                        const idleImagePath = widget.tiles.idle;
+                        this.replaceLocationBackground(locationId, idleImagePath, 'idle');
+                    } else {
+                        this.restoreLocationBackground(locationId);
+                    }
+                }
+            }
+
+            replaceLocationBackground(locationId, imagePath, state) {
+                console.log(`🎨 Replacing background for ${locationId} with ${state} state: ${imagePath}`);
+
+                // Find the location container (the actual element with background)
+                const locationContainer = document.querySelector(`[data-location-id="${locationId}"]`);
+                if (!locationContainer) {
+                    console.error(`❌ Location container not found: ${locationId}`);
+                    return;
+                }
+
+                // Store original background if not already stored
+                if (!locationContainer.dataset.originalBackground) {
+                    locationContainer.dataset.originalBackground = locationContainer.style.backgroundImage || '';
+                    locationContainer.dataset.originalState = 'idle';
+                }
+
+                // Update background image directly on the container
+                locationContainer.style.backgroundImage = `url('${imagePath}')`;
+                locationContainer.dataset.currentState = state;
+
+                console.log(`✅ Background replaced for ${locationId}: ${imagePath}`);
+            }
+
+            restoreLocationBackground(locationId) {
+                console.log(`🔄 Restoring background for ${locationId} to idle state`);
+
+                // Find the location container
+                const locationContainer = document.querySelector(`[data-location-id="${locationId}"]`);
+                if (!locationContainer) {
+                    console.error(`❌ Location container not found: ${locationId}`);
+                    return;
+                }
+
+                // Restore original background
+                if (locationContainer.dataset.originalBackground) {
+                    locationContainer.style.backgroundImage = locationContainer.dataset.originalBackground;
+                } else {
+                    // Fallback to idle tile from world data
+                    const location = this.worldData.locations.find(loc => loc.id === locationId);
+                    if (location && location.tiles && location.tiles.idle) {
+                        locationContainer.style.backgroundImage = `url('${location.tiles.idle}')`;
+                    }
+                }
+
+                locationContainer.dataset.currentState = 'idle';
+                console.log(`✅ Background restored for ${locationId}`);
+            }
+
+            createSimpleHoverOverlay(widgetId, locationId) {
+                console.log(`⚡ Creating simple hover overlay for ${widgetId}`);
+                // Find the widget area and add a simple CSS effect
+                const widgetArea = document.querySelector(`.widget-area[data-widget-id="${widgetId}"][data-location-id="${locationId}"]`);
+                if (widgetArea) {
+                    widgetArea.style.boxShadow = '0 0 20px rgba(79, 129, 189, 0.6)';
+                    widgetArea.style.transform = 'scale(1.05)';
+                    widgetArea.style.transition = 'all 0.2s ease';
+                }
+            }
+
+            createSimpleClickEffect(widgetId, locationId) {
+                console.log(`⚡ Creating simple click effect for ${widgetId}`);
+                // Find the widget area and add a simple CSS effect
+                const widgetArea = document.querySelector(`.widget-area[data-widget-id="${widgetId}"][data-location-id="${locationId}"]`);
+                if (widgetArea) {
+                    widgetArea.style.boxShadow = '0 0 30px rgba(220, 50, 47, 0.8)';
+                    widgetArea.style.transform = 'scale(1.1)';
+                    widgetArea.style.transition = 'all 0.1s ease';
+
+                    // Remove effect after short delay
+                    setTimeout(() => {
+                        widgetArea.style.boxShadow = '';
+                        widgetArea.style.transform = '';
+                    }, 200);
                 }
             }
 
@@ -2893,8 +3068,7 @@
                     });
                 });
 
-                // Setup tile interactions after creating all locations
-                this.setupTileInteractions();
+                // Widget interactions are now handled individually - no location-level interactions needed
 
                 // Build floor navigation
                 this.widgetManager.buildFloorNavigation(Object.keys(floors).sort((a, b) => b - a));
@@ -2943,50 +3117,7 @@
                 document.getElementById('locationsWrapper').appendChild(section);
             }
 
-            createWidget(container, widget, location) {
-                // Create widget group for all tiles of this widget
-                const widgetGroup = document.createElement('div');
-                widgetGroup.className = 'widget-group';
-                widgetGroup.dataset.widgetId = widget.id;
-                widgetGroup.dataset.locationId = location.id;
-
-                // Create interactive area
-                const widgetArea = document.createElement('div');
-                widgetArea.className = 'widget-area';
-                widgetArea.style.left = `${widget.position.x}px`;
-                widgetArea.style.top = `${widget.position.y}px`;
-                widgetArea.style.width = `${widget.size.width}px`;
-                widgetArea.style.height = `${widget.size.height}px`;
-                widgetArea.dataset.widgetId = widget.id;
-                widgetArea.dataset.widgetType = widget.type;
-                widgetArea.dataset.locationId = location.id;
-
-                // Add hover and click events
-                widgetArea.addEventListener('mouseenter', () => this.handleWidgetHover(widget.id, true, location.id));
-                widgetArea.addEventListener('mouseleave', () => this.handleWidgetHover(widget.id, false, location.id));
-                widgetArea.addEventListener('mousedown', () => this.handleWidgetClick(widget.id, true, location.id));
-                widgetArea.addEventListener('mouseup', () => this.handleWidgetClick(widget.id, false, location.id));
-                widgetArea.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.handleWidgetClick(widget.id, true, location.id);
-                });
-                widgetArea.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.handleWidgetClick(widget.id, false, location.id);
-                });
-
-                container.appendChild(widgetGroup);
-                container.appendChild(widgetArea);
-
-                // Add canvas overlay for dynamic widgets
-                if (widget.type === 'time') {
-                    this.createClockCanvas(widget, container);
-                } else if (widget.type === 'status' || widget.type === 'online') {
-                    this.createStatusCanvas(widget, container);
-                } else if (widget.type === 'version' || widget.type === 'hash') {
-                    this.createTextCanvas(widget, container);
-                }
-            }
+            // Widget creation is handled by WidgetManager.createWidget() - no duplicate method needed here
 
             createEasterEgg(container, easterEgg, location) {
                 const zone = document.createElement('div');
@@ -3007,42 +3138,6 @@
                 container.appendChild(zone);
             }
 
-            handleWidgetHover(widgetId, isHovering, locationId) {
-                console.log(`🎯 handleWidgetHover: widgetId=${widgetId}, isHovering=${isHovering}, locationId=${locationId}`);
-
-                // Update widget group CSS classes
-                const widgetGroups = document.querySelectorAll(`[data-widget-id="${widgetId}"][data-location-id="${locationId}"]`);
-                widgetGroups.forEach(group => {
-                    group.classList.toggle('hover', isHovering);
-                });
-
-                // Change location tile background
-                const locationContainer = document.querySelector(`.location-container[data-location-id="${locationId}"]`);
-                console.log(`📦 Location container found:`, !!locationContainer);
-
-                if (locationContainer) {
-                    console.log(`🖼️ Current tile: ${locationContainer.dataset.currentTile}`);
-                    console.log(`🖼️ Tile URLs: idle=${locationContainer.dataset.tileIdle}, hover=${locationContainer.dataset.tileHover}`);
-
-                    if (isHovering) {
-                        const newBg = `url('${locationContainer.dataset.tileHover}')`;
-                        console.log(`🔄 Changing to hover: ${newBg}`);
-                        locationContainer.style.backgroundImage = newBg;
-                        locationContainer.dataset.currentTile = 'hover';
-                        this.audioManager.playHover();
-                    } else {
-                        // Only revert to idle if not currently clicking
-                        if (locationContainer.dataset.currentTile !== 'click') {
-                            const newBg = `url('${locationContainer.dataset.tileIdle}')`;
-                            console.log(`🔄 Reverting to idle: ${newBg}`);
-                            locationContainer.style.backgroundImage = newBg;
-                            locationContainer.dataset.currentTile = 'idle';
-                        }
-                    }
-                } else {
-                    console.error(`❌ Location container not found for locationId: ${locationId}`);
-                }
-            }
 
             handleWidgetClick(widgetId, isClicking, locationId) {
                 // Update widget group CSS classes
@@ -3051,19 +3146,16 @@
                     group.classList.toggle('click', isClicking);
                 });
 
-                // Change location tile background
+                // DISABLED: Background changes conflict with widget overlay system
+                // Individual widget overlays handle their own states
                 const locationContainer = document.querySelector(`.location-container[data-location-id="${locationId}"]`);
                 if (locationContainer) {
                     if (isClicking) {
-                        locationContainer.style.backgroundImage = `url('${locationContainer.dataset.tileClick}')`;
-                        locationContainer.dataset.currentTile = 'click';
+                        console.log(`🚫 Location background change DISABLED - widget overlay handles ${widgetId} click state`);
                         this.audioManager.playClick();
                         this.executeWidgetAction(widgetId, locationId);
-                    } else {
-                        // Revert to idle state on release (not hover)
-                        locationContainer.style.backgroundImage = `url('${locationContainer.dataset.tileIdle}')`;
-                        locationContainer.dataset.currentTile = 'idle';
                     }
+                    // No background reversion needed - widget overlays handle their own states
                 }
             }
 
@@ -3088,17 +3180,9 @@
                             marking each moment as she learns and grows.
                         `), 1000); // Auto-close after 1 second for testing
 
-                        // Ensure hover state is restored after modal closes (force hover for testing)
-                        setTimeout(() => {
-                            const locationContainer = document.querySelector(`.location-container[data-location-id="${locationId}"]`);
-
-                            // Force hover state for testing purposes
-                            if (locationContainer) {
-                                locationContainer.style.backgroundImage = `url('${locationContainer.dataset.tileHover}')`;
-                                locationContainer.dataset.currentTile = 'hover';
-                                console.log('Forced hover state restoration after modal');
-                            }
-                        }, 1100);
+                        // DISABLED: Location-level hover restoration - widgets should be isolated
+                        // Widget hover effects are now handled individually, not at location level
+                        console.log('Widget action completed - location-level hover disabled for isolation');
                         break;
 
                     case 'link':
@@ -3383,47 +3467,19 @@
             }
 
             setupTileInteractions() {
-                // Add tile interaction listeners to all location containers
-                const containers = document.querySelectorAll('.location-container');
-                containers.forEach(container => {
-                    const locationId = container.dataset.locationId;
-                    if (!locationId) return;
-
-                    // Mouse enter - hover tile
-                    container.addEventListener('mouseenter', () => {
-                        this.handleTileHover(locationId, true);
-                    });
-
-                    // Mouse leave - back to idle tile
-                    container.addEventListener('mouseleave', () => {
-                        this.handleTileHover(locationId, false);
-                    });
-
-                    // Mouse down - click tile
-                    container.addEventListener('mousedown', () => {
-                        this.handleTileClick(locationId, true);
-                    });
-
-                    // Mouse up - back to hover tile
-                    container.addEventListener('mouseup', () => {
-                        this.handleTileClick(locationId, false);
-                    });
-                });
+                // DISABLED: Widget interactions are now handled individually through overlay effects
+                // This function was causing all widgets in a location to update when hovering any widget
+                console.log('Tile interactions disabled - using individual widget hover effects instead');
             }
 
             handleTileHover(locationId, isHovering) {
-                const state = isHovering ? 'hover' : 'idle';
-                this.tileManager.setLocationTile(locationId, state);
+                // DISABLED: Location-level hover handling replaced by individual widget overlays
+                console.log('Location hover disabled - using individual widget hover effects instead');
             }
 
             handleTileClick(locationId, isPressed) {
-                const state = isPressed ? 'click' : 'hover';
-                this.tileManager.setLocationTile(locationId, state);
-
-                // Play click sound
-                if (isPressed) {
-                    this.audioManager.playClick();
-                }
+                // DISABLED: Location-level click handling replaced by individual widget interactions
+                console.log('Location click disabled - using individual widget interactions instead');
             }
 
             setupDiscoveryObserver() {
@@ -3484,6 +3540,9 @@
                 document.getElementById('modalContent').innerHTML = content;
                 document.getElementById('modalOverlay').classList.add('active');
 
+                // Set modal background cover based on current location
+                this.setModalBackgroundCover();
+
                 // Auto-close modal after specified delay (for testing)
                 if (autoCloseMs > 0) {
                     setTimeout(() => {
@@ -3492,16 +3551,46 @@
                 }
             }
 
+            setModalBackgroundCover() {
+                const backgroundCover = document.getElementById('modalBackgroundCover');
+                if (!backgroundCover) return;
+
+                // Use the current location's idle tile as background
+                const currentLocationId = this.tileManager.currentLocation;
+                if (currentLocationId && this.tiles.has(currentLocationId)) {
+                    const tileStates = this.tiles.get(currentLocationId);
+                    if (tileStates.idle && tileStates.idle.src) {
+                        backgroundCover.style.backgroundImage = `url('${tileStates.idle.src}')`;
+                        backgroundCover.classList.add('active');
+                        return;
+                    }
+                }
+
+                // Fallback: use the first available location tile
+                if (this.worldManager.worldData && this.worldManager.worldData.locations && this.worldManager.worldData.locations.length > 0) {
+                    const firstLocation = this.worldManager.worldData.locations[0];
+                    if (firstLocation.tiles && firstLocation.tiles.idle) {
+                        backgroundCover.style.backgroundImage = `url('${firstLocation.tiles.idle}')`;
+                        backgroundCover.classList.add('active');
+                        return;
+                    }
+                }
+            }
+
             hideModal() {
                 document.getElementById('modalOverlay').classList.remove('active');
 
-                // Reset all widget states to idle when modal closes
+                // Hide modal background cover
+                const backgroundCover = document.getElementById('modalBackgroundCover');
+                if (backgroundCover) {
+                    backgroundCover.classList.remove('active');
+                }
+
+                // DISABLED: Reset background changes - widget overlays handle their own states
                 const allLocationContainers = document.querySelectorAll('.location-container');
                 allLocationContainers.forEach(container => {
-                    if (container.dataset.tileIdle) {
-                        container.style.backgroundImage = `url('${container.dataset.tileIdle}')`;
-                        container.dataset.currentTile = 'idle';
-                    }
+                    console.log(`🚫 Background reset DISABLED - widget overlays handle their own idle states`);
+                    // No background changes needed - widget overlays handle their own states
                 });
 
                 // Remove all widget state classes

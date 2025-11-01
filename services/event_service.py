@@ -153,10 +153,10 @@ class EventService:
             await self.session.rollback()
             return 0
 
-    async def delete_old_events(self, days_old: int = 30) -> int:
+    async def delete_old_events(self, days: int = 30) -> int:
         """Delete events older than specified days."""
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=days_old)
+            cutoff_date = datetime.utcnow() - timedelta(days=days)
 
             result = await self.session.execute(
                 delete(Event).where(Event.created_at < cutoff_date)

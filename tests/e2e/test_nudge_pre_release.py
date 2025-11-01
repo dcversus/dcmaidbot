@@ -8,9 +8,91 @@ as specified in AGENTS.md requirements.
 """
 
 import os
+import time
 
+import psutil
 import pytest
 import requests
+
+
+# Performance tracking
+class PerformanceTracker:
+    """Track response time and memory usage for /nudge API calls."""
+
+    def __init__(self):
+        self.start_time = None
+        self.start_memory = None
+        self.end_memory = None
+        self.response_time = None
+        self.memory_increase = None
+
+    def start_tracking(self):
+        """Start tracking performance metrics."""
+        self.start_time = time.time()
+        self.start_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+
+    def end_tracking(self):
+        """End tracking and calculate metrics."""
+        self.end_time = time.time()
+        self.end_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+        self.response_time = (self.end_time - self.start_time) * 1000  # ms
+        self.memory_increase = self.end_memory - self.start_memory  # MB
+        return self
+
+    def get_metrics(self):
+        """Get performance metrics as dictionary."""
+        return {
+            "response_time_ms": self.response_time,
+            "memory_usage_mb": self.end_memory,
+            "memory_increase_mb": self.memory_increase,
+            "start_memory_mb": self.start_memory,
+            "end_memory_mb": self.end_memory,
+        }
+
+
+def call_nudge_api(
+    base_url: str,
+    secret: str,
+    message: str,
+    nudge_type: str = "direct",
+    user_id: int = None,
+    performance_tracker: PerformanceTracker = None,
+) -> dict:
+    """Make HTTP request to /nudge endpoint with optional performance tracking.
+
+    Args:
+        base_url: Base URL for the API
+        secret: NUDGE_SECRET for authentication
+        message: Message to send
+        nudge_type: Type of nudge ("direct" or "llm")
+        user_id: Optional specific user ID
+        performance_tracker: Optional PerformanceTracker for metrics
+
+    Returns:
+        dict: Response from /nudge endpoint
+    """
+    headers = {
+        "Authorization": f"Bearer {secret}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "message": message,
+        "type": nudge_type,
+    }
+
+    if user_id:
+        data["user_id"] = user_id
+
+    if performance_tracker:
+        performance_tracker.start_tracking()
+
+    response = requests.post(f"{base_url}/nudge", headers=headers, json=data)
+
+    if performance_tracker:
+        performance_tracker.end_tracking()
+
+    return response
 
 
 class TestNudgePreRelease:
@@ -33,37 +115,49 @@ class TestNudgePreRelease:
         base_url = nudge_config["base_url"]
         valid_secret = nudge_config["secret"]
 
+        # Performance tracking setup
+        performance_tracker = PerformanceTracker()
+
         # Test with valid token
-        response = requests.post(
-            f"{base_url}/nudge",
-            headers={
-                "Authorization": f"Bearer {valid_secret}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "message": "Test message for authentication",
-                "type": "direct",
-                "user_id": nudge_config["vasilisa_id"],
-            },
+        response = call_nudge_api(
+            base_url=base_url,
+            secret=valid_secret,
+            message="Test message for authentication",
+            nudge_type="direct",
+            user_id=nudge_config["vasilisa_id"],
+            performance_tracker=performance_tracker,
         )
 
         assert response.status_code == 200, f"Valid token should work: {response.text}"
         assert response.json()["status"] == "success"
 
+        # Validate performance metrics for valid authentication
+        metrics = performance_tracker.get_metrics()
+        print("\n📊 Valid Authentication Performance:")
+        print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+        print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+        print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+        # Performance assertions for authentication
+        assert metrics["response_time_ms"] < 5000, (
+            f"Authentication response too slow: {metrics['response_time_ms']}ms"
+        )
+        assert metrics["memory_increase_mb"] < 25, (
+            f"Memory increase too high for auth: {metrics['memory_increase_mb']}MB"
+        )
+
         # Test with invalid token
-        response = requests.post(
-            f"{base_url}/nudge",
-            headers={
-                "Authorization": "Bearer invalid_token",
-                "Content-Type": "application/json",
-            },
-            json={"message": "Test message", "type": "direct"},
+        response = call_nudge_api(
+            base_url=base_url,
+            secret="invalid_token",
+            message="Test message",
+            nudge_type="direct",
         )
 
         assert response.status_code == 401, "Invalid token should be unauthorized"
         assert "Invalid authorization token" in response.json()["error"]
 
-        # Test with no token
+        # Test with no token (using requests directly since we need to test missing auth header)
         response = requests.post(
             f"{base_url}/nudge",
             headers={"Content-Type": "application/json"},
@@ -76,6 +170,9 @@ class TestNudgePreRelease:
         """Test sending pre-release notification to Vasilisa specifically"""
         base_url = nudge_config["base_url"]
         vasilisa_id = nudge_config["vasilisa_id"]
+
+        # Performance tracking setup
+        performance_tracker = PerformanceTracker()
 
         pre_release_message = f"""🚨 **PRE-RELEASE WARNING** 🚨
 
@@ -99,17 +196,13 @@ All critical user requirements implemented and tested. Please review the advance
 
 *This is an automated pre-release notification. Review and provide feedback before production deployment.*"""
 
-        response = requests.post(
-            f"{base_url}/nudge",
-            headers={
-                "Authorization": f"Bearer {nudge_config['secret']}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "message": pre_release_message,
-                "type": "direct",
-                "user_id": vasilisa_id,
-            },
+        response = call_nudge_api(
+            base_url=base_url,
+            secret=nudge_config["secret"],
+            message=pre_release_message,
+            nudge_type="direct",
+            user_id=vasilisa_id,
+            performance_tracker=performance_tracker,
         )
 
         assert response.status_code == 200, (
@@ -121,6 +214,21 @@ All critical user requirements implemented and tested. Please review the advance
         assert result["message"] == "Message sent via direct mode"
         assert result["result"]["sent_count"] == 1
         assert result["result"]["failed_count"] == 0
+
+        # Validate performance metrics for pre-release notification
+        metrics = performance_tracker.get_metrics()
+        print("\n📊 Pre-Release Notification Performance:")
+        print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+        print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+        print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+        # Performance assertions for pre-release notification (should be reasonable for large messages)
+        assert metrics["response_time_ms"] < 10000, (
+            f"Pre-release notification too slow: {metrics['response_time_ms']}ms"
+        )
+        assert metrics["memory_increase_mb"] < 50, (
+            f"Memory increase too high for pre-release: {metrics['memory_increase_mb']}MB"
+        )
 
         # Verify the specific user was targeted
         sent_results = result["result"]["results"]
@@ -136,6 +244,9 @@ All critical user requirements implemented and tested. Please review the advance
         """Test sending post-release notification to all admins with changelog"""
         base_url = nudge_config["base_url"]
         admin_ids = nudge_config["admin_ids"]
+
+        # Performance tracking setup
+        performance_tracker = PerformanceTracker()
 
         # Simulate changelog content (in real scenario, this would come from CHANGELOG.md)
         changelog_content = """# 🎉 Advanced UI Behaviors - v0.1.1
@@ -195,17 +306,13 @@ All critical user requirements implemented and tested. Please review the advance
 
 *Automated post-release notification sent to all administrators*"""
 
-        response = requests.post(
-            f"{base_url}/nudge",
-            headers={
-                "Authorization": f"Bearer {nudge_config['secret']}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "message": post_release_message,
-                "type": "direct",
-                # No user_id specified = send to all admins
-            },
+        response = call_nudge_api(
+            base_url=base_url,
+            secret=nudge_config["secret"],
+            message=post_release_message,
+            nudge_type="direct",
+            performance_tracker=performance_tracker,
+            # No user_id specified = send to all admins
         )
 
         assert response.status_code == 200, (
@@ -215,6 +322,21 @@ All critical user requirements implemented and tested. Please review the advance
         result = response.json()
         assert result["status"] == "success"
         assert result["message"] == "Message sent via direct mode"
+
+        # Validate performance metrics for post-release notification
+        metrics = performance_tracker.get_metrics()
+        print("\n📊 Post-Release Notification Performance:")
+        print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+        print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+        print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+        # Performance assertions for post-release notification (bulk messaging to multiple admins)
+        assert metrics["response_time_ms"] < 15000, (
+            f"Post-release notification too slow: {metrics['response_time_ms']}ms"
+        )
+        assert metrics["memory_increase_mb"] < 75, (
+            f"Memory increase too high for post-release: {metrics['memory_increase_mb']}MB"
+        )
 
         # Verify message was sent to all admins
         assert result["result"]["sent_count"] == len(admin_ids)
@@ -236,19 +358,18 @@ All critical user requirements implemented and tested. Please review the advance
         """Test nudge LLM mode for personalized messages"""
         base_url = nudge_config["base_url"]
 
+        # Performance tracking setup
+        performance_tracker = PerformanceTracker()
+
         llm_message = "Hi Vasilisa! I've completed the advanced UI behavior improvements. The modal now has dark text on transparent backgrounds as you requested, and I've created comprehensive E2E tests to validate everything. Could you please review the changes when you have a moment?"
 
-        response = requests.post(
-            f"{base_url}/nudge",
-            headers={
-                "Authorization": f"Bearer {nudge_config['secret']}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "message": llm_message,
-                "type": "llm",
-                "user_id": nudge_config["vasilisa_id"],
-            },
+        response = call_nudge_api(
+            base_url=base_url,
+            secret=nudge_config["secret"],
+            message=llm_message,
+            nudge_type="llm",
+            user_id=nudge_config["vasilisa_id"],
+            performance_tracker=performance_tracker,
         )
 
         assert response.status_code == 200, (
@@ -260,6 +381,21 @@ All critical user requirements implemented and tested. Please review the advance
         assert result["message"] == "Message sent via llm mode"
         assert result["result"]["sent_count"] == 1
 
+        # Validate performance metrics for LLM mode
+        metrics = performance_tracker.get_metrics()
+        print("\n📊 LLM Mode Performance:")
+        print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+        print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+        print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+        # Performance assertions for LLM mode (should be slower due to LLM processing, but reasonable)
+        assert metrics["response_time_ms"] < 20000, (
+            f"LLM mode response too slow: {metrics['response_time_ms']}ms"
+        )
+        assert metrics["memory_increase_mb"] < 100, (
+            f"Memory increase too high for LLM mode: {metrics['memory_increase_mb']}MB"
+        )
+
         print("✅ LLM mode nudge sent successfully")
         print(f"   Mode: {result['result']['mode']}")
         print(f"   Message ID: {result['result']['results'][0]['message_id']}")
@@ -268,27 +404,35 @@ All critical user requirements implemented and tested. Please review the advance
         """Test nudge endpoint error handling for invalid requests"""
         base_url = nudge_config["base_url"]
 
+        # Performance tracking for error cases
+        validation_error_tracker = PerformanceTracker()
+
         # Test missing required fields
-        response = requests.post(
-            f"{base_url}/nudge",
-            headers={
-                "Authorization": f"Bearer {nudge_config['secret']}",
-                "Content-Type": "application/json",
-            },
-            json={},
+        response = call_nudge_api(
+            base_url=base_url,
+            secret=nudge_config["secret"],
+            message="",
+            nudge_type="direct",
+            performance_tracker=validation_error_tracker,
         )
 
         assert response.status_code == 400, "Missing fields should return 400"
         assert "Missing or invalid field: message" in response.json()["error"]
 
+        # Validate performance for validation error
+        validation_metrics = validation_error_tracker.get_metrics()
+        print("\n📊 Validation Error Performance:")
+        print(f"  Response time: {validation_metrics['response_time_ms']:.2f}ms")
+        assert validation_metrics["response_time_ms"] < 1000, (
+            f"Validation error response too slow: {validation_metrics['response_time_ms']}ms"
+        )
+
         # Test invalid type
-        response = requests.post(
-            f"{base_url}/nudge",
-            headers={
-                "Authorization": f"Bearer {nudge_config['secret']}",
-                "Content-Type": "application/json",
-            },
-            json={"message": "Test message", "type": "invalid_type"},
+        response = call_nudge_api(
+            base_url=base_url,
+            secret=nudge_config["secret"],
+            message="Test message",
+            nudge_type="invalid_type",
         )
 
         assert response.status_code == 400, "Invalid type should return 400"

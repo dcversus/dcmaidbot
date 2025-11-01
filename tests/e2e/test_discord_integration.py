@@ -594,7 +594,7 @@ Embed: Welcome|Enjoy your time with dcmaidbot!|65280
     async def test_error_recovery_simulation(self):
         """Test error recovery and fallback mechanisms."""
         discord_service = DiscordService()
-        nudge_service = NudgeService(platform="discord")
+        NudgeService(platform="discord")
 
         # Simulate various error conditions
         error_scenarios = [

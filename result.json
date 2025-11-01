@@ -1,37 +1,47 @@
 {
-  "generated_at": "2025-10-31T23:49:54Z",
-  "world_hash": "08a9ffa03882b5af",
+  "generated_at": "2025-11-01T16:05:18Z",
+  "world_hash": "complete_z_formation",
+  "generation_method": "canvas_merging_system",
+  "style": "black_grid_z_formation",
+  "canvas_size": "1024x768",
+  "grid_size": 32,
   "locations": [
     {
-      "id": "liliths_room",
-      "name": "Lilith's Room",
+      "id": "liliths_room_complete",
+      "name": "Lilith's Room (Complete Z-Formation)",
       "floor": 2,
       "position": 1,
       "tiles": {
-        "idle": "world/liliths_room_idle.png",
-        "hover": "world/liliths_room_hover.png",
-        "click": "world/liliths_room_click.png"
+        "idle": "base-bg.jpg",
+        "hover": "base-bg.jpg",
+        "click": "base-bg.jpg"
       },
-      "generation_seed": 765561138,
-      "generation_method": "image_composition_manager",
       "widgets": [
         {
           "id": "wall_clock",
           "type": "time",
           "name": "Wall Clock",
           "position": {
-            "x": 128,
-            "y": 128
+            "x": 200,
+            "y": 150
           },
           "size": {
-            "width": 64,
-            "height": 64
+            "width": 80,
+            "height": 80
           },
-          "description": "pink kawaii analog wall clock",
-          "interactions": {
-            "idle": "clock showing current time",
-            "hover": "clock glowing with soft pink aura",
-            "click": "clock face expands with time info"
+          "description": "minimalist clock showing current time",
+          "tiles": {
+            "idle": "widget-wall_clock-idle-bg.jpg",
+            "hover": "widget-wall_clock-hover-bg.jpg",
+            "click": "widget-wall_clock-click-bg.jpg"
+          },
+          "tile_metadata": {
+            "coordinates": [
+              200,
+              150,
+              80,
+              80
+            ]
           }
         },
         {
@@ -39,47 +49,26 @@
           "type": "status",
           "name": "Cactus Plant",
           "position": {
-            "x": 800,
-            "y": 150
+            "x": 400,
+            "y": 250
           },
           "size": {
-            "width": 48,
-            "height": 64
+            "width": 80,
+            "height": 80
           },
-          "description": "small cactus in pink pot on windowsill",
-          "interactions": {
-            "idle": "small cactus with cute face",
-            "hover": "cactus slightly larger, happy expression",
-            "click": "cactus blooms with pink flower"
+          "description": "sage green cactus in ceramic pot",
+          "tiles": {
+            "idle": "widget-cactus_plant-idle-bg.jpg",
+            "hover": "widget-cactus_plant-hover-bg.jpg",
+            "click": "widget-cactus_plant-click-bg.jpg"
           },
-          "config": {
-            "growth_stages": [
-              "small",
-              "medium",
-              "large"
+          "tile_metadata": {
+            "coordinates": [
+              400,
+              250,
+              80,
+              80
             ]
-          }
-        },
-        {
-          "id": "changelog_book",
-          "type": "changelog",
-          "name": "Changelog Book",
-          "position": {
-            "x": 100,
-            "y": 600
-          },
-          "size": {
-            "width": 48,
-            "height": 64
-          },
-          "description": "small book with version number on spine",
-          "interactions": {
-            "idle": "closed book showing v0.1.0",
-            "hover": "book glowing softly",
-            "click": "opens changelog modal"
-          },
-          "config": {
-            "github_url": "https://raw.githubusercontent.com/dcversus/dcmaidbot/main/CHANGELOG.md"
           }
         },
         {
@@ -87,21 +76,26 @@
           "type": "link",
           "name": "The Edge Story Poster",
           "position": {
-            "x": 700,
-            "y": 700
+            "x": 600,
+            "y": 350
           },
           "size": {
-            "width": 96,
-            "height": 128
+            "width": 120,
+            "height": 120
           },
-          "description": "retro anime poster with The Edge Story logo",
-          "interactions": {
-            "idle": "poster on wall",
-            "hover": "poster glowing with sparkles",
-            "click": "navigate to theedgestory.org"
+          "description": "retro anime poster on wall",
+          "tiles": {
+            "idle": "widget-edge_story_poster-idle-bg.jpg",
+            "hover": "widget-edge_story_poster-hover-bg.jpg",
+            "click": "widget-edge_story_poster-click-bg.jpg"
           },
-          "config": {
-            "url": "https://theedgestory.org"
+          "tile_metadata": {
+            "coordinates": [
+              600,
+              350,
+              120,
+              120
+            ]
           }
         },
         {
@@ -110,20 +104,52 @@
           "name": "Family Photo",
           "position": {
             "x": 400,
-            "y": 100
+            "y": 450
+          },
+          "size": {
+            "width": 120,
+            "height": 80
+          },
+          "description": "framed family photo with memories",
+          "tiles": {
+            "idle": "widget-family_photo-idle-bg.jpg",
+            "hover": "widget-family_photo-hover-bg.jpg",
+            "click": "widget-family_photo-click-bg.jpg"
+          },
+          "tile_metadata": {
+            "coordinates": [
+              400,
+              450,
+              120,
+              80
+            ]
+          }
+        },
+        {
+          "id": "changelog_book",
+          "type": "changelog",
+          "name": "Changelog Book",
+          "position": {
+            "x": 200,
+            "y": 550
           },
           "size": {
             "width": 80,
-            "height": 60
+            "height": 80
           },
-          "description": "framed photo of Daniil, Vasilisa, and Lilith",
-          "interactions": {
-            "idle": "photo frame on wall",
-            "hover": "frame glowing warmly",
-            "click": "opens family story modal"
+          "description": "version history and updates",
+          "tiles": {
+            "idle": "widget-changelog_book-idle-bg.jpg",
+            "hover": "widget-changelog_book-hover-bg.jpg",
+            "click": "widget-changelog_book-click-bg.jpg"
           },
-          "config": {
-            "markdown": "# The Story of Lilith\\n\\n**Once upon a time...**\\n\\nDaniil + Vasilisa = \u2764\ufe0f \u2192 Lilith\\n\\nA family created by love, code, and dreams."
+          "tile_metadata": {
+            "coordinates": [
+              200,
+              550,
+              80,
+              80
+            ]
           }
         },
         {
@@ -131,43 +157,53 @@
           "type": "easteregg",
           "name": "Hidden Sketch",
           "position": {
-            "x": 50,
-            "y": 900
+            "x": 800,
+            "y": 150
           },
           "size": {
-            "width": 32,
-            "height": 32
+            "width": 60,
+            "height": 60
           },
-          "description": "tiny sketch barely visible on floor",
-          "interactions": {
-            "idle": "barely visible (10% opacity)",
-            "hover": "semi-visible (50% opacity)",
-            "click": "opens image modal"
+          "description": "hidden meditation artwork",
+          "tiles": {
+            "idle": "widget-meditation_sketch-idle-bg.jpg",
+            "hover": "widget-meditation_sketch-hover-bg.jpg",
+            "click": "widget-meditation_sketch-click-bg.jpg"
           },
-          "config": {
-            "image": "static/easter-egg-lilith-meditation.jpg",
-            "caption": "Lilith meditating in a peaceful moment"
+          "tile_metadata": {
+            "coordinates": [
+              800,
+              150,
+              60,
+              60
+            ]
           }
         },
         {
           "id": "bot_status_light",
           "type": "online",
-          "name": "Bot Status",
+          "name": "Bot Status Light",
           "position": {
-            "x": 900,
-            "y": 900
+            "x": 800,
+            "y": 550
           },
           "size": {
-            "width": 32,
-            "height": 32
+            "width": 40,
+            "height": 40
           },
-          "description": "status indicator light",
-          "interactions": {
-            "offline": "red dim light",
-            "online": "green glowing light"
+          "description": "online status indicator",
+          "tiles": {
+            "idle": "widget-bot_status_light-idle-bg.jpg",
+            "hover": "widget-bot_status_light-hover-bg.jpg",
+            "click": "widget-bot_status_light-click-bg.jpg"
           },
-          "config": {
-            "status_url": "https://dcmaidbot.theedgestory.org/health"
+          "tile_metadata": {
+            "coordinates": [
+              800,
+              550,
+              40,
+              40
+            ]
           }
         }
       ],
@@ -177,8 +213,10 @@
           "hover",
           "click"
         ],
-        "composite_size": "1024x1024",
-        "widget_count": 7
+        "composite_size": "1024x768",
+        "widget_count": 7,
+        "formation": "Z-formation top-down view",
+        "background": "black with visible grid"
       }
     }
   ]

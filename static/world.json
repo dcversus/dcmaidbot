@@ -1,137 +1,127 @@
 {
   "world_name": "Lilith's House",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "style": {
-    "art_style": "16-bit pixel art",
+    "art_style": "16-bit pixel art top-down",
     "palette": "DB32",
     "camera": "top-down SNES RPG",
-    "tile_size": 1024
+    "tile_size": 64,
+    "grid": { "cols": 20, "rows": 20 },
+    "hiDPI_scale": 2
   },
-  "locations": [
+  "render": {
+    "provider_priority": ["huggingface", "leonardo", "openai"],
+    "models": {
+      "txt2img": {
+        "huggingface": "stability-ai/sdxl",
+        "leonardo": "Leonardo Diffusion XL",
+        "openai": "dall-e-3"
+      },
+      "inpaint": {
+        "huggingface": "stability-ai/sdxl-inpainting",
+        "leonardo": "RealtimeCanvasInpaint"
+      }
+    },
+    "defaults": {
+      "seed": 424242,
+      "steps": 30,
+      "cfg": 5.0
+    }
+  },
+  "floors": [
     {
-      "id": "liliths_room",
-      "name": "Lilith's Room",
-      "description": "cozy teenage bedroom with desk, bed, bookshelf, and window, purple rug in center, pastel pink and purple theme",
-      "floor": 2,
-      "position": 1,
-      "connections": [
+      "id": "floor_2",
+      "name": "Second Floor",
+      "locations": [
         {
-          "to": "hall",
-          "type": "door",
-          "coords": {"x": 512, "y": 1024},
-          "from_side": "bottom",
-          "to_side": "top"
-        }
-      ],
-      "widgets": [
-        {
-          "id": "wall_clock",
-          "type": "time",
-          "name": "Wall Clock",
-          "position": {"x": 128, "y": 128},
-          "size": {"width": 64, "height": 64},
-          "description": "pink kawaii analog wall clock",
-          "interactions": {
-            "idle": "clock showing current time",
-            "hover": "clock glowing with soft pink aura",
-            "click": "clock face expands with time info"
-          }
+          "id": "liliths_room",
+          "name": "Lilith's Room",
+          "seed_offset": 101,
+          "description_prompt": "Cozy teenage bedroom, pastel pink/purple theme, purple rug center, desk with PC, bed, bookshelf, window; consistent top-down 16-bit pixel art.",
+          "bounds": { "cols": 20, "rows": 20 },
+          "connections": [
+            { "to": "hall", "type": "door", "grid": { "x": 10, "y": 19 }, "from_side": "bottom", "to_side": "top" }
+          ],
+          "widgets": [
+            {
+              "id": "digital_clock",
+              "type": "time",
+              "name": "Digital Clock",
+              "grid": { "x": 2, "y": 1, "w": 2, "h": 1 },
+              "prompt_base": "a small retro digital desk clock, off (blank)",
+              "states": [
+                {
+                  "state": "idle",
+                  "region": { "mode": "cells", "cells": [[2,1],[3,1]] },
+                  "prompt": "retro digital clock off (blank display)",
+                  "render_text": { "format": "HH:mm", "font": "PressStart2P", "color": "#9ad1ff", "when": "hover" }
+                },
+                {
+                  "state": "hover",
+                  "region": { "mode": "cells", "cells": [[2,1],[3,1]] },
+                  "prompt": "digital clock on with cyan glow, shows current time",
+                  "render_text": { "format": "HH:mm", "font": "PressStart2P", "color": "#9ad1ff" }
+                },
+                {
+                  "state": "click",
+                  "region": { "mode": "cells", "cells": [[2,1],[3,1]] },
+                  "prompt": "digital clock on with seconds and colon blinking",
+                  "render_text": { "format": "HH:mm:ss", "font": "PressStart2P", "color": "#9ad1ff" }
+                }
+              ]
+            },
+            {
+              "id": "cactus_plant",
+              "type": "status",
+              "name": "Cactus Plant",
+              "grid": { "x": 3, "y": 2, "w": 2, "h": 2 },
+              "prompt_base": "small cactus in pink pot on windowsill, cute face",
+              "states": [
+                { "state": "idle-small",  "prompt": "small cactus with cute face"  },
+                { "state": "hover-small", "prompt": "small cactus slightly larger, happy expression" },
+                { "state": "click-small", "prompt": "small cactus blooms pink flower" },
+                { "state": "idle-medium","prompt": "medium cactus with cute face" },
+                { "state": "hover-medium","prompt": "medium cactus slightly larger, happy" },
+                { "state": "click-medium","prompt": "medium cactus blooms pink flower" },
+                { "state": "idle-large", "prompt": "large cactus with cute face" },
+                { "state": "hover-large","prompt": "large cactus slightly larger, happy" },
+                { "state": "click-large","prompt": "large cactus blooms pink flower" }
+              ],
+              "region": { "mode": "cells", "cells": [[3,2],[4,2],[3,3],[4,3]] }
+            },
+            {
+              "id": "changelog_book",
+              "type": "changelog",
+              "name": "Changelog Book",
+              "grid": { "x": 16, "y": 1, "w": 2, "h": 2 },
+              "prompt_base": "small leather book with version number on spine",
+              "states": [
+                { "state": "idle",  "prompt": "closed book showing v0.1.0 on spine", "region": { "mode": "cells", "cells": [[16,1],[17,1],[16,2],[17,2]] } },
+                { "state": "hover", "prompt": "book slightly open, subtle glow",       "region": { "mode": "cells", "cells": [[16,1],[17,1],[16,2],[17,2]] } },
+                { "state": "click", "prompt": "book opened full screen, readable pages", "region": { "mode": "full" } }
+              ],
+              "config": { "github_url": "https://raw.githubusercontent.com/dcversus/dcmaidbot/main/CHANGELOG.md" }
+            },
+            {
+              "id": "commit_badge",
+              "type": "badge",
+              "name": "Commit Badge",
+              "grid": { "x": 10, "y": 0, "w": 2, "h": 1 },
+              "prompt_base": "small pixel badge plate",
+              "states": [
+                { "state": "idle",  "prompt": "badge plate blank", "render_text": { "text": "version", "font": "PressStart2P", "color": "#ffd37f" } },
+                { "state": "hover", "prompt": "badge plate highlighted", "render_text": { "env": "GIT_COMMIT_SHORT", "font": "PressStart2P", "color": "#ffd37f" } }
+              ]
+            }
+          ]
         },
         {
-          "id": "cactus_plant",
-          "type": "status",
-          "name": "Cactus Plant",
-          "position": {"x": 800, "y": 150},
-          "size": {"width": 48, "height": 64},
-          "description": "small cactus in pink pot on windowsill",
-          "interactions": {
-            "idle": "small cactus with cute face",
-            "hover": "cactus slightly larger, happy expression",
-            "click": "cactus blooms with pink flower"
-          },
-          "config": {
-            "growth_stages": ["small", "medium", "large"]
-          }
-        },
-        {
-          "id": "changelog_book",
-          "type": "changelog",
-          "name": "Changelog Book",
-          "position": {"x": 100, "y": 600},
-          "size": {"width": 48, "height": 64},
-          "description": "small book with version number on spine",
-          "interactions": {
-            "idle": "closed book showing v0.1.0",
-            "hover": "book glowing softly",
-            "click": "opens changelog modal"
-          },
-          "config": {
-            "github_url": "https://raw.githubusercontent.com/dcversus/dcmaidbot/main/CHANGELOG.md"
-          }
-        },
-        {
-          "id": "edge_story_poster",
-          "type": "link",
-          "name": "The Edge Story Poster",
-          "position": {"x": 700, "y": 700},
-          "size": {"width": 96, "height": 128},
-          "description": "retro anime poster with The Edge Story logo",
-          "interactions": {
-            "idle": "poster on wall",
-            "hover": "poster glowing with sparkles",
-            "click": "navigate to theedgestory.org"
-          },
-          "config": {
-            "url": "https://theedgestory.org"
-          }
-        },
-        {
-          "id": "family_photo",
-          "type": "story",
-          "name": "Family Photo",
-          "position": {"x": 400, "y": 100},
-          "size": {"width": 80, "height": 60},
-          "description": "framed photo of Daniil, Vasilisa, and Lilith",
-          "interactions": {
-            "idle": "photo frame on wall",
-            "hover": "frame glowing warmly",
-            "click": "opens family story modal"
-          },
-          "config": {
-            "markdown": "# The Story of Lilith\\n\\n**Once upon a time...**\\n\\nDaniil + Vasilisa = ❤️ → Lilith\\n\\nA family created by love, code, and dreams."
-          }
-        },
-        {
-          "id": "meditation_sketch",
-          "type": "easteregg",
-          "name": "Hidden Sketch",
-          "position": {"x": 50, "y": 900},
-          "size": {"width": 32, "height": 32},
-          "description": "tiny sketch barely visible on floor",
-          "interactions": {
-            "idle": "barely visible (10% opacity)",
-            "hover": "semi-visible (50% opacity)",
-            "click": "opens image modal"
-          },
-          "config": {
-            "image": "static/easter-egg-lilith-meditation.jpg",
-            "caption": "Lilith meditating in a peaceful moment"
-          }
-        },
-        {
-          "id": "bot_status_light",
-          "type": "online",
-          "name": "Bot Status",
-          "position": {"x": 900, "y": 900},
-          "size": {"width": 32, "height": 32},
-          "description": "status indicator light",
-          "interactions": {
-            "offline": "red dim light",
-            "online": "green glowing light"
-          },
-          "config": {
-            "status_url": "https://dcmaidbot.theedgestory.org/health"
-          }
+          "id": "hall",
+          "name": "Hallway",
+          "seed_offset": 102,
+          "description_prompt": "Simple hallway connecting rooms, pastel walls, framed pictures.",
+          "bounds": { "cols": 20, "rows": 6 },
+          "widgets": []
         }
       ]
     }

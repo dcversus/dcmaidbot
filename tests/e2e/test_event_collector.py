@@ -37,7 +37,7 @@ async def test_api_key(async_session: AsyncSession, api_key_service: ApiKeyServi
         allowed_event_types=["button_click", "user_message"],
         rate_limit_per_minute=10,
         rate_limit_per_hour=100,
-        description="API key for testing"
+        description="API key for testing",
     )
     return api_key, raw_key
 
@@ -49,7 +49,7 @@ async def inactive_api_key(async_session: AsyncSession, api_key_service: ApiKeyS
         name="Inactive API Key",
         created_by=1,
         allowed_event_types=["button_click"],
-        description="Inactive API key for testing"
+        description="Inactive API key for testing",
     )
     # Deactivate the key
     await api_key_service.deactivate_api_key(api_key.id)
@@ -63,7 +63,7 @@ async def expired_api_key(async_session: AsyncSession, api_key_service: ApiKeySe
         name="Expired API Key",
         created_by=1,
         expires_at=datetime.utcnow() - timedelta(days=1),
-        description="Expired API key for testing"
+        description="Expired API key for testing",
     )
     return api_key, raw_key
 
@@ -77,7 +77,7 @@ class TestEventCollectorE2E:
         async_session: AsyncSession,
         api_key_service: ApiKeyService,
         event_service: EventService,
-        test_api_key: tuple[ApiKey, str]
+        test_api_key: tuple[ApiKey, str],
     ):
         """Test complete flow from API key creation to event processing."""
         api_key, raw_key = test_api_key
@@ -98,19 +98,17 @@ class TestEventCollectorE2E:
             "data": {
                 "button_id": "start_game",
                 "screen": "main_menu",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             },
             "button_text": "Start Game",
-            "callback_data": "action:start_game"
+            "callback_data": "action:start_game",
         }
 
         # 3. Submit event via HTTP API
         async with ClientSession() as session:
             headers = {"Authorization": f"Bearer {raw_key}"}
             async with session.post(
-                "http://localhost:8080/event",
-                json=event_data,
-                headers=headers
+                "http://localhost:8080/event", json=event_data, headers=headers
             ) as response:
                 assert response.status == 200
                 result = await response.json()
@@ -152,14 +150,14 @@ class TestEventCollectorE2E:
         async_session: AsyncSession,
         test_api_key: tuple[ApiKey, str],
         inactive_api_key: tuple[ApiKey, str],
-        expired_api_key: tuple[ApiKey, str]
+        expired_api_key: tuple[ApiKey, str],
     ):
         """Test API key authentication failure scenarios."""
         event_data = {
             "event_id": f"test_auth_{secrets.token_urlsafe(8)}",
             "user_id": 12345,
             "event_type": "button_click",
-            "data": {}
+            "data": {},
         }
 
         async with ClientSession() as session:
@@ -167,7 +165,7 @@ class TestEventCollectorE2E:
             async with session.post(
                 "http://localhost:8080/event",
                 json=event_data,
-                headers={"Authorization": "InvalidFormat"}
+                headers={"Authorization": "InvalidFormat"},
             ) as response:
                 assert response.status == 401
 
@@ -175,7 +173,7 @@ class TestEventCollectorE2E:
             async with session.post(
                 "http://localhost:8080/event",
                 json=event_data,
-                headers={"Authorization": "Bearer dcmaid_nonexistent"}
+                headers={"Authorization": "Bearer dcmaid_nonexistent"},
             ) as response:
                 assert response.status == 401
 
@@ -184,7 +182,7 @@ class TestEventCollectorE2E:
             async with session.post(
                 "http://localhost:8080/event",
                 json=event_data,
-                headers={"Authorization": f"Bearer {inactive_key}"}
+                headers={"Authorization": f"Bearer {inactive_key}"},
             ) as response:
                 assert response.status == 401
 
@@ -193,15 +191,12 @@ class TestEventCollectorE2E:
             async with session.post(
                 "http://localhost:8080/event",
                 json=event_data,
-                headers={"Authorization": f"Bearer {expired_key}"}
+                headers={"Authorization": f"Bearer {expired_key}"},
             ) as response:
                 assert response.status == 401
 
     @pytest.mark.asyncio
-    async def test_event_validation(
-        self,
-        test_api_key: tuple[ApiKey, str]
-    ):
+    async def test_event_validation(self, test_api_key: tuple[ApiKey, str]):
         """Test event data validation."""
         _, raw_key = test_api_key
         headers = {"Authorization": f"Bearer {raw_key}"}
@@ -217,9 +212,7 @@ class TestEventCollectorE2E:
 
             for invalid_event in invalid_events:
                 async with session.post(
-                    "http://localhost:8080/event",
-                    json=invalid_event,
-                    headers=headers
+                    "http://localhost:8080/event", json=invalid_event, headers=headers
                 ) as response:
                     assert response.status == 400
                     result = await response.json()
@@ -227,17 +220,13 @@ class TestEventCollectorE2E:
 
             # Test invalid JSON
             async with session.post(
-                "http://localhost:8080/event",
-                data="invalid json",
-                headers=headers
+                "http://localhost:8080/event", data="invalid json", headers=headers
             ) as response:
                 assert response.status == 400
 
     @pytest.mark.asyncio
     async def test_duplicate_event_prevention(
-        self,
-        event_service: EventService,
-        test_api_key: tuple[ApiKey, str]
+        self, event_service: EventService, test_api_key: tuple[ApiKey, str]
     ):
         """Test prevention of duplicate event IDs."""
         _, raw_key = test_api_key
@@ -245,7 +234,7 @@ class TestEventCollectorE2E:
             "event_id": f"duplicate_test_{secrets.token_urlsafe(8)}",
             "user_id": 12345,
             "event_type": "button_click",
-            "data": {}
+            "data": {},
         }
 
         async with ClientSession() as session:
@@ -253,17 +242,13 @@ class TestEventCollectorE2E:
 
             # Submit first event
             async with session.post(
-                "http://localhost:8080/event",
-                json=event_data,
-                headers=headers
+                "http://localhost:8080/event", json=event_data, headers=headers
             ) as response:
                 assert response.status == 200
 
             # Submit duplicate event
             async with session.post(
-                "http://localhost:8080/event",
-                json=event_data,
-                headers=headers
+                "http://localhost:8080/event", json=event_data, headers=headers
             ) as response:
                 assert response.status == 409
                 result = await response.json()
@@ -271,20 +256,17 @@ class TestEventCollectorE2E:
 
     @pytest.mark.asyncio
     async def test_event_type_permissions(
-        self,
-        api_key_service: ApiKeyService,
-        test_api_key: tuple[ApiKey, str]
+        self, api_key_service: ApiKeyService, test_api_key: tuple[ApiKey, str]
     ):
         """Test API key event type permissions."""
         api_key, raw_key = test_api_key
-        headers = {"Authorization": f"Bearer {raw_key}"}
 
         # Create API key with restricted permissions
         restricted_key, restricted_raw = await api_key_service.create_api_key(
             name="Restricted API Key",
             created_by=1,
             allowed_event_types=["button_click"],
-            description="API key with restricted permissions"
+            description="API key with restricted permissions",
         )
         restricted_headers = {"Authorization": f"Bearer {restricted_raw}"}
 
@@ -294,13 +276,13 @@ class TestEventCollectorE2E:
                 "event_id": f"allowed_test_{secrets.token_urlsafe(8)}",
                 "user_id": 12345,
                 "event_type": "button_click",
-                "data": {}
+                "data": {},
             }
 
             async with session.post(
                 "http://localhost:8080/event",
                 json=allowed_event,
-                headers=restricted_headers
+                headers=restricted_headers,
             ) as response:
                 assert response.status == 200
 
@@ -309,23 +291,20 @@ class TestEventCollectorE2E:
                 "event_id": f"forbidden_test_{secrets.token_urlsafe(8)}",
                 "user_id": 12345,
                 "event_type": "user_message",
-                "data": {}
+                "data": {},
             }
 
             async with session.post(
                 "http://localhost:8080/event",
                 json=forbidden_event,
-                headers=restricted_headers
+                headers=restricted_headers,
             ) as response:
                 assert response.status == 403
                 result = await response.json()
                 assert "not authorized" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_rate_limiting(
-        self,
-        api_key_service: ApiKeyService
-    ):
+    async def test_rate_limiting(self, api_key_service: ApiKeyService):
         """Test API rate limiting."""
         # Create API key with very low rate limits
         rate_limited_key, rate_limited_raw = await api_key_service.create_api_key(
@@ -333,7 +312,7 @@ class TestEventCollectorE2E:
             created_by=1,
             rate_limit_per_minute=2,
             rate_limit_per_hour=5,
-            description="API key for rate limiting tests"
+            description="API key for rate limiting tests",
         )
         headers = {"Authorization": f"Bearer {rate_limited_raw}"}
 
@@ -344,13 +323,11 @@ class TestEventCollectorE2E:
                     "event_id": f"rate_test_{i}_{secrets.token_urlsafe(8)}",
                     "user_id": 12345,
                     "event_type": "button_click",
-                    "data": {}
+                    "data": {},
                 }
 
                 async with session.post(
-                    "http://localhost:8080/event",
-                    json=event_data,
-                    headers=headers
+                    "http://localhost:8080/event", json=event_data, headers=headers
                 ) as response:
                     assert response.status == 200
 
@@ -359,13 +336,11 @@ class TestEventCollectorE2E:
                 "event_id": f"rate_test_excess_{secrets.token_urlsafe(8)}",
                 "user_id": 12345,
                 "event_type": "button_click",
-                "data": {}
+                "data": {},
             }
 
             async with session.post(
-                "http://localhost:8080/event",
-                json=event_data,
-                headers=headers
+                "http://localhost:8080/event", json=event_data, headers=headers
             ) as response:
                 assert response.status == 429
                 result = await response.json()
@@ -373,22 +348,18 @@ class TestEventCollectorE2E:
                 assert "retry_after" in result
 
     @pytest.mark.asyncio
-    async def test_cors_headers(
-        self,
-        test_api_key: tuple[ApiKey, str]
-    ):
+    async def test_cors_headers(self, test_api_key: tuple[ApiKey, str]):
         """Test CORS headers are properly set."""
         _, raw_key = test_api_key
         headers = {
             "Authorization": f"Bearer {raw_key}",
-            "Origin": "https://example.com"
+            "Origin": "https://example.com",
         }
 
         async with ClientSession() as session:
             # Test preflight request
             async with session.options(
-                "http://localhost:8080/event",
-                headers=headers
+                "http://localhost:8080/event", headers=headers
             ) as response:
                 assert response.status == 200
                 assert "Access-Control-Allow-Origin" in response.headers
@@ -400,22 +371,18 @@ class TestEventCollectorE2E:
                 "event_id": f"cors_test_{secrets.token_urlsafe(8)}",
                 "user_id": 12345,
                 "event_type": "button_click",
-                "data": {}
+                "data": {},
             }
 
             async with session.post(
-                "http://localhost:8080/event",
-                json=event_data,
-                headers=headers
+                "http://localhost:8080/event", json=event_data, headers=headers
             ) as response:
                 assert response.status == 200
                 assert "Access-Control-Allow-Origin" in response.headers
 
     @pytest.mark.asyncio
     async def test_event_statistics(
-        self,
-        event_service: EventService,
-        test_api_key: tuple[ApiKey, str]
+        self, event_service: EventService, test_api_key: tuple[ApiKey, str]
     ):
         """Test event statistics functionality."""
         # Create test events
@@ -424,7 +391,7 @@ class TestEventCollectorE2E:
                 "event_id": f"stats_test_{i}_{secrets.token_urlsafe(8)}",
                 "user_id": 12345,
                 "event_type": "button_click" if i % 2 == 0 else "user_message",
-                "data": {}
+                "data": {},
             }
             for i in range(5)
         ]
@@ -443,9 +410,7 @@ class TestEventCollectorE2E:
 
     @pytest.mark.asyncio
     async def test_event_search(
-        self,
-        event_service: EventService,
-        test_api_key: tuple[ApiKey, str]
+        self, event_service: EventService, test_api_key: tuple[ApiKey, str]
     ):
         """Test event search functionality."""
         # Create test events with searchable content
@@ -456,7 +421,7 @@ class TestEventCollectorE2E:
                 "event_type": "button_click",
                 "button_text": "Start Adventure",
                 "callback_data": f"action:adventure_{i}",
-                "data": {}
+                "data": {},
             }
             for i in range(3)
         ]
@@ -476,9 +441,7 @@ class TestEventCollectorE2E:
 
     @pytest.mark.asyncio
     async def test_event_cleanup(
-        self,
-        event_service: EventService,
-        test_api_key: tuple[ApiKey, str]
+        self, event_service: EventService, test_api_key: tuple[ApiKey, str]
     ):
         """Test old event cleanup functionality."""
         # Create an old event (simulate by creating and manually updating timestamp)
@@ -486,11 +449,12 @@ class TestEventCollectorE2E:
             event_id=f"old_test_{secrets.token_urlsafe(8)}",
             user_id=12345,
             event_type="button_click",
-            data={}
+            data={},
         )
 
         # Manually update the timestamp to make it old
         from sqlalchemy import update
+
         await event_service.session.execute(
             update(Event)
             .where(Event.id == old_event.id)

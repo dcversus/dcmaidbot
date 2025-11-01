@@ -4,7 +4,6 @@ Tests the complete RPG functionality from session creation
 to multiplayer gameplay and game master actions.
 """
 
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,7 +26,7 @@ async def test_game_session(rpg_service: RPGService):
         scenario_template="fantasy_adventure",
         difficulty_level="normal",
         max_players=4,
-        created_by=1
+        created_by=1,
     )
     return session
 
@@ -39,7 +38,7 @@ async def test_player(rpg_service: RPGService, test_game_session: GameSession):
         session_id=test_game_session.session_id,
         user_id=12345,
         character_name="TestHero",
-        character_class="warrior"
+        character_class="warrior",
     )
     return player
 
@@ -49,9 +48,7 @@ class TestRPGSystemE2E:
 
     @pytest.mark.asyncio
     async def test_complete_rpg_session_flow(
-        self,
-        rpg_service: RPGService,
-        async_session: AsyncSession
+        self, rpg_service: RPGService, async_session: AsyncSession
     ):
         """Test complete RPG session from creation to gameplay."""
         # 1. Create game session
@@ -61,7 +58,7 @@ class TestRPGSystemE2E:
             scenario_template="fantasy_adventure",
             difficulty_level="normal",
             max_players=3,
-            created_by=1
+            created_by=1,
         )
 
         assert session.name == "Epic Quest"
@@ -77,7 +74,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=1001,
             character_name="Thorin",
-            character_class="warrior"
+            character_class="warrior",
         )
 
         assert player1.character_name == "Thorin"
@@ -94,7 +91,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=1002,
             character_name="Merlin",
-            character_class="mage"
+            character_class="mage",
         )
 
         assert player2.character_class == "mage"
@@ -105,7 +102,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=1003,
             character_name="Shadow",
-            character_class="rogue"
+            character_class="rogue",
         )
 
         assert player3.character_class == "rogue"
@@ -123,7 +120,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=1001,
             action="move",
-            action_data={"destination": "tavern"}
+            action_data={"destination": "tavern"},
         )
 
         assert result["success"] is True
@@ -141,7 +138,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=1001,
             action="interact",
-            action_data={"target": "tavern_keeper"}
+            action_data={"target": "tavern_keeper"},
         )
 
         assert result["success"] is True
@@ -153,7 +150,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=1002,
             action="explore",
-            action_data={}
+            action_data={},
         )
 
         assert result["success"] is True
@@ -169,10 +166,7 @@ class TestRPGSystemE2E:
         assert "move_to_tavern" in player1_choices.values()
 
     @pytest.mark.asyncio
-    async def test_rpg_difficulty_levels(
-        self,
-        rpg_service: RPGService
-    ):
+    async def test_rpg_difficulty_levels(self, rpg_service: RPGService):
         """Test RPG difficulty levels affect player stats."""
         difficulties = ["easy", "normal", "hard", "expert"]
         players = {}
@@ -182,14 +176,14 @@ class TestRPGSystemE2E:
                 name=f"Test {difficulty.title()}",
                 scenario_template="fantasy_adventure",
                 difficulty_level=difficulty,
-                created_by=1
+                created_by=1,
             )
 
             player = await rpg_service.join_game_session(
                 session_id=session.session_id,
                 user_id=int(f"{2000}{difficulties.index(difficulty)}"),
                 character_name=f"Hero{difficulty.title()}",
-                character_class="warrior"
+                character_class="warrior",
             )
 
             players[difficulty] = player
@@ -205,15 +199,10 @@ class TestRPGSystemE2E:
             assert player.health_points == 100
 
     @pytest.mark.asyncio
-    async def test_character_class_variations(
-        self,
-        rpg_service: RPGService
-    ):
+    async def test_character_class_variations(self, rpg_service: RPGService):
         """Test different character classes have different starting equipment."""
         session = await rpg_service.create_game_session(
-            name="Class Test",
-            scenario_template="fantasy_adventure",
-            created_by=1
+            name="Class Test", scenario_template="fantasy_adventure", created_by=1
         )
 
         # Create different character classes
@@ -221,21 +210,21 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=3001,
             character_name="Warrior",
-            character_class="warrior"
+            character_class="warrior",
         )
 
         mage = await rpg_service.join_game_session(
             session_id=session.session_id,
             user_id=3002,
             character_name="Mage",
-            character_class="mage"
+            character_class="mage",
         )
 
         rogue = await rpg_service.join_game_session(
             session_id=session.session_id,
             user_id=3003,
             character_name="Rogue",
-            character_class="rogue"
+            character_class="rogue",
         )
 
         # Test class-specific stat bonuses
@@ -260,26 +249,24 @@ class TestRPGSystemE2E:
 
     @pytest.mark.asyncio
     async def test_multiplayer_interactions(
-        self,
-        rpg_service: RPGService,
-        test_game_session: GameSession
+        self, rpg_service: RPGService, test_game_session: GameSession
     ):
         """Test multiplayer interactions and shared world state."""
         session = test_game_session
 
         # Add multiple players
-        player1 = await rpg_service.join_game_session(
+        await rpg_service.join_game_session(
             session_id=session.session_id,
             user_id=4001,
             character_name="PlayerOne",
-            character_class="warrior"
+            character_class="warrior",
         )
 
-        player2 = await rpg_service.join_game_session(
+        await rpg_service.join_game_session(
             session_id=session.session_id,
             user_id=4002,
             character_name="PlayerTwo",
-            character_class="mage"
+            character_class="mage",
         )
 
         # Player 1 discovers a new location
@@ -287,7 +274,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=4001,
             action="move",
-            action_data={"destination": "tavern"}
+            action_data={"destination": "tavern"},
         )
         assert result["success"] is True
 
@@ -300,7 +287,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=4002,
             action="move",
-            action_data={"destination": "tavern"}
+            action_data={"destination": "tavern"},
         )
         assert result["success"] is True
 
@@ -322,7 +309,7 @@ class TestRPGSystemE2E:
         self,
         rpg_service: RPGService,
         test_game_session: GameSession,
-        test_player: PlayerState
+        test_player: PlayerState,
     ):
         """Test error handling for invalid actions and states."""
         session = test_game_session
@@ -333,7 +320,7 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=player.user_id,
             action="move",
-            action_data={"destination": "nonexistent_location"}
+            action_data={"destination": "nonexistent_location"},
         )
         assert result["success"] is False
         assert "cannot go" in result["message"].lower()
@@ -343,17 +330,20 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=player.user_id,
             action="interact",
-            action_data={"target": "nonexistent_target"}
+            action_data={"target": "nonexistent_target"},
         )
         assert result["success"] is False
-        assert "no" in result["message"].lower() and "nonexistent_target" in result["message"]
+        assert (
+            "no" in result["message"].lower()
+            and "nonexistent_target" in result["message"]
+        )
 
         # Test action without required data
         result = await rpg_service.process_player_action(
             session_id=session.session_id,
             user_id=player.user_id,
             action="move",
-            action_data={}
+            action_data={},
         )
         assert result["success"] is False
         assert "specify" in result["message"].lower()
@@ -364,7 +354,7 @@ class TestRPGSystemE2E:
                 session_id="nonexistent_session",
                 user_id=player.user_id,
                 action="move",
-                action_data={"destination": "tavern"}
+                action_data={"destination": "tavern"},
             )
 
         # Test player not in session
@@ -373,7 +363,7 @@ class TestRPGSystemE2E:
                 session_id=session.session_id,
                 user_id=99999,
                 action="move",
-                action_data={"destination": "tavern"}
+                action_data={"destination": "tavern"},
             )
 
     @pytest.mark.asyncio
@@ -382,7 +372,7 @@ class TestRPGSystemE2E:
         rpg_service: RPGService,
         test_game_session: GameSession,
         test_player: PlayerState,
-        async_session: AsyncSession
+        async_session: AsyncSession,
     ):
         """Test that game master properly tracks context and player actions."""
         session = test_game_session
@@ -393,14 +383,15 @@ class TestRPGSystemE2E:
             {"action": "move", "data": {"destination": "tavern"}},
             {"action": "interact", "data": {"target": "fountain"}},
             {"action": "explore", "data": {}},
-            {"action": "talk", "data": {"character": "tavern_keeper", "message": "Hello!"}}
+            {
+                "action": "talk",
+                "data": {"character": "tavern_keeper", "message": "Hello!"},
+            },
         ]
 
         for action_data in actions:
             await rpg_service.process_player_action(
-                session_id=session.session_id,
-                user_id=player.user_id,
-                **action_data
+                session_id=session.session_id, user_id=player.user_id, **action_data
             )
 
         # Refresh session and player from database
@@ -423,31 +414,22 @@ class TestRPGSystemE2E:
         assert "tavern_keeper" in player.met_characters
 
     @pytest.mark.asyncio
-    async def test_session_capacity_and_joining_rules(
-        self,
-        rpg_service: RPGService
-    ):
+    async def test_session_capacity_and_joining_rules(self, rpg_service: RPGService):
         """Test session capacity limits and joining rules."""
         # Create a session with capacity of 2
         session = await rpg_service.create_game_session(
-            name="Capacity Test",
-            max_players=2,
-            created_by=1
+            name="Capacity Test", max_players=2, created_by=1
         )
 
         # Add first player
         player1 = await rpg_service.join_game_session(
-            session_id=session.session_id,
-            user_id=5001,
-            character_name="Player1"
+            session_id=session.session_id, user_id=5001, character_name="Player1"
         )
         assert player1.is_active is True
 
         # Add second player
         player2 = await rpg_service.join_game_session(
-            session_id=session.session_id,
-            user_id=5002,
-            character_name="Player2"
+            session_id=session.session_id, user_id=5002, character_name="Player2"
         )
         assert player2.is_active is True
 
@@ -457,9 +439,7 @@ class TestRPGSystemE2E:
         # Try to add third player (should fail)
         with pytest.raises(ValueError, match="not joinable"):
             await rpg_service.join_game_session(
-                session_id=session.session_id,
-                user_id=5003,
-                character_name="Player3"
+                session_id=session.session_id, user_id=5003, character_name="Player3"
             )
 
         # Test reactivating inactive player
@@ -475,21 +455,16 @@ class TestRPGSystemE2E:
         reactivated_player = await rpg_service.join_game_session(
             session_id=session.session_id,
             user_id=5001,
-            character_name="Player1Reactivated"
+            character_name="Player1Reactivated",
         )
         assert reactivated_player.is_active is True
         assert reactivated_player.character_name == "Player1"
 
     @pytest.mark.asyncio
-    async def test_scenario_template_loading(
-        self,
-        rpg_service: RPGService
-    ):
+    async def test_scenario_template_loading(self, rpg_service: RPGService):
         """Test that scenario templates are properly loaded."""
         session = await rpg_service.create_game_session(
-            name="Template Test",
-            scenario_template="fantasy_adventure",
-            created_by=1
+            name="Template Test", scenario_template="fantasy_adventure", created_by=1
         )
 
         # Check that world data is loaded
@@ -515,9 +490,7 @@ class TestRPGSystemE2E:
 
     @pytest.mark.asyncio
     async def test_player_inventory_management(
-        self,
-        rpg_service: RPGService,
-        test_player: PlayerState
+        self, rpg_service: RPGService, test_player: PlayerState
     ):
         """Test player inventory management."""
         player = test_player
@@ -533,7 +506,7 @@ class TestRPGSystemE2E:
             "id": "test_sword",
             "name": "Test Sword",
             "damage": 10,
-            "description": "A sword for testing"
+            "description": "A sword for testing",
         }
         success = player.add_to_inventory(new_item)
         assert success is True
@@ -560,7 +533,7 @@ class TestRPGSystemE2E:
         rpg_service: RPGService,
         test_game_session: GameSession,
         test_player: PlayerState,
-        async_session: AsyncSession
+        async_session: AsyncSession,
     ):
         """Test that player state is properly persisted and can be retrieved."""
         session = test_game_session
@@ -571,20 +544,19 @@ class TestRPGSystemE2E:
             session_id=session.session_id,
             user_id=player.user_id,
             action="move",
-            action_data={"destination": "tavern"}
+            action_data={"destination": "tavern"},
         )
 
         await rpg_service.process_player_action(
             session_id=session.session_id,
             user_id=player.user_id,
             action="explore",
-            action_data={}
+            action_data={},
         )
 
         # Get fresh player state from database
         fresh_player = await rpg_service.get_player_state(
-            player.user_id,
-            session.session_id
+            player.user_id, session.session_id
         )
 
         # Verify state persistence
@@ -597,8 +569,7 @@ class TestRPGSystemE2E:
 
         # Test player-specific session state
         session_state = await rpg_service.get_session_state(
-            session.session_id,
-            user_id=player.user_id
+            session.session_id, user_id=player.user_id
         )
         assert "current_player" in session_state
         assert session_state["current_player"]["user_id"] == player.user_id

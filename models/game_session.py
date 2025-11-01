@@ -26,7 +26,9 @@ class GameSession(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Game master (dcmaidbot) configuration
-    game_master_id: Mapped[int] = mapped_column(nullable=False)  # Always dcmaidbot's user ID
+    game_master_id: Mapped[int] = mapped_column(
+        nullable=False
+    )  # Always dcmaidbot's user ID
     scenario_template: Mapped[str] = mapped_column(Text, nullable=False)
     difficulty_level: Mapped[str] = mapped_column(
         String(20), nullable=False, default="normal"
@@ -44,7 +46,9 @@ class GameSession(Base):
     world_data: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 
     # Timing and progression
-    step_timeout_minutes: Mapped[int] = mapped_column(default=60)  # Auto-progress if no action
+    step_timeout_minutes: Mapped[int] = mapped_column(
+        default=60
+    )  # Auto-progress if no action
     last_activity_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     auto_progress_enabled: Mapped[bool] = mapped_column(default=True)
 
@@ -53,14 +57,12 @@ class GameSession(Base):
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
-        server_default=text("CURRENT_TIMESTAMP"),
-        nullable=False,
-        index=True
+        server_default=text("CURRENT_TIMESTAMP"), nullable=False, index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
         onupdate=text("CURRENT_TIMESTAMP"),
-        nullable=False
+        nullable=False,
     )
     started_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     ended_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
@@ -109,7 +111,9 @@ class GameSession(Base):
             "game_state": self.game_state,
             "world_data": self.world_data,
             "step_timeout_minutes": self.step_timeout_minutes,
-            "last_activity_at": self.last_activity_at.isoformat() if self.last_activity_at else None,
+            "last_activity_at": self.last_activity_at.isoformat()
+            if self.last_activity_at
+            else None,
             "auto_progress_enabled": self.auto_progress_enabled,
             "created_by": self.created_by,
             "created_at": self.created_at.isoformat(),
@@ -163,7 +167,9 @@ class PlayerState(Base):
 
     # Player memory (what the player knows)
     player_memory: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    discovered_locations: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    discovered_locations: Mapped[list] = mapped_column(
+        JSON, nullable=False, default=list
+    )
     met_characters: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
 
     # Timing
@@ -172,14 +178,12 @@ class PlayerState(Base):
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
-        server_default=text("CURRENT_TIMESTAMP"),
-        nullable=False,
-        index=True
+        server_default=text("CURRENT_TIMESTAMP"), nullable=False, index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
         onupdate=text("CURRENT_TIMESTAMP"),
-        nullable=False
+        nullable=False,
     )
     joined_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     left_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
@@ -269,7 +273,9 @@ class PlayerState(Base):
             "player_memory": self.player_memory,
             "discovered_locations": self.discovered_locations,
             "met_characters": self.met_characters,
-            "last_action_at": self.last_action_at.isoformat() if self.last_action_at else None,
+            "last_action_at": self.last_action_at.isoformat()
+            if self.last_action_at
+            else None,
             "actions_taken": self.actions_taken,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),

@@ -39,10 +39,15 @@ tgcrypto>=1.2.0
 # Web Search (PRP-005)
 duckduckgo-search>=6.0.0
 
+# External Tools (PRP-009)
+httpx>=0.27.0
+google-search-results>=2.4.2
+
 # Image Generation (PRP-016 tile system)
 replicate>=0.15.0
 pillow>=9.0.0
 numpy>=1.21.0
+scikit-learn>=1.3.0
 
 # Discord Integration (PRP-XXX: Discord Integration)
 discord.py>=2.3.0

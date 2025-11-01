@@ -23,8 +23,12 @@ class ApiKey(Base):
 
     # Key identification
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    key_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
-    key_prefix: Mapped[str] = mapped_column(String(8), nullable=False)  # First 8 chars for identification
+    key_hash: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=False, index=True
+    )
+    key_prefix: Mapped[str] = mapped_column(
+        String(8), nullable=False
+    )  # First 8 chars for identification
 
     # Usage tracking
     usage_count: Mapped[int] = mapped_column(default=0)
@@ -49,14 +53,12 @@ class ApiKey(Base):
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
-        server_default=text("CURRENT_TIMESTAMP"),
-        nullable=False,
-        index=True
+        server_default=text("CURRENT_TIMESTAMP"), nullable=False, index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
         onupdate=text("CURRENT_TIMESTAMP"),
-        nullable=False
+        nullable=False,
     )
 
     def __repr__(self) -> str:
@@ -74,6 +76,7 @@ class ApiKey(Base):
     def hash_key(cls, key: str) -> str:
         """Hash an API key for storage."""
         import hashlib
+
         return hashlib.sha256(key.encode()).hexdigest()
 
     def get_prefix(self, key: str) -> str:
@@ -105,7 +108,9 @@ class ApiKey(Base):
             "name": self.name,
             "key_prefix": self.key_prefix,
             "usage_count": self.usage_count,
-            "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
+            "last_used_at": self.last_used_at.isoformat()
+            if self.last_used_at
+            else None,
             "rate_limit_per_minute": self.rate_limit_per_minute,
             "rate_limit_per_hour": self.rate_limit_per_hour,
             "allowed_event_types": self.allowed_event_types,

@@ -1,14 +1,19 @@
 """Memory service for PRP-005: Enhanced memory with VAD emotions and Zettelkasten.
+PRP-007: Memory search with semantic vector embeddings and specialized retrieval tools.
 
 This service handles CRUD operations for memories, VAD emotion extraction,
-Zettelkasten attribute generation, and memory link management.
+Zettelkasten attribute generation, memory link management, and semantic search.
 
 Based on research:
 - A-MEM (NeurIPS 2025): Zettelkasten-inspired agentic memory
 - VAD Model: Valence-Arousal-Dominance emotional dimensions
 - Knowledge Graphs: Graph-based memory organization
+- Sentence Transformers: Semantic search and embeddings
 """
 
+import asyncio
+import json
+import logging
 from datetime import datetime
 from typing import Any, Optional
 
@@ -18,6 +23,28 @@ from sqlalchemy.orm import selectinload
 
 from models.memory import Category, Memory, MemoryLink
 from services.redis_service import redis_service
+
+logger = logging.getLogger(__name__)
+
+# Global embedding model for performance
+_embedding_model = None
+
+
+def get_embedding_model():
+    """Get or initialize sentence transformer model."""
+    global _embedding_model
+    if _embedding_model is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+
+            _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+            logger.info("Loaded sentence transformer model: all-MiniLM-L6-v2")
+        except ImportError:
+            logger.warning(
+                "sentence-transformers not available, semantic search disabled"
+            )
+            _embedding_model = None
+    return _embedding_model
 
 
 class MemoryService:
@@ -99,6 +126,9 @@ class MemoryService:
         await self.session.refresh(memory, ["categories"])
 
         await self._invalidate_cache(created_by)
+
+        # Generate embedding asynchronously for semantic search (PRP-007)
+        asyncio.create_task(self._generate_and_store_embedding(memory.id, full_content))
 
         return memory
 
@@ -534,6 +564,291 @@ class MemoryService:
             context=reason,
             auto_generated=True,
         )
+
+    # PRP-007: Semantic search and vector embeddings
+
+    async def create_embedding(self, text: str) -> Optional[list[float]]:
+        """Generate embedding vector for text."""
+        model = get_embedding_model()
+        if model is None:
+            logger.warning("Embedding model not available")
+            return None
+
+        try:
+            embedding = model.encode(text).tolist()
+            return embedding
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            return None
+
+    async def _generate_and_store_embedding(self, memory_id: int, content: str) -> None:
+        """Background task to generate and store embedding."""
+        try:
+            embedding = await self.create_embedding(content)
+            if embedding is None:
+                return
+
+            # Update memory with embedding
+            result = await self.session.execute(
+                select(Memory).where(Memory.id == memory_id)
+            )
+            memory = result.scalar_one_or_none()
+            if memory:
+                # Always store embedding as JSON string for database compatibility
+                memory.embedding = json.dumps(embedding)
+
+                await self.session.commit()
+                await self._invalidate_cache(memory.created_by)
+
+                logger.info(f"Generated embedding for memory {memory_id}")
+        except Exception as e:
+            logger.error(f"Failed to generate embedding for memory {memory_id}: {e}")
+
+    async def semantic_search(
+        self,
+        query: str,
+        user_id: int,
+        categories: Optional[list[str]] = None,
+        min_importance: int = 0,
+        limit: int = 10,
+    ) -> list[dict]:
+        """Search memories by semantic similarity."""
+        model = get_embedding_model()
+        if model is None:
+            logger.warning("Semantic search not available - no embedding model")
+            return []
+
+        try:
+            # Generate query embedding
+            query_embedding = await self.create_embedding(query)
+            if query_embedding is None:
+                return []
+
+            # Build base query
+            stmt = select(Memory).where(Memory.created_by == user_id)
+
+            # Filter by categories if provided
+            if categories:
+                stmt = stmt.join(Memory.categories).where(
+                    Category.full_path.in_(categories)
+                )
+
+            # Filter by importance
+            stmt = stmt.where(Memory.importance >= min_importance)
+
+            # For now, always use fallback semantic search
+            # TODO: Implement vector similarity search when pgvector operators are available
+            return await self._fallback_semantic_search(
+                query, user_id, categories, min_importance, limit
+            )
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}")
+            return []
+
+    async def _fallback_semantic_search(
+        self,
+        query: str,
+        user_id: int,
+        categories: Optional[list[str]] = None,
+        min_importance: int = 0,
+        limit: int = 10,
+    ) -> list[dict]:
+        """Fallback semantic search using basic text matching when pgvector unavailable."""
+        # Extract keywords from query
+        keywords = query.lower().split()
+
+        # Build search query
+        filters = [Memory.created_by == user_id, Memory.importance >= min_importance]
+
+        if keywords:
+            search_conditions = []
+            for keyword in keywords:
+                search_conditions.append(
+                    or_(
+                        Memory.simple_content.ilike(f"%{keyword}%"),
+                        Memory.full_content.ilike(f"%{keyword}%"),
+                    )
+                )
+            filters.append(and_(*search_conditions))
+
+        stmt = (
+            select(Memory)
+            .where(and_(*filters))
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.importance.desc(), Memory.created_at.desc())
+            .limit(limit)
+        )
+
+        # Filter by categories if provided
+        if categories:
+            stmt = stmt.join(Memory.categories).where(
+                Category.full_path.in_(categories)
+            )
+
+        results = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "simple_content": m.simple_content,
+                "importance": m.importance,
+                "categories": [c.full_path for c in m.categories],
+                "emotion_label": m.emotion_label,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in results.scalars().all()
+        ]
+
+    # PRP-007: Specialized retrieval tools
+
+    async def get_all_friends(self, user_id: int) -> list[dict]:
+        """Get summary of all person-category memories."""
+        stmt = (
+            select(Memory)
+            .join(Memory.categories)
+            .where(
+                and_(
+                    Memory.created_by == user_id, Category.full_path == "social.person"
+                )
+            )
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.importance.desc())
+        )
+
+        memories = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "name": self._extract_person_name(m.simple_content),
+                "summary": m.simple_content,
+                "importance": m.importance,
+                "emotion_label": m.emotion_label,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in memories.scalars().all()
+        ]
+
+    async def get_panic_attacks(self, user_id: int) -> list[dict]:
+        """Get all emotion:panic memories."""
+        stmt = (
+            select(Memory)
+            .join(Memory.categories)
+            .where(
+                and_(
+                    Memory.created_by == user_id,
+                    Category.full_path == "self.emotion",
+                    Memory.simple_content.ilike("%panic%"),
+                )
+            )
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.created_at.desc())
+        )
+
+        memories = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "date": m.created_at.date().isoformat() if m.created_at else None,
+                "summary": m.simple_content,
+                "importance": m.importance,
+                "emotion_label": m.emotion_label,
+                "full_content": m.full_content,
+            }
+            for m in memories.scalars().all()
+        ]
+
+    async def get_interests(self, user_id: int) -> list[dict]:
+        """Get all interest category memories."""
+        stmt = (
+            select(Memory)
+            .join(Memory.categories)
+            .where(and_(Memory.created_by == user_id, Category.full_path == "interest"))
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.importance.desc())
+        )
+
+        memories = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "interest": self._extract_interest_name(m.simple_content),
+                "summary": m.simple_content,
+                "importance": m.importance,
+                "keywords": m.keywords,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in memories.scalars().all()
+        ]
+
+    async def search_by_person(self, user_id: int, person_name: str) -> list[dict]:
+        """Find all memories mentioning a specific person."""
+        # Use semantic search for better matching
+        results = await self.semantic_search(
+            query=f"memories about {person_name}", user_id=user_id, limit=50
+        )
+
+        # Filter by name mention for more precise results
+        return [
+            r for r in results if person_name.lower() in r["simple_content"].lower()
+        ]
+
+    async def search_by_emotion(self, user_id: int, emotion: str) -> list[dict]:
+        """Find memories with specific emotional signal."""
+        return await self.semantic_search(
+            query=f"{emotion} feeling emotion",
+            user_id=user_id,
+            categories=["self.emotion"],
+            limit=20,
+        )
+
+    async def search_across_versions(
+        self, user_id: int, query: str, limit: int = 10
+    ) -> list[dict]:
+        """Search across all memory versions."""
+        model = get_embedding_model()
+        if model is None:
+            # Fallback to basic search
+            return await self.search_memories(user_id=user_id, query=query, limit=limit)
+
+        try:
+            query_embedding = await self.create_embedding(query)
+            if query_embedding is None:
+                return []
+
+            # For now, use basic search
+            # TODO: Implement vector similarity search when pgvector operators are available
+            return await self.search_memories(user_id=user_id, query=query, limit=limit)
+        except Exception as e:
+            logger.error(f"Cross-version search failed: {e}")
+            return []
+
+    def _extract_person_name(self, content: str) -> str:
+        """Extract person name from memory content."""
+        lines = content.split("\n")
+        for line in lines:
+            if "name:" in line.lower():
+                return line.split(":", 1)[1].strip()
+        # Fallback: try to extract from content
+        words = content.split()
+        for word in words:
+            if word.istitle() and len(word) > 2:
+                return word
+        return "Unknown"
+
+    def _extract_interest_name(self, content: str) -> str:
+        """Extract interest name from memory content."""
+        lines = content.split("\n")
+        for line in lines:
+            if any(
+                keyword in line.lower()
+                for keyword in ["interest:", "hobby:", "activity:"]
+            ):
+                return line.split(":", 1)[1].strip()
+        # Fallback: return first 50 characters
+        return content[:50] + ("..." if len(content) > 50 else "")
 
     def _serialize_memory(self, memory: Memory) -> dict:
         """

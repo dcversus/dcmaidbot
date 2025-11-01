@@ -33,7 +33,7 @@ class RPGService:
         scenario_template: str = "fantasy_adventure",
         difficulty_level: str = "normal",
         max_players: int = 4,
-        created_by: int = 1
+        created_by: int = 1,
     ) -> GameSession:
         """Create a new RPG game session."""
         # Generate unique session ID
@@ -53,7 +53,7 @@ class RPGService:
             hidden_context=scenario_data.get("hidden_context", {}),
             game_state=scenario_data.get("initial_state", {}),
             world_data=scenario_data.get("world_data", {}),
-            created_by=created_by
+            created_by=created_by,
         )
 
         self.session.add(game_session)
@@ -68,7 +68,7 @@ class RPGService:
         session_id: str,
         user_id: int,
         character_name: str,
-        character_class: Optional[str] = None
+        character_class: Optional[str] = None,
     ) -> PlayerState:
         """Add a player to an existing game session."""
         # Check if session exists and is joinable
@@ -100,7 +100,7 @@ class RPGService:
             current_location=session.world_data.get("starting_location", "town_square"),
             inventory=self._get_starting_inventory(character_class),
             stats=self._get_starting_stats(character_class, session.difficulty_level),
-            joined_at=datetime.utcnow()
+            joined_at=datetime.utcnow(),
         )
 
         self.session.add(player_state)
@@ -115,11 +115,7 @@ class RPGService:
         return player_state
 
     async def process_player_action(
-        self,
-        session_id: str,
-        user_id: int,
-        action: str,
-        action_data: dict[str, Any]
+        self, session_id: str, user_id: int, action: str, action_data: dict[str, Any]
     ) -> dict[str, Any]:
         """Process a player's action in the game."""
         session = await self.get_game_session(session_id)
@@ -144,7 +140,9 @@ class RPGService:
         elif action == "explore":
             result = await self._process_explore_action(session, player, action_data)
         else:
-            result = await self._process_custom_action(session, player, action, action_data)
+            result = await self._process_custom_action(
+                session, player, action, action_data
+            )
 
         # Update player and session state
         player.last_action_at = datetime.utcnow()
@@ -166,25 +164,20 @@ class RPGService:
         return result.scalar_one_or_none()
 
     async def get_player_state(
-        self,
-        user_id: int,
-        session_id: str
+        self, user_id: int, session_id: str
     ) -> Optional[PlayerState]:
         """Get a player's state in a specific session."""
         result = await self.session.execute(
             select(PlayerState).where(
                 and_(
-                    PlayerState.user_id == user_id,
-                    PlayerState.session_id == session_id
+                    PlayerState.user_id == user_id, PlayerState.session_id == session_id
                 )
             )
         )
         return result.scalar_one_or_none()
 
     async def get_session_state(
-        self,
-        session_id: str,
-        user_id: Optional[int] = None
+        self, session_id: str, user_id: Optional[int] = None
     ) -> dict[str, Any]:
         """Get the current state of a game session."""
         session = await self.get_game_session(session_id)
@@ -194,10 +187,7 @@ class RPGService:
         # Get all active players
         result = await self.session.execute(
             select(PlayerState).where(
-                and_(
-                    PlayerState.session_id == session_id,
-                    PlayerState.is_active == True
-                )
+                and_(PlayerState.session_id == session_id, PlayerState.is_active)
             )
         )
         players = result.scalars().all()
@@ -208,7 +198,7 @@ class RPGService:
             "players": [player.to_dict() for player in players],
             "current_step": session.current_step,
             "is_active": session.is_active,
-            "player_count": len(players)
+            "player_count": len(players),
         }
 
         # Add player-specific information if requested
@@ -220,27 +210,26 @@ class RPGService:
         return state
 
     async def _process_move_action(
-        self,
-        session: GameSession,
-        player: PlayerState,
-        action_data: dict[str, Any]
+        self, session: GameSession, player: PlayerState, action_data: dict[str, Any]
     ) -> dict[str, Any]:
         """Process a movement action."""
         destination = action_data.get("destination")
         if not destination:
             return {
                 "success": False,
-                "message": "You need to specify where you want to go."
+                "message": "You need to specify where you want to go.",
             }
 
         # Check if destination is accessible
-        current_location = session.world_data.get("locations", {}).get(player.current_location, {})
+        current_location = session.world_data.get("locations", {}).get(
+            player.current_location, {}
+        )
         available_exits = current_location.get("exits", [])
 
         if destination not in available_exits:
             return {
                 "success": False,
-                "message": f"You cannot go to {destination} from here."
+                "message": f"You cannot go to {destination} from here.",
             }
 
         # Move player
@@ -255,7 +244,7 @@ class RPGService:
         player.record_choice(
             session.current_step,
             f"move_to_{destination}",
-            {"old_location": old_location, "new_location": destination}
+            {"old_location": old_location, "new_location": destination},
         )
 
         # Get new location description
@@ -269,35 +258,36 @@ class RPGService:
             "new_location": destination,
             "location_description": description,
             "available_exits": new_location.get("exits", []),
-            "available_actions": await self._get_available_actions(session, player)
+            "available_actions": await self._get_available_actions(session, player),
         }
 
     async def _process_interact_action(
-        self,
-        session: GameSession,
-        player: PlayerState,
-        action_data: dict[str, Any]
+        self, session: GameSession, player: PlayerState, action_data: dict[str, Any]
     ) -> dict[str, Any]:
         """Process an interaction action."""
         target = action_data.get("target")
         if not target:
             return {
                 "success": False,
-                "message": "You need to specify what you want to interact with."
+                "message": "You need to specify what you want to interact with.",
             }
 
         # Get location data
-        location = session.world_data.get("locations", {}).get(player.current_location, {})
+        location = session.world_data.get("locations", {}).get(
+            player.current_location, {}
+        )
         interactables = location.get("interactables", {})
 
         if target not in interactables:
             return {
                 "success": False,
-                "message": f"There is no {target} here to interact with."
+                "message": f"There is no {target} here to interact with.",
             }
 
         target_data = interactables[target]
-        interaction_result = target_data.get("interaction", "You interact with the {target}.")
+        interaction_result = target_data.get(
+            "interaction", "You interact with the {target}."
+        )
 
         # Process interaction effects
         if "item_reward" in target_data:
@@ -316,14 +306,11 @@ class RPGService:
             "action": "interact",
             "message": interaction_result,
             "target": target,
-            "effects": target_data.get("effects", {})
+            "effects": target_data.get("effects", {}),
         }
 
     async def _process_talk_action(
-        self,
-        session: GameSession,
-        player: PlayerState,
-        action_data: dict[str, Any]
+        self, session: GameSession, player: PlayerState, action_data: dict[str, Any]
     ) -> dict[str, Any]:
         """Process a conversation action."""
         character = action_data.get("character")
@@ -332,7 +319,7 @@ class RPGService:
         if not character:
             return {
                 "success": False,
-                "message": "You need to specify who you want to talk to."
+                "message": "You need to specify who you want to talk to.",
             }
 
         # Use LLM to generate character response
@@ -349,23 +336,24 @@ class RPGService:
             "action": "talk",
             "message": f"You talk to {character}: '{message}'",
             "character_response": response,
-            "character": character
+            "character": character,
         }
 
     async def _process_explore_action(
-        self,
-        session: GameSession,
-        player: PlayerState,
-        action_data: dict[str, Any]
+        self, session: GameSession, player: PlayerState, action_data: dict[str, Any]
     ) -> dict[str, Any]:
         """Process an exploration action."""
-        location = session.world_data.get("locations", {}).get(player.current_location, {})
+        location = session.world_data.get("locations", {}).get(
+            player.current_location, {}
+        )
 
         # Check for hidden items or secrets
         secrets_found = []
         if "hidden_items" in location:
             for item in location["hidden_items"]:
-                if item.get("id") not in [i.get("id") for items in player.inventory.values() for i in items]:
+                if item.get("id") not in [
+                    i.get("id") for items in player.inventory.values() for i in items
+                ]:
                     player.add_to_inventory(item)
                     secrets_found.append(item.get("name", "something"))
 
@@ -379,7 +367,7 @@ class RPGService:
             "success": True,
             "action": "explore",
             "message": message,
-            "items_found": secrets_found
+            "items_found": secrets_found,
         }
 
     async def _process_custom_action(
@@ -387,7 +375,7 @@ class RPGService:
         session: GameSession,
         player: PlayerState,
         action: str,
-        action_data: dict[str, Any]
+        action_data: dict[str, Any],
     ) -> dict[str, Any]:
         """Process a custom action using LLM."""
         # Use LLM to determine the outcome
@@ -410,23 +398,23 @@ class RPGService:
                 "success": True,
                 "action": action,
                 "message": llm_response,
-                "custom": True
+                "custom": True,
             }
         except Exception as e:
             logger.error(f"Error processing custom action with LLM: {e}")
             return {
                 "success": False,
                 "action": action,
-                "message": f"You attempt to {action}, but something prevents it from working."
+                "message": f"You attempt to {action}, but something prevents it from working.",
             }
 
     async def _get_available_actions(
-        self,
-        session: GameSession,
-        player: PlayerState
+        self, session: GameSession, player: PlayerState
     ) -> list[str]:
         """Get available actions for a player in their current location."""
-        location = session.world_data.get("locations", {}).get(player.current_location, {})
+        location = session.world_data.get("locations", {}).get(
+            player.current_location, {}
+        )
         actions = ["move", "explore", "talk"]
 
         # Add interact action if there are interactables
@@ -444,11 +432,7 @@ class RPGService:
         return actions
 
     async def _generate_character_response(
-        self,
-        session: GameSession,
-        player: PlayerState,
-        character: str,
-        message: str
+        self, session: GameSession, player: PlayerState, character: str, message: str
     ) -> str:
         """Generate a character response using LLM."""
         character_data = session.world_data.get("characters", {}).get(character, {})
@@ -474,7 +458,7 @@ class RPGService:
         """Get starting inventory based on character class."""
         base_inventory = {
             "gold": [{"id": "gold_coin", "name": "Gold Coin", "quantity": 10}],
-            "potion": [{"id": "health_potion", "name": "Health Potion", "quantity": 1}]
+            "potion": [{"id": "health_potion", "name": "Health Potion", "quantity": 1}],
         }
 
         if character_class == "warrior":
@@ -493,9 +477,7 @@ class RPGService:
         return base_inventory
 
     def _get_starting_stats(
-        self,
-        character_class: Optional[str],
-        difficulty_level: str
+        self, character_class: Optional[str], difficulty_level: str
     ) -> dict:
         """Get starting stats based on character class and difficulty."""
         base_stats = {
@@ -504,7 +486,7 @@ class RPGService:
             "dexterity": 10,
             "constitution": 10,
             "wisdom": 10,
-            "charisma": 10
+            "charisma": 10,
         }
 
         # Adjust based on character class
@@ -541,13 +523,13 @@ class RPGService:
                     "secrets": ["There's a hidden passage in the tavern"],
                     "npc_motivations": {
                         "tavern_keeper": "Knows more than they let on",
-                        "blacksmith": "Looking for a rare ore"
-                    }
+                        "blacksmith": "Looking for a rare ore",
+                    },
                 },
                 "initial_state": {
                     "plot_stage": "beginning",
                     "time_of_day": "morning",
-                    "weather": "clear"
+                    "weather": "clear",
                 },
                 "world_data": {
                     "starting_location": "town_square",
@@ -558,9 +540,9 @@ class RPGService:
                             "interactables": {
                                 "fountain": {
                                     "interaction": "You toss a coin in the fountain and make a wish.",
-                                    "effects": {"luck": 1}
+                                    "effects": {"luck": 1},
                                 }
-                            }
+                            },
                         },
                         "tavern": {
                             "description": "A cozy tavern with the smell of ale and roasted meat.",
@@ -569,21 +551,21 @@ class RPGService:
                                 "tavern_keeper": {
                                     "interaction": "The tavern keeper greets you warmly.",
                                     "hidden_items": [
-                                        {"id": "rumor_note", "name": "Mysterious Note", "description": "A note with strange writing."}
-                                    ]
+                                        {
+                                            "id": "rumor_note",
+                                            "name": "Mysterious Note",
+                                            "description": "A note with strange writing.",
+                                        }
+                                    ],
                                 }
-                            }
-                        }
+                            },
+                        },
                     },
                     "characters": {
-                        "tavern_keeper": {
-                            "personality": "friendly but mysterious"
-                        },
-                        "blacksmith": {
-                            "personality": "gruff but honorable"
-                        }
-                    }
-                }
+                        "tavern_keeper": {"personality": "friendly but mysterious"},
+                        "blacksmith": {"personality": "gruff but honorable"},
+                    },
+                },
             }
         }
 
@@ -594,7 +576,7 @@ class RPGService:
         session: GameSession,
         player: PlayerState,
         action: str,
-        result: dict[str, Any]
+        result: dict[str, Any],
     ) -> None:
         """Update the game master's hidden context with new information."""
         # Add to session's hidden context for future LLM decisions
@@ -603,12 +585,12 @@ class RPGService:
             "action": action,
             "result": result,
             "player_state": player.to_dict(),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
         # Update player memory
         player.player_memory[f"action_{session.current_step}"] = {
             "action": action,
             "outcome": result.get("message", ""),
-            "location": player.current_location
+            "location": player.current_location,
         }

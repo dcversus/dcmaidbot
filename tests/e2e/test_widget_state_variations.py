@@ -167,7 +167,7 @@ class TestWidgetStateVariations:
 
                     if modal_visible:
                         # Check modal transparency
-                        modal_bg = await modal_overlay.get_attribute("style") or ""
+                        await modal_overlay.get_attribute("style") or ""
                         modal_style = await modal_overlay.evaluate(
                             "el => getComputedStyle(el)"
                         )
@@ -430,7 +430,7 @@ class TestWidgetStateVariations:
             print(f"Location containers: {len(location_containers)}")
 
             for container in location_containers:
-                bg_style = await container.get_attribute("style") or ""
+                await container.get_attribute("style") or ""
                 bg_image = await container.evaluate(
                     "el => getComputedStyle(el).backgroundImage"
                 )

@@ -10,8 +10,10 @@ This is the RIGHT way to test - we test what the user experiences!
 """
 
 import os
+import time
 
 import aiohttp
+import psutil
 import pytest
 
 from models.user import User
@@ -24,6 +26,36 @@ NUDGE_SECRET = os.getenv("NUDGE_SECRET", "test_secret_for_e2e")
 
 # Admin user ID for testing
 TEST_ADMIN_ID = 199572554
+
+
+# Performance tracking
+class PerformanceTracker:
+    def __init__(self):
+        self.start_time = None
+        self.start_memory = None
+        self.end_memory = None
+        self.response_time = None
+        self.memory_increase = None
+
+    def start_tracking(self):
+        self.start_time = time.time()
+        self.start_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+
+    def end_tracking(self):
+        self.end_time = time.time()
+        self.end_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+        self.response_time = (self.end_time - self.start_time) * 1000  # ms
+        self.memory_increase = self.end_memory - self.start_memory  # MB
+        return self
+
+    def get_metrics(self):
+        return {
+            "response_time_ms": self.response_time,
+            "memory_usage_mb": self.end_memory,
+            "memory_increase_mb": self.memory_increase,
+            "start_memory_mb": self.start_memory,
+            "end_memory_mb": self.end_memory,
+        }
 
 
 @pytest.fixture
@@ -55,13 +87,19 @@ async def llm_judge():
     return LLMService()
 
 
-async def call_bot(client: aiohttp.ClientSession, user_id: int, message: str) -> dict:
+async def call_bot(
+    client: aiohttp.ClientSession,
+    user_id: int,
+    message: str,
+    performance_tracker: PerformanceTracker = None,
+) -> dict:
     """Make HTTP request to /call endpoint.
 
     Args:
         client: aiohttp session
         user_id: Telegram user ID
         message: Message text to send
+        performance_tracker: Optional PerformanceTracker for metrics
 
     Returns:
         dict: Response from /call endpoint
@@ -76,8 +114,16 @@ async def call_bot(client: aiohttp.ClientSession, user_id: int, message: str) ->
         "message": message,
     }
 
+    if performance_tracker:
+        performance_tracker.start_tracking()
+
     async with client.post(url, json=data, headers=headers) as response:
-        return await response.json()
+        result = await response.json()
+
+    if performance_tracker:
+        performance_tracker.end_tracking()
+
+    return result
 
 
 async def judge_response(
@@ -152,20 +198,59 @@ async def test_bot_remembers_message_history(
     2. User sends second message referencing first
     3. Bot should remember first message and respond contextually
     4. LLM judge validates that bot actually used history
+    5. Performance metrics are collected and validated
     """
-    # Step 1: Send first message
+    # Performance tracking setup
+    first_message_tracker = PerformanceTracker()
+    second_message_tracker = PerformanceTracker()
+
+    # Step 1: Send first message with performance tracking
     first_message = "My name is Alice and I love Python programming!"
-    response1 = await call_bot(bot_client, TEST_ADMIN_ID, first_message)
+    response1 = await call_bot(
+        bot_client, TEST_ADMIN_ID, first_message, first_message_tracker
+    )
 
     assert response1["success"] is True
     response1["response"]
 
-    # Step 2: Send second message asking about previous conversation
+    # Validate first message performance
+    first_metrics = first_message_tracker.get_metrics()
+    print("\n📊 First Message Performance:")
+    print(f"  Response time: {first_metrics['response_time_ms']:.2f}ms")
+    print(f"  Memory usage: {first_metrics['memory_usage_mb']:.2f}MB")
+    print(f"  Memory increase: {first_metrics['memory_increase_mb']:.2f}MB")
+
+    # Performance assertions
+    assert first_metrics["response_time_ms"] < 5000, (
+        f"First message response too slow: {first_metrics['response_time_ms']}ms"
+    )
+    assert first_metrics["memory_increase_mb"] < 50, (
+        f"Memory increase too high: {first_metrics['memory_increase_mb']}MB"
+    )
+
+    # Step 2: Send second message asking about previous conversation with performance tracking
     second_message = "What did I just tell you about myself?"
-    response2 = await call_bot(bot_client, TEST_ADMIN_ID, second_message)
+    response2 = await call_bot(
+        bot_client, TEST_ADMIN_ID, second_message, second_message_tracker
+    )
 
     assert response2["success"] is True
     bot_response2 = response2["response"]
+
+    # Validate second message performance
+    second_metrics = second_message_tracker.get_metrics()
+    print("\n📊 Second Message Performance:")
+    print(f"  Response time: {second_metrics['response_time_ms']:.2f}ms")
+    print(f"  Memory usage: {second_metrics['memory_usage_mb']:.2f}MB")
+    print(f"  Memory increase: {second_metrics['memory_increase_mb']:.2f}MB")
+
+    # Performance assertions for second message (should be faster with context)
+    assert second_metrics["response_time_ms"] < 8000, (
+        f"Second message response too slow: {second_metrics['response_time_ms']}ms"
+    )
+    assert second_metrics["memory_increase_mb"] < 75, (
+        f"Memory increase too high: {second_metrics['memory_increase_mb']}MB"
+    )
 
     # Step 3: Use LLM as judge to validate bot remembered
     judgment = await judge_response(
@@ -191,6 +276,18 @@ async def test_bot_remembers_message_history(
     )
     assert judgment["score"] >= 0.7, "Judge confidence too low"
 
+    # Overall performance summary
+    avg_response_time = (
+        first_metrics["response_time_ms"] + second_metrics["response_time_ms"]
+    ) / 2
+    total_memory_increase = (
+        first_metrics["memory_increase_mb"] + second_metrics["memory_increase_mb"]
+    )
+
+    print("\n📈 Overall Performance Summary:")
+    print(f"  Average response time: {avg_response_time:.2f}ms")
+    print(f"  Total memory increase: {total_memory_increase:.2f}MB")
+
 
 @pytest.mark.asyncio
 @pytest.mark.requires_openai
@@ -205,7 +302,11 @@ async def test_bot_uses_memories_in_response(
     2. User asks something related to that memory
     3. Bot should reference the memory in response
     4. LLM judge validates memory was used
+    5. Performance metrics are collected and validated
     """
+    # Performance tracking setup
+    performance_tracker = PerformanceTracker()
+
     # Step 1: Create a memory about the user
     memory_service = MemoryService(async_session)
     await memory_service.create_memory(
@@ -221,12 +322,29 @@ async def test_bot_uses_memories_in_response(
         keywords=["Python", "async", "expert", "FastAPI"],
     )
 
-    # Step 2: User asks about Python
+    # Step 2: User asks about Python with performance tracking
     user_message = "I'm working on a FastAPI project. Any tips?"
-    response = await call_bot(bot_client, TEST_ADMIN_ID, user_message)
+    response = await call_bot(
+        bot_client, TEST_ADMIN_ID, user_message, performance_tracker
+    )
 
     assert response["success"] is True
     bot_response = response["response"]
+
+    # Validate performance metrics
+    metrics = performance_tracker.get_metrics()
+    print("\n📊 Memory Query Performance:")
+    print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+    print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+    print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+    # Performance assertions (memory queries should be efficient)
+    assert metrics["response_time_ms"] < 10000, (
+        f"Memory query response too slow: {metrics['response_time_ms']}ms"
+    )
+    assert metrics["memory_increase_mb"] < 100, (
+        f"Memory increase too high: {metrics['memory_increase_mb']}MB"
+    )
 
     # Step 3: Use LLM as judge to validate bot used memory
     judgment = await judge_response(
@@ -265,15 +383,36 @@ async def test_bot_creates_memories_from_conversation(
     2. Bot responds
     3. Check that a memory was created in database
     4. Verify memory contains key information
+    5. Performance metrics are collected and validated
     """
-    # Step 1: User shares important personal information
+    # Performance tracking setup
+    performance_tracker = PerformanceTracker()
+
+    # Step 1: User shares important personal information with performance tracking
     user_message = (
         "I just got promoted to Senior Engineer at Google! "
         "I'll be leading the infrastructure team!"
     )
-    response = await call_bot(bot_client, TEST_ADMIN_ID, user_message)
+    response = await call_bot(
+        bot_client, TEST_ADMIN_ID, user_message, performance_tracker
+    )
 
     assert response["success"] is True
+
+    # Validate performance metrics
+    metrics = performance_tracker.get_metrics()
+    print("\n📊 Memory Creation Performance:")
+    print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+    print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+    print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+    # Performance assertions (memory creation should be reasonable)
+    assert metrics["response_time_ms"] < 12000, (
+        f"Memory creation response too slow: {metrics['response_time_ms']}ms"
+    )
+    assert metrics["memory_increase_mb"] < 150, (
+        f"Memory increase too high: {metrics['memory_increase_mb']}MB"
+    )
 
     # Step 2: Check that a memory was created
     MemoryService(async_session)
@@ -326,7 +465,11 @@ async def test_bot_uses_vad_emotions_in_context(
     2. User asks about that project
     3. Bot should show empathy/awareness of emotional context
     4. LLM judge validates emotional awareness
+    5. Performance metrics are collected and validated
     """
+    # Performance tracking setup
+    performance_tracker = PerformanceTracker()
+
     # Step 1: Create memory with negative emotional context
     memory_service = MemoryService(async_session)
     await memory_service.create_memory(
@@ -345,12 +488,29 @@ async def test_bot_uses_vad_emotions_in_context(
         emotion_dominance=-0.3,  # Feeling out of control
     )
 
-    # Step 2: User mentions the project
+    # Step 2: User mentions the project with performance tracking
     user_message = "Still working on that refactoring project..."
-    response = await call_bot(bot_client, TEST_ADMIN_ID, user_message)
+    response = await call_bot(
+        bot_client, TEST_ADMIN_ID, user_message, performance_tracker
+    )
 
     assert response["success"] is True
     bot_response = response["response"]
+
+    # Validate performance metrics
+    metrics = performance_tracker.get_metrics()
+    print("\n📊 Emotional Context Performance:")
+    print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+    print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+    print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+    # Performance assertions (emotional context processing should be efficient)
+    assert metrics["response_time_ms"] < 10000, (
+        f"Emotional context response too slow: {metrics['response_time_ms']}ms"
+    )
+    assert metrics["memory_increase_mb"] < 100, (
+        f"Memory increase too high: {metrics['memory_increase_mb']}MB"
+    )
 
     # Step 3: Use LLM as judge to validate emotional awareness
     judgment = await judge_response(
@@ -385,10 +545,28 @@ async def test_bot_responds_without_telegram(bot_client, setup_test_admin):
 
     This is a smoke test to ensure the integration tests can run with DISABLE_TG=true.
     """
-    response = await call_bot(bot_client, TEST_ADMIN_ID, "Hello!")
+    # Performance tracking setup
+    performance_tracker = PerformanceTracker()
+
+    response = await call_bot(bot_client, TEST_ADMIN_ID, "Hello!", performance_tracker)
 
     assert response["success"] is True
     assert "response" in response
     assert len(response["response"]) > 0
+
+    # Validate performance metrics for basic smoke test
+    metrics = performance_tracker.get_metrics()
+    print("\n📊 Basic Smoke Test Performance:")
+    print(f"  Response time: {metrics['response_time_ms']:.2f}ms")
+    print(f"  Memory usage: {metrics['memory_usage_mb']:.2f}MB")
+    print(f"  Memory increase: {metrics['memory_increase_mb']:.2f}MB")
+
+    # Basic performance assertions for smoke test
+    assert metrics["response_time_ms"] < 3000, (
+        f"Basic response too slow: {metrics['response_time_ms']}ms"
+    )
+    assert metrics["memory_increase_mb"] < 25, (
+        f"Memory increase too high for basic test: {metrics['memory_increase_mb']}MB"
+    )
 
     print(f"\n✅ Bot responded: {response['response'][:100]}...")

@@ -7,7 +7,7 @@ button events, user interactions, and other UI events.
 import json
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from aiohttp import web
 from sqlalchemy import select
@@ -145,11 +145,11 @@ async def _process_event(
 
 async def _authenticate_api_key(
     session: AsyncSession, provided_key: str
-) -> ApiKey | None:
+) -> Optional[ApiKey]:
     """Authenticate the provided API key."""
     try:
         # Get all active API keys
-        result = await session.execute(select(ApiKey).where(ApiKey.is_active == True))
+        result = await session.execute(select(ApiKey).where(ApiKey.is_active))
         api_keys = result.scalars().all()
 
         # Check each key (hash comparison)
@@ -170,7 +170,7 @@ async def _authenticate_api_key(
 
 async def _check_rate_limits(
     api_key_obj: ApiKey, client_ip: str
-) -> web.Response | None:
+) -> Optional[web.Response]:
     """Check rate limits for the API key."""
     try:
         current_time = datetime.utcnow()
