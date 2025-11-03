@@ -1,0 +1,130 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dcmaidbot-config
+  namespace: dcmaidbot
+data:
+  # Environment configuration
+  PYTHONPATH: "/app/src:/app"
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dcmaidbot-secrets
+  namespace: dcmaidbot
+type: Opaque
+stringData:
+  # These should be replaced with actual values or use existing secrets
+  DATABASE_URL: "postgresql://dcmaidbot:password@postgres:5432/dcmaidbot"
+  BOT_TOKEN: "your-telegram-bot-token"
+  ADMIN_IDS: "123456789"
+  OPENAI_API_KEY: "your-openai-api-key"
+  REDIS_URL: "redis://redis:6379/0"
+  WEBHOOK_URL: "https://dcmaidbot-dev.theedgestory.org/webhook"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcmaidbot
+  namespace: dcmaidbot
+  labels:
+    app: dcmaidbot
+    version: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dcmaidbot
+  template:
+    metadata:
+      labels:
+        app: dcmaidbot
+        version: dev
+    spec:
+      containers:
+      - name: dcmaidbot
+        image: ghcr.io/dcversus/dcmaidbot:latest-dev  # Use GHCR image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        envFrom:
+        - configMapRef:
+            name: dcmaidbot-config
+        - secretRef:
+            name: dcmaidbot-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcmaidbot-service
+  namespace: dcmaidbot
+  labels:
+    app: dcmaidbot
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: dcmaidbot
+---
+# Ingress for webhook (optional - comment out if not needed)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dcmaidbot-ingress
+  namespace: dcmaidbot
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - dcmaidbot-dev.theedgestory.org
+    secretName: dcmaidbot-dev-tls
+  rules:
+  - host: dcmaidbot-dev.theedgestory.org
+    http:
+      paths:
+      - path: /webhook
+        pathType: Prefix
+        backend:
+          service:
+            name: dcmaidbot-service
+            port:
+              number: 8080
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: dcmaidbot-service
+            port:
+              number: 8080

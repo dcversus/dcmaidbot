@@ -1,1 +1,17 @@
-# This file intentionally left empty to mark this directory as a Python package
+# Handler imports for API routes
+
+from .call import call_handler
+from .event import event_handler
+from .landing import landing_handler
+from .nudge import nudge_handler
+from .status import health_handler
+from .status import api_version_handler as version_handler
+
+__all__ = [
+    "call_handler",
+    "event_handler",
+    "health_handler",
+    "landing_handler",
+    "nudge_handler",
+    "version_handler",
+]

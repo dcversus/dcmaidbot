@@ -44,7 +44,7 @@ class LLMService:
 
     def load_base_prompt(self) -> str:
         """Load BASE_PROMPT from config file."""
-        config_path = Path(__file__).parent.parent / "config" / "base_prompt.txt"
+        config_path = Path(__file__).parent.parent.parent / "config" / "base_prompt.txt"
         if not config_path.exists():
             raise FileNotFoundError(f"BASE_PROMPT not found at {config_path}")
 

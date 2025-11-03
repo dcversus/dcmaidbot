@@ -13,8 +13,8 @@ def create_app() -> web.Application:
     setup_routes(app)
 
     # Setup middleware
-    from src.api.middleware.analytics import analytics_middleware
+    from src.api.middleware.analytics import AnalyticsMiddleware
 
-    app.middlewares.append(analytics_middleware)
+    app.middlewares.append(AnalyticsMiddleware())
 
     return app

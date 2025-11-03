@@ -175,14 +175,21 @@ class StatusService:
         return base_status
 
     def _read_version_file(self) -> str:
-        """Read version from version.txt.
+        """Read version from CHANGELOG.md.
 
         Returns:
-            str: Version string or 'unknown' if file not found
+            str: Version string or 'unknown' if not found
         """
         try:
-            with open("version.txt", "r") as f:
-                return f.read().strip()
+            with open("CHANGELOG.md", "r") as f:
+                # Read first 10 lines to find version
+                for i, line in enumerate(f):
+                    if i < 10:  # Only check first 10 lines
+                        if line.startswith("## [") and "]" in line:
+                            # Extract version from "## [0.5.0] - 2025-11-03"
+                            version = line.split("]")[0].split("[")[1]
+                            return version
+            return "unknown"
         except FileNotFoundError:
             return "unknown"
         except (IOError, OSError) as e:
