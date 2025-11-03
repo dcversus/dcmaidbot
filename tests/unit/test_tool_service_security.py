@@ -18,7 +18,7 @@ import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from services.tool_service import SecurityConfig, ThreatLevel, ToolService
+from core.services.tool_service import SecurityConfig, ThreatLevel, ToolService
 
 
 class TestSecurityConfig:

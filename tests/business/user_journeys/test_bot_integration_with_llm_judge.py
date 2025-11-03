@@ -16,9 +16,9 @@ import aiohttp
 import psutil
 import pytest
 
-from models.user import User
-from services.llm_service import LLMService
-from services.memory_service import MemoryService
+from core.models.user import User
+from core.services.llm_service import LLMService
+from core.services.memory_service import MemoryService
 
 # Test configuration
 BASE_URL = "http://localhost:8080"  # Bot running locally
@@ -422,7 +422,7 @@ async def test_bot_creates_memories_from_conversation(
     # For now, we'll query directly
     from sqlalchemy import select
 
-    from models.memory import Memory
+    from core.models.memory import Memory
 
     stmt = (
         select(Memory)

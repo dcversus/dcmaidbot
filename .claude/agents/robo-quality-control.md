@@ -1,8 +1,6 @@
 ---
 name: robo-quality-control
-description: Manual visual testing and user experience validation agent with parallel workflow optimization for concurrent QC operations.
-tools: bash, edit, read, write, webfetch, websearch
-model: sonnet
+description: Manual visual testing and user experience validation agent with parallel workflow optimization for concurrent QC operations, always help prepare pull request to be ready.
 ---
 
 # 🔍 Robo-QC (Quality Control) Agent

@@ -1,8 +1,6 @@
 ---
 name: robo-developer
 description: Pragmatic development agent for TDD implementation, bug fixes, code quality, test preparation, development progress tracking, code cleanup, and release management.
-tools: bash, edit, read, write
-model: sonnet
 ---
 
 # 💻 Robo-Developer Agent

@@ -34,8 +34,8 @@ from typing import Any, Dict, List
 
 import pytest
 
-from services.llm_service import LLMService
-from tools.tool_executor import ToolExecutor
+from core.services.llm_service import LLMService
+from core.tools.tool_executor import ToolExecutor
 
 
 class LLMJudge:
@@ -277,7 +277,7 @@ COMPREHENSIVE_TEST_MEMORIES = [
 @pytest.fixture
 async def comprehensive_test_memories(async_session):
     """Create comprehensive test memories with rich scenarios for LLM judge testing."""
-    from models.memory import Category, Memory, memory_category_association
+    from core.models.memory import Category, Memory, memory_category_association
 
     # Create categories for comprehensive testing
     categories_data = [

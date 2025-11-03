@@ -5,10 +5,50 @@ All notable changes to DCMaidBot will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2025-11-03
+
+### Major Changes
+- **Complete Codebase Restructure** - Moved to src/ architecture with proper layering
+- **Unified Entry Point** - Smart mode detection with main.py replacing multiple entry scripts
+- **No More Workarounds** - Removed SKIP_MIGRATION_CHECK and DISABLE_TG flags
 
 ### Added
-- **PRP-011: Canary Deployment System Restructure - Major CI/CD Pipeline Overhaul** 🚀
+- **PRP-005: Emotional Intelligence System** 🧠
+  - Multi-CoT (4-chain) emotional analysis for user messages
+  - VAD emotion tracking (Valence-Arousal-Dominance) with bot mood persistence
+  - Memory commands: `/mood`, `/memories`, `/memorize`, `/relate`
+  - Relationship tracking with trust, friendship, and familiarity metrics
+  - Admin protection from negative mood impact
+  - 35+ memory categories across 6 domains (social, knowledge, interest, episode, meta, system)
+  - Automatic memory creation from conversations with importance scoring
+  - Memory linking system for creating knowledge graphs
+
+### Changed
+- **Architecture**: All backend code moved to `src/` directory with proper separation
+- **Entry Point**: Single `main.py` with automatic mode detection
+- **Development**: Single `./run.sh` command for all development needs
+- **Database**: Fixed migration issues with proper pgvector handling
+- **API**: Unified API structure with cleaner organization
+
+### Deprecated
+- `bot.py` - Replaced by `main.py`
+- `bot_webhook.py` - Replaced by unified entry point
+- `DISABLE_TG` environment variable - Automatic detection now
+- `SKIP_MIGRATION_CHECK` - Migrations work properly without workarounds
+
+### Fixed
+- Database migration conflicts with pgvector extension
+- Import paths after src/ restructure
+- Memory system emotional context persistence
+- Admin protection logic in mood updates
+
+## [0.4.2] - 2025-10-28
+
+### Added
+- **PRP-011: Canary Deployment System** 🚀
+  - Complete GitOps integration with Helm charts
+  - Automated canary deployments with 10% traffic splitting
+  - LLM judge integration for deployment validation
   - **Complete GitOps Integration** - Production-grade deployment automation
     - Helm chart structure (`helm/dcmaidbot/`) with multi-environment support
     - Canary deployment templates with 10% traffic splitting via Istio/NGINX

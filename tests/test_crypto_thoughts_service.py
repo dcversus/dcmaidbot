@@ -18,7 +18,7 @@ async def test_crypto_service():
 
     try:
         # Import the service
-        from services.crypto_thoughts_service import CryptoThoughtsService
+        from core.services.crypto_thoughts_service import CryptoThoughtsService
 
         # Create mock dependencies
         mock_session = AsyncMock()

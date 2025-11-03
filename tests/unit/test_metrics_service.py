@@ -21,7 +21,11 @@ import requests
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from services.metrics_service import MetricsHandler, MetricsService, get_metrics_service
+from core.services.metrics_service import (
+    MetricsHandler,
+    MetricsService,
+    get_metrics_service,
+)
 
 
 class TestMetricsService:

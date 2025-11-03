@@ -6,10 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from services.domik_service import DomikService
-from services.event_service import EventService
-from services.token_service import TokenService
-from tools.domik_tool import DomikTool
+from core.services.domik_service import DomikService
+from core.services.event_service import EventService
+from core.services.token_service import TokenService
+from core.tools.domik_tool import DomikTool
 
 
 class TestWebappEventFlow:

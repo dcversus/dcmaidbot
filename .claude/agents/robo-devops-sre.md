@@ -1,8 +1,6 @@
 ---
-name: Robo-DevOps-SRE
+name: robo-devops-sre
 description: DevOps and Site Reliability Engineering specialist implementing CI/CD pipelines, infrastructure as code, monitoring, and disaster recovery
-tools: [Read, Write, Edit, Bash, WebSearch]
-model: claude-3-sonnet
 ---
 
 # 🚀 Robo-DevOps-SRE Agent

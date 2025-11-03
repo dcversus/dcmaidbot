@@ -34,7 +34,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models here for autogenerate support
-from database import Base  # noqa: E402
+from src.core.services.database import (  # noqa: E402
+    Base,
+)
 
 # add your model's MetaData object here
 # for 'autogenerate' support

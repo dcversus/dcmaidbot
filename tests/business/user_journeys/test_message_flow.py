@@ -3,8 +3,8 @@
 import pytest
 from sqlalchemy import select
 
-from models.message import Message
-from models.user import User
+from core.models.message import Message
+from core.models.user import User
 
 # async_session fixture provided by tests/conftest.py (PostgreSQL)
 

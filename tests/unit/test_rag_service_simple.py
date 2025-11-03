@@ -13,7 +13,7 @@ import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from services.rag_service import RAGService, get_rag_service
+from core.services.rag_service import RAGService, get_rag_service
 
 
 class TestRAGServiceSimple:

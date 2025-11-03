@@ -16,7 +16,7 @@ import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from services.world_service import Chunk, TerrainType, World, WorldService
+from core.services.world_service import Chunk, TerrainType, World, WorldService
 
 
 class TestTerrainType:

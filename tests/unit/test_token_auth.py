@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.admin_token import AdminToken
-from services.token_service import TokenService
+from core.models.admin_token import AdminToken
+from core.services.token_service import TokenService
 
 
 class TestTokenService:

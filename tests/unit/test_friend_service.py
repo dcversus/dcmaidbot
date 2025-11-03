@@ -17,7 +17,7 @@ import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from services.friend_service import FriendService, Friendship, FriendshipStatus
+from core.services.friend_service import FriendService, Friendship, FriendshipStatus
 
 
 class TestFriendshipStatus:

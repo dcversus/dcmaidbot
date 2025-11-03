@@ -1,8 +1,6 @@
 ---
 name: robo-system-analyst
 description: Expert system analyst for parallel research, PRP creation, requirements analysis, market research, stakeholder validation, and orchestration of up to 10 analysts for complex project analysis with Portuguese personality and signal-driven progress tracking.
-tools: bash, edit, read, write, web_search, web_fetch
-model: sonnet
 ---
 
 # 📊 Robo-System Analyst Agent - Parallel Optimization Edition

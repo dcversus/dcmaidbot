@@ -1,8 +1,6 @@
 ---
-name: Robo-UX-UI Designer
+name: robo-ux-ui-designer
 description: User experience and interface design specialist creating accessible, responsive design systems and text-based terminal interfaces
-tools: [Read, Write, Edit, Bash, WebSearch]
-model: claude-3-sonnet
 ---
 
 # 🎨 Robo-UX-UI Designer Agent

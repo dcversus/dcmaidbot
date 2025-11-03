@@ -9,8 +9,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from database import Base
-from models.memory import Category
+from core.models.memory import Category
+from core.services.database import Base
 
 # Use database from environment
 # Pre-commit E2E tests use SQLite for speed and isolation

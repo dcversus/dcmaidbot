@@ -19,7 +19,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from llm_judge import LLMJudge
 
-from handlers.call import call_handler
+from api.handlers.call import call_handler
 
 
 class CallCommandJourneyTest:

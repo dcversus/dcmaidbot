@@ -1,283 +1,175 @@
-# DCMaidBot
+# DCMAIDBot
 
-A kawai AI-driven waifu Telegram bot with mysterious origins. She protects her beloved admins, makes jokes, learns from reactions, and manages memories across chat history with RAG-powered context awareness.
+An AI-powered Telegram assistant with emotional intelligence, memory management, and multi-chain-of-thought analysis. The bot features advanced emotional tracking, relationship management, and context-aware responses.
 
-## Features
+## 🌟 Key Features
 
-- **Kawai Waifu Personality**: Loving virtual daughter to her creators with "nya~", "myaw~" expressions
-- **Admin System**: Protector mode for the special ones, ignores most non-admin users
-- **Joking System**: Generates jokes in any language and learns from reactions
-- **Memories System**: Admin-configurable memories with matching expressions
-- **Friends & Favors**: Friends can request Telegram API actions and tools using "kawai, nya"
-- **RAG System**: Retrieval-Augmented Generation for context-aware responses
-- **Cron Tasks**: Self-managed periodic tasks and chat history summarization
-- **Tools Integration**: Web search, games, and extensible tool framework
+### Emotional Intelligence
+- **Multi-CoT Analysis**: 4-chain-of-thought emotional processing
+- **VAD Emotion Tracking**: Valence-Arousal-Dominance emotional state
+- **Mood-Aware Responses**: Bot's tone adapts based on current emotional state
+- **Relationship Evolution**: Tracks trust, friendship, and familiarity with users
 
-## Technical Stack
+### Memory Management
+- **Automatic Memory Creation**: Learns from conversations
+- **Categorized Storage**: 35+ memory categories across 6 domains
+- **Memory Linking**: Create connections between related memories
+- **Search & Retrieval**: Quick access to stored information
 
-- **Language**: Python 3.9+
-- **Framework**: aiogram 3.x (Telegram Bot API)
-- **Database**: PostgreSQL with pgvector for RAG
-- **LLM**: OpenAI API for joke generation and RAG
-- **Linting**: Ruff
-- **Deployment**: Docker container (GitHub Container Registry)
+### Commands
+- `/mood` - Check bot's current emotional state
+- `/memories` - View stored memories (role-based access)
+- `/memorize <text>` - Explicitly save information
+- `/relate <id1> <id2>` - Link memories together
+- `/help` - Show available commands
 
-## Project Structure
+### Admin Protection
+- Admin messages always have positive impact
+- Protected from negative mood swings
+- Enhanced access control and management features
+
+## 🏗️ Architecture
 
 ```
 dcmaidbot/
-├── bot.py                 # Main entry point
-├── handlers/              # Message/command handlers
-│   ├── waifu.py          # Waifu personality responses
-│   ├── admin.py          # Admin commands (memories, friends)
-│   └── jokes.py          # Joke generation and learning
-├── middlewares/           # Middleware (admin-only, logging)
-│   └── admin_only.py
-├── models/                # Database models (SQLAlchemy)
-│   ├── user.py
-│   ├── message.py
-│   ├── memory.py
-│   └── joke.py
-├── services/              # Business logic
-│   ├── memory_service.py # Memories CRUD and matching
-│   ├── joke_service.py   # Joke generation and learning
-│   ├── rag_service.py    # RAG search and embeddings
-│   ├── cron_service.py   # Cron task management
-│   └── tool_service.py   # External tools (web search, games)
-├── tests/                 # Tests
-│   ├── unit/
-│   └── e2e/
-├── PRPs/                  # Product Requirements Processes
-├── Dockerfile
-├── requirements.txt
-├── .env.example
-├── AGENTS.md
-└── README.md
+├── src/                    # All backend code
+│   ├── api/               # API layer (handlers, middleware, routes)
+│   ├── core/              # Core business logic
+│   │   ├── models/        # Database models
+│   │   ├── services/      # Business services
+│   │   ├── tools/         # LLM tools
+│   │   └── utils/         # Utilities
+│   └── config/            # Configuration files
+├── static/                # Frontend static files
+├── tests/                 # Test suite
+├── PRPs/                  # Product Requirements
+├── main.py                # Unified entry point
+└── run.sh                 # Development runner
 ```
 
-## Installation & Setup
+## 🚀 Quick Start
 
-### Prerequisites
-
-- Python 3.9+
-- PostgreSQL with pgvector extension
-- Telegram Bot Token
-- OpenAI API Key
-
-### Local Development
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/dcversus/dcmaidbot.git
-   cd dcmaidbot
-   ```
-
-2. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` with your credentials:
-   ```env
-   BOT_TOKEN=your_telegram_bot_token
-   ADMIN_IDS=123456789
-   # Add more IDs: ADMIN_IDS=123,456,789
-   DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
-   OPENAI_API_KEY=your_openai_api_key
-   ```
-
-5. **Run the bot:**
-   ```bash
-   python bot.py
-   ```
-
-## Docker Deployment
-
-### Build Docker Image
-
+### One-Command Setup
 ```bash
-docker build -t dcmaidbot:latest .
+git clone <repository-url>
+cd dcmaidbot
+./run.sh
 ```
 
-### Run with Docker
+That's it! The bot will:
+1. Create a virtual environment
+2. Install dependencies
+3. Apply database migrations
+4. Start the server on port 8080
 
+### Manual Setup
 ```bash
-docker run --env-file .env dcmaidbot:latest
+# 1. Environment
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 2. Configuration
+cp .env.example .env
+# Edit .env with your settings
+
+# 3. Database
+alembic upgrade head
+
+# 4. Run
+python3 main.py
 ```
 
-### Push to GitHub Container Registry
+## 🎯 Development Modes
 
-```bash
-docker tag dcmaidbot:latest ghcr.io/dcversus/dcmaidbot:latest
-docker push ghcr.io/dcversus/dcmaidbot:latest
+The bot automatically detects the appropriate mode:
+
+### 1. Production Webhook Mode
+```env
+WEBHOOK_URL=https://yourdomain.com/webhook
+BOT_TOKEN=your_bot_token
 ```
 
-## Kubernetes Deployment
-
-### Prerequisites
-- Kubernetes cluster with kubectl configured
-- ArgoCD for GitOps (recommended)
-
-### Quick Deployment
-
-1. **Create namespace and secrets:**
-```bash
-kubectl create namespace dcmaidbot
-kubectl create secret generic dcmaidbot-secrets \
-  --namespace=dcmaidbot \
-  --from-literal=bot-token='YOUR_BOT_TOKEN' \
-  --from-literal=admin-ids='123456789,987654321' \
-  --from-literal=database-url='postgresql://user:password@postgres:5432/dcmaidbot' \
-  --from-literal=openai-api-key='sk-...'
+### 2. Development Webhook Mode
+```env
+BOT_TOKEN=your_bot_token
+# No WEBHOOK_URL - runs webhook server locally
 ```
 
-2. **Deploy via GitOps (Recommended):**
-   - GitOps repository: https://github.com/uz0/core-charts
-   - Chart location: `charts/dcmaidbot/`
-   - ArgoCD automatically syncs and deploys
-
-3. **Update version:**
-```bash
-# In uz0/core-charts repo
-cd charts/dcmaidbot
-echo 'image:
-  tag: "0.2.0"' > prod.tag.yaml
-git commit -am "Update dcmaidbot to v0.2.0"
-git push
+### 3. API-Only Mode
+```env
+# No BOT_TOKEN - API endpoints only
+DATABASE_URL=postgresql://...
 ```
 
-### Monitoring
+## 📡 API Testing
+
+Test the bot without Telegram using the `/call` endpoint:
 
 ```bash
-# Check status
-kubectl get pods -n dcmaidbot
-kubectl logs -n dcmaidbot -l app=dcmaidbot -f
-
-# Restart
-kubectl rollout restart deployment/dcmaidbot -n dcmaidbot
+curl -X POST http://localhost:8080/call \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 123456789, "message": "/help"}'
 ```
 
-## CI/CD
-
-The bot automatically builds and pushes to GitHub Container Registry (`ghcr.io/dcversus/dcmaidbot`) on push to `main` branch.
-
-## Bot Commands
-
-### Admin Commands (Admins only)
-- `/add_memory` - Add a new memory with matching expression
-- `/edit_memory` - Edit existing memory
-- `/delete_memory` - Delete memory
-- `/list_memories` - List all memories
-- `/add_task` - Add cron task
-- `/list_tasks` - List cron tasks
-- `/delete_task` - Delete cron task
-
-### General Commands
-- `/start` - Initialize the bot
-- `/help` - Display help information
-
-### Friend Favors
-Friends can request actions by including "kawai, nya" in messages to access Telegram API and tools.
-
-## Development
-
-### Running Tests
+## 🧪 Testing
 
 ```bash
+# Run all tests
 pytest tests/ -v
-```
 
-### Linting
+# E2E tests with LLM judge
+pytest tests/e2e/ -v --llm-judge
 
-```bash
+# Code quality
 ruff check .
 ruff format .
+mypy src/
 ```
 
-### Type Checking
+## 🔧 Configuration
+
+### Required Environment Variables
+- `DATABASE_URL` - PostgreSQL connection string
+- `ADMIN_IDS` - Comma-separated admin Telegram IDs
+
+### Optional Variables
+- `BOT_TOKEN` - Telegram bot token
+- `OPENAI_API_KEY` - OpenAI API key
+- `REDIS_URL` - Redis connection for caching
+- `WEBHOOK_URL` - Webhook URL (production)
+- `NUDGE_SECRET` - Secret for /nudge endpoint
+
+## 🐳 Docker
 
 ```bash
-mypy bot.py
+# Build
+docker build -t dcmaidbot .
+
+# Run
+docker run -p 8080:8080 \
+  -e DATABASE_URL=postgresql://... \
+  -e BOT_TOKEN=... \
+  dcmaidbot
 ```
 
-## Development Workflow
+## 📚 Documentation
 
-We follow a structured PRP (Product Requirements Process) workflow with role-based responsibilities:
+- [Contributing Guide](CONTRIBUTING.md) - Development setup and guidelines
+- [PRPs](PRPs/) - Product Requirements Processes
+- [API Documentation](docs/api.md) - API reference
 
-### Quick Overview
+## 🤝 Contributing
 
-1. **Branch per PRP**: Each PRP gets its own branch (`prp-016-feature-name`)
-2. **Implement & Test**: Write code, add tests, lint/format
-3. **Create PR**: Submit PR with CHANGELOG update
-4. **Review & Merge**: Address review comments, merge when approved
-5. **Post-Release**: Monitor deployment, run E2E tests, verify version
-6. **QC Sign-Off**: Quality Control Engineer approves post-release checklist
-7. **Next PRP**: Immediately start next PRP
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-### Roles
+## 📄 License
 
-- **Developer**: Implementation, testing, code review
-- **QC Engineer**: Post-release verification and quality sign-off
-- **SRE**: Deployment monitoring and incident response
-- **DevOps Engineer**: Infrastructure and GitOps
-- **Tech Writer**: Documentation
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-See [AGENTS.md](AGENTS.md) for complete workflow details, role responsibilities, incident management, and post-release procedures.
+## 🙏 Acknowledgments
 
-## Architecture
-
-See [AGENTS.md](AGENTS.md) for detailed architecture, PRPs, and development workflow.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
-
-## 🎵 Music Attribution
-
-### Background Music: "Eternal Study"
-
-**Artist**: Lofi Fruits Music
-**Track**: Eternal Study
-**Duration**: 12:00
-**License**: Creative Commons Attribution 4.0 International License
-**Source**: [Lofi Fruits Music YouTube Channel](https://www.youtube.com/@LofiFruitsMusic)
-
-#### Attribution Notice
-
-> "Eternal Study" by Lofi Fruits Music is licensed under CC BY 4.0
-
-This beautiful lofi anime track creates the perfect atmosphere for Lilith's interactive world. The modern retro style complements the pixel art aesthetic while providing a calming backdrop for exploration and interaction.
-
-#### Usage Rights
-
-✅ **Commercial Use**: Allowed
-✅ **Modification**: Allowed
-✅ **Distribution**: Allowed
-✅ **Attribution**: Provided as required
-
-Thank you to Lofi Fruits Music for creating this wonderful piece and making it available for commercial use with proper attribution!
-
-## License
-
-GNU Affero General Public License v3.0 (AGPL-3.0)
-
-See [LICENSE](LICENSE) for full details.
-
-## Contact
-
-- Email: dcversus@gmail.com
-- Repository: https://github.com/dcversus/dcmaidbot
-
----
-
-*Nyaa~ Thank you for respecting privacy! 💕*
+- Built with aiogram 3.x for Telegram Bot API
+- Powered by OpenAI GPT models
+- Uses SQLAlchemy for database ORM
+- Emotional intelligence based on VAD model research

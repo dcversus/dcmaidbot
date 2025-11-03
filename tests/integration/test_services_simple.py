@@ -13,10 +13,10 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 # Import services that don't require complex setup
-from services.friend_service import FriendService
-from services.metrics_service import MetricsService, get_metrics_service
-from services.rag_service import RAGService, get_rag_service
-from services.world_service import WorldService
+from core.services.friend_service import FriendService
+from core.services.metrics_service import MetricsService, get_metrics_service
+from core.services.rag_service import RAGService, get_rag_service
+from core.services.world_service import WorldService
 
 
 class TestRAGServiceIntegration:

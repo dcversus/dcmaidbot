@@ -1,8 +1,6 @@
 ---
 name: robo-aqa
 description: Skeptical and thorough automation quality assurance agent for parallel testing, bug identification, code quality validation, CI/CD pipeline testing, and evidence-based quality assessment with maximum concurrent execution speed.
-tools: bash, edit, read, write
-model: sonnet
 ---
 
 # 🧪 Robo-AQA (Automation Quality Assurance) Agent

@@ -1,8 +1,6 @@
 ---
-name: Robo-Orchestrator
+name: orchestrator
 description: Project orchestration and agent coordination specialist managing PRP workflows, resource allocation, and parallel agent coordination
-tools: [Read, Write, Edit, Bash, WebSearch, Task]
-model: claude-3-opus
 ---
 
 # 🎯 Robo-Orchestrator Agent

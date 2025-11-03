@@ -9,7 +9,7 @@ import os
 import pytest
 from aiogram import Bot
 
-from services.auth_service import AuthService
+from core.services.auth_service import AuthService
 
 
 class TestExternalToolsIntegration:
@@ -47,7 +47,7 @@ class TestExternalToolsIntegration:
         assert auth_service.is_admin(admin_user_id), "Test user should be admin"
 
         # Import and test the call handler
-        from handlers.call import handle_command
+        from api.handlers.call import handle_command
 
         # This will test the actual tool execution through the bot
         try:
@@ -71,7 +71,7 @@ class TestExternalToolsIntegration:
     @pytest.mark.asyncio
     async def test_admin_can_use_curl_via_call(self, bot_instance, admin_user_id):
         """Test admin can use curl requests through call command."""
-        from handlers.call import handle_command
+        from api.handlers.call import handle_command
 
         try:
             response = await handle_command(
@@ -90,7 +90,7 @@ class TestExternalToolsIntegration:
     @pytest.mark.asyncio
     async def test_url_allowlist_management_via_call(self, bot_instance, admin_user_id):
         """Test URL allowlist management through call command."""
-        from handlers.call import handle_command
+        from api.handlers.call import handle_command
 
         try:
             response = await handle_command(
@@ -107,7 +107,7 @@ class TestExternalToolsIntegration:
     @pytest.mark.asyncio
     async def test_non_admin_access_denied(self, bot_instance):
         """Test that non-admin users cannot access tools."""
-        from handlers.call import handle_command
+        from api.handlers.call import handle_command
 
         try:
             response = await handle_command(
@@ -130,7 +130,7 @@ class TestExternalToolsIntegration:
     @pytest.mark.asyncio
     async def test_tool_statistics_via_call(self, bot_instance, admin_user_id):
         """Test getting tool usage statistics through call command."""
-        from handlers.call import handle_command
+        from api.handlers.call import handle_command
 
         try:
             response = await handle_command(

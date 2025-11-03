@@ -15,11 +15,11 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 # Import all services
-from services.friend_service import FriendService
-from services.metrics_service import MetricsService, get_metrics_service
-from services.rag_service import RAGService, get_rag_service
-from services.tool_service import ToolService
-from services.world_service import WorldService
+from core.services.friend_service import FriendService
+from core.services.metrics_service import MetricsService, get_metrics_service
+from core.services.rag_service import RAGService, get_rag_service
+from core.services.tool_service import ToolService
+from core.services.world_service import WorldService
 
 
 class TestRAGServiceIntegration:
@@ -241,10 +241,10 @@ class TestFriendServiceIntegration:
         service = FriendService()
 
         # Test operations without database
-        result = await service.send_friend_request(123, 456)
+        await service.send_friend_request(123, 456)
         # Should handle gracefully without database
 
-        result = await service.accept_friend_request(123, 456)
+        await service.accept_friend_request(123, 456)
         # Should handle gracefully without database
 
         await service.get_friends_list(123)

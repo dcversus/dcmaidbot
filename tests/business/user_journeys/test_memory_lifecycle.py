@@ -13,8 +13,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from services.llm_service import LLMService
-from services.memory_service import MemoryService
+from core.services.llm_service import LLMService
+from core.services.memory_service import MemoryService
 
 # async_session and test_categories fixtures provided by tests/conftest.py (PostgreSQL)
 

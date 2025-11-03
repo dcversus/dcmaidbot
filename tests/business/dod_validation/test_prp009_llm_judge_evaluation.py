@@ -225,7 +225,7 @@ class TestPRP009LLMJudgeEvaluation:
     @pytest.mark.asyncio
     async def test_real_bot_functionality_evaluation(self):
         """Test real bot functionality as part of evaluation."""
-        from services.auth_service import AuthService
+        from core.services.auth_service import AuthService
 
         # Get admin user ID
         admin_ids = os.getenv("ADMIN_IDS", "").split(",")

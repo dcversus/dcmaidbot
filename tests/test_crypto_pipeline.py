@@ -82,7 +82,7 @@ async def test_complete_crypto_pipeline():
 
     try:
         # Import the real crypto service
-        from services.crypto_thoughts_service import CryptoThoughtsService
+        from core.services.crypto_thoughts_service import CryptoThoughtsService
 
         # Create dependencies
         mock_session = MockAsyncSession()
@@ -164,7 +164,7 @@ async def test_complete_crypto_pipeline():
         import sys
         from unittest.mock import MagicMock
 
-        from services.status_service import StatusService
+        from core.services.status_service import StatusService
 
         mock_redis_module = MagicMock()
         mock_redis_module.redis_service = mock_redis

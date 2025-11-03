@@ -1,6 +1,0 @@
-{
-  "validation_failed": true,
-  "error": "'StatusJudge' object has no attribute 'generate_recommendations'",
-  "timestamp": "2025-11-03T00:54:08.320295",
-  "environment": "local"
-}

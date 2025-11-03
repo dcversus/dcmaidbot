@@ -1,59 +1,57 @@
-# Environment variables
-.env
-
-# Python cache files
 __pycache__/
-*.py[cod]
-*$py.class
-.mypy_cache
-.pytest_cache
-.ruff_cache
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.ruff_cache/
 
-# Virtual environment
-venv/
-env/
-ENV/
+# Database
+*.db
+*.sqlite
+*.sqlite3
+test.db
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
 
 # Logs
-logs/
 *.log
 
-# IDE files
-.idea/
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
 .vscode/
+.idea/
 *.swp
 *.swo
 
-# GitHub Container Registry
-ghcr.io/
+# Virtual environments
+venv/
+env/
 
-# Storage
-storage/
-
-# Pyrogram session files (security-sensitive)
-tests/*.session
-tests/*.session-journal
-*.session
-*.session-journal
-
-# SQLite databases (should never be in version control)
-*.db
-*.db-journal
-*.sqlite
-*.sqlite3
-
-# Cache directories (should not be in version control)
-cache/
-.cache/
-
-# Output directories (generated, should not be in version control)
-output/
-build/
-dist/
-
-# AI generated assets
-static/output/
-static/cache/
-
-# rest
-htmlcov
+# Local files
+version.txt

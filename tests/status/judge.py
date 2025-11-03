@@ -22,8 +22,8 @@ from dotenv import load_dotenv
 from llm_judge import LLMJudge
 
 # Import local modules
-from services.llm_service import LLMService
-from services.status_enhanced_service import EnhancedStatusService
+from core.services.llm_service import LLMService
+from core.services.status_enhanced_service import EnhancedStatusService
 
 load_dotenv()
 

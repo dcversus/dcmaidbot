@@ -19,8 +19,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from llm_judge import LLMJudge
 
-from handlers.status import handle_status_command
-from services.crypto_thoughts_service import CryptoThoughtsService
+from api.handlers.status import handle_status_command
+from core.services.crypto_thoughts_service import CryptoThoughtsService
 
 
 class StatusVerificationToolsTest:
