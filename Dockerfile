@@ -1,58 +1,74 @@
-# Simplified single-stage build for reliability
+# Multi-stage build for smaller final image
+FROM python:3.13-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# System build dependencies are only required while installing wheels
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
+
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip \
+    && /opt/venv/bin/pip install -r requirements.txt
+
 FROM python:3.13-slim
 
-# Build arguments for deployment information
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PATH="/opt/venv/bin:$PATH"
+
 ARG GIT_COMMIT=unknown
 ARG IMAGE_TAG=latest
 ARG BUILD_TIME=unknown
 
-# Set as environment variables
-ENV GIT_COMMIT=${GIT_COMMIT}
-ENV IMAGE_TAG=${IMAGE_TAG}
-ENV BUILD_TIME=${BUILD_TIME}
+ENV GIT_COMMIT=${GIT_COMMIT} \
+    IMAGE_TAG=${IMAGE_TAG} \
+    BUILD_TIME=${BUILD_TIME}
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    libpq-dev \
+# Runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpq5 \
+        wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN addgroup --system app && adduser --system --ingroup app app
 
-# Copy application code
-COPY bot.py .
-COPY bot_webhook.py .
-COPY database.py .
-COPY version.txt .
-COPY CHANGELOG.md .
-COPY alembic.ini .
-COPY alembic/ ./alembic/
-COPY handlers/ ./handlers/
-COPY middlewares/ ./middlewares/
-COPY models/ ./models/
-COPY services/ ./services/
-COPY tools/ ./tools/
-COPY static/ ./static/
-COPY config/ ./config/
-COPY conftest.py .
+COPY --from=builder /opt/venv /opt/venv
 
-# Create non-root user and set ownership
-RUN useradd --create-home --shell /bin/bash app \
-    && chown -R app:app /app
+COPY --chown=app:app bot.py ./
+COPY --chown=app:app bot_webhook.py ./
+COPY --chown=app:app database.py ./
+COPY --chown=app:app version.txt ./
+COPY --chown=app:app CHANGELOG.md ./
+COPY --chown=app:app alembic.ini ./
+COPY --chown=app:app alembic/ ./alembic/
+COPY --chown=app:app handlers/ ./handlers/
+COPY --chown=app:app middlewares/ ./middlewares/
+COPY --chown=app:app models/ ./models/
+COPY --chown=app:app services/ ./services/
+COPY --chown=app:app tools/ ./tools/
+COPY --chown=app:app static/ ./static/
+COPY --chown=app:app config/ ./config/
+COPY --chown=app:app conftest.py ./
 
 USER app
 
-# Health check using /health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-# Expose webhook port
 EXPOSE 8080
 
-# Run bot in webhook mode if WEBHOOK_MODE=true, else polling
 CMD ["sh", "-c", "if [ \"$WEBHOOK_MODE\" = \"true\" ]; then python -u bot_webhook.py; else python -u bot.py; fi"]
