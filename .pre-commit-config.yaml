@@ -42,6 +42,16 @@ repos:
   # Run tests before commit
   - repo: local
     hooks:
+      # Tools documentation validation (progressive enforcement)
+      # Validates that tool Python files have corresponding documentation
+      # Provides helpful guidance and auto-fix suggestions
+      - id: validate-tool-docs
+        name: validate-tool-docs
+        entry: python3 scripts/validate_tool_documentation.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
       # Unit tests (fast, no external dependencies)
       - id: pytest-unit
         name: pytest-unit

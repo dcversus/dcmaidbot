@@ -1,110 +1,33 @@
-/**
- * Type definitions for PRP-016 Multi-Room Interactive House Exploration Frontend
- */
-
 export type RenderText = {
   format?: string;
   text?: string;
   env?: string;
   font: string;
+  font_size?: number;
   color: string;
-  when?: "hover" | "click" | undefined;
+  when?: "hover"|"click"|undefined;
 };
 
 export type WidgetStateMeta = {
-  state: string;
-  overlay: string;
-  bbox: [number, number, number, number];
-  render_text?: RenderText;
-  region?: {
-    mode: "cells" | "full";
-    cells?: number[][];
-  };
+  state:string;
+  overlay:string;
+  bbox:[number,number,number,number];
+  render_text?:RenderText;
 };
 
 export type WidgetMeta = {
-  id: string;
-  states: WidgetStateMeta[];
+  id:string;
+  states:WidgetStateMeta[];
 };
 
 export type MapMeta = {
-  W: number;
-  H: number;
-  tile: number;
-  widgets: WidgetMeta[];
-  base_image: string;
-  world_name: string;
-  floor_name: string;
-  location_name: string;
-  generated_at: string;
+  W:number;
+  H:number;
+  tile:number;
+  widgets:WidgetMeta[];
 };
 
-export type WorldConfig = {
-  world_name: string;
-  version: string;
-  style: {
-    art_style: string;
-    palette: string;
-    camera: string;
-    tile_size: number;
-    grid: { cols: number; rows: number };
-    hiDPI_scale: number;
-  };
-  floors: FloorConfig[];
-};
-
-export type FloorConfig = {
-  id: string;
-  name: string;
-  seed_offset?: number;
-  locations: LocationConfig[];
-};
-
-export type LocationConfig = {
-  id: string;
-  name: string;
-  seed_offset?: number;
-  description_prompt: string;
-  bounds: { cols: number; rows: number };
-  connections?: ConnectionConfig[];
-  widgets?: WidgetConfig[];
-};
-
-export type ConnectionConfig = {
-  to: string;
-  type: string;
-  grid: { x: number; y: number };
-  from_side: string;
-  to_side: string;
-  widget_id?: string;
-  bidirectional?: boolean;
-};
-
-export type WidgetConfig = {
-  id: string;
-  type: string;
-  name: string;
-  grid: { x: number; y: number; w: number; h: number };
-  prompt_base?: string;
-  states: WidgetStateConfig[];
-  region?: {
-    mode: "cells" | "full";
-    cells?: number[][];
-  };
-  config?: Record<string, any>;
-};
-
-export type WidgetStateConfig = {
-  state: string;
-  prompt?: string;
-  region?: {
-    mode: "cells" | "full";
-    cells?: number[][];
-  };
-  render_text?: RenderText;
-};
-
-export type RenderState = {
+export type AppState = {
   floorId: string;
   locId: string;
   base: HTMLImageElement;
@@ -112,65 +35,5 @@ export type RenderState = {
   meta: MapMeta;
   hoverWidgetId?: string;
   clickWidgetId?: string;
-  isLoading: boolean;
-  error?: string;
+  worldConfig?: any;
 };
-
-
-export type PerformanceMetrics = {
-  loadTime: number;
-  renderTime: number;
-  cacheHitRate: number;
-  memoryUsage: number;
-  fps: number;
-};
-
-export type WorldRendererOptions = {
-  canvasId: string;
-  enableDebugMode?: boolean;
-  enablePerformanceMonitoring?: boolean;
-  pixelPerfectRendering?: boolean;
-};
-
-export type NavigationState = {
-  currentFloor: string;
-  currentLocation: string;
-  availableConnections: ConnectionConfig[];
-  transitionProgress: number;
-  isTransitioning: boolean;
-  targetLocation?: { floorId: string; locationId: string };
-  transitionStartTime?: number;
-  transitionDuration: number;
-};
-
-export type ConnectionWidget = {
-  id: string;
-  type: "connection";
-  connection: ConnectionConfig;
-  name: string;
-  grid: { x: number; y: number; w: number; h: number };
-  states: WidgetStateConfig[];
-};
-
-export type InteractionEvent = {
-  type: "hover" | "click" | "navigate" | "connection";
-  widgetId?: string;
-  location?: { floorId: string; locationId: string };
-  connection?: ConnectionConfig;
-  timestamp: number;
-  position: { x: number; y: number };
-};
-
-export type DebugInfo = {
-  fps: number;
-  renderTime: number;
-  cacheStats: {
-    hits: number;
-    misses: number;
-    total: number;
-  };
-  loadedAssets: number;
-  totalAssets: number;
-  currentHover: string | null;
-  currentClick: string | null;
-}

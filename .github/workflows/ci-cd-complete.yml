@@ -1,0 +1,911 @@
+name: Complete CI/CD Pipeline with Business Test Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: 'Target environment'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      run_business_tests:
+        description: 'Run business value tests with LLM judge'
+        required: false
+        default: true
+        type: boolean
+      force_deploy:
+        description: 'Force deployment bypassing some checks'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.13'
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# Global permissions for the workflow
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+  issues: write
+  checks: write
+  statuses: write
+
+jobs:
+  # Phase 1: Code Quality and Security
+  code-quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    outputs:
+      quality_passed: ${{ steps.quality-check.outputs.passed }}
+      security_scan_passed: ${{ steps.security-scan.outputs.passed }}
+      test_coverage: ${{ steps.coverage.outputs.percentage }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better analysis
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install coverage pytest-cov bandit safety mypy
+
+    - name: Lint with Ruff
+      id: lint
+      run: |
+        ruff check . --output-format=json > ruff-results.json || echo "lint_issues=true" >> $GITHUB_OUTPUT
+        ruff format --check . || echo "format_issues=true" >> $GITHUB_OUTPUT
+
+        # Check if any issues found
+        if [[ -f ruff-results.json && $(cat ruff-results.json | jq 'length') -gt 0 ]]; then
+          echo "lint_failed=true" >> $GITHUB_OUTPUT
+        else
+          echo "lint_failed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Type checking with MyPy
+      id: mypy
+      run: |
+        mypy bot.py --ignore-missing-imports --json-report mypy-report || echo "mypy_failed=true" >> $GITHUB_OUTPUT
+        if [[ -f mypy-report/results.json ]]; then
+          mypy_errors=$(cat mypy-report/results.json | jq 'length')
+          echo "mypy_error_count=$mypy_errors" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Security scan with Bandit
+      id: security-scan
+      run: |
+        bandit -r . -f json -o bandit-report.json || echo "bandit_issues=true" >> $GITHUB_OUTPUT
+        if [[ -f bandit-report.json ]]; then
+          high_issues=$(cat bandit-report.json | jq '[.results[] | select(.issue_severity == "HIGH")] | length')
+          medium_issues=$(cat bandit-report.json | jq '[.results[] | select(.issue_severity == "MEDIUM")] | length')
+          echo "high_issues=$high_issues" >> $GITHUB_OUTPUT
+          echo "medium_issues=$medium_issues" >> $GITHUB_OUTPUT
+
+          # Security passes if no HIGH issues
+          if [[ $high_issues -eq 0 ]]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "passed=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Dependency security check
+      id: deps-scan
+      run: |
+        safety check --json --output safety-report.json || echo "safety_issues=true" >> $GITHUB_OUTPUT
+        if [[ -f safety-report.json ]]; then
+          vuln_count=$(cat safety-report.json | jq 'length')
+          echo "vulnerability_count=$vuln_count" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run unit tests with coverage
+      id: coverage
+      run: |
+        pytest tests/unit/ -v --cov=. --cov-report=json --cov-report=html --cov-report=xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
+
+        if [[ -f coverage.json ]]; then
+          coverage_percent=$(cat coverage.json | jq '.totals.percent_covered')
+          echo "percentage=$coverage_percent" >> $GITHUB_OUTPUT
+
+          # Check if coverage meets threshold (80%)
+          if (( $(echo "$coverage_percent >= 80" | bc -l) )); then
+            echo "meets_threshold=true" >> $GITHUB_OUTPUT
+          else
+            echo "meets_threshold=false" >> $GITHUB_OUTPUT
+          fi
+        fi
+
+    - name: Quality gate check
+      id: quality-check
+      run: |
+        lint_failed=${{ steps.lint.outputs.lint_failed }}
+        format_issues=${{ steps.lint.outputs.format_issues }}
+        mypy_failed=${{ steps.mypy.outputs.mypy_failed }}
+        tests_failed=${{ true }}
+
+        # Check if all quality checks pass
+        if [[ "$lint_failed" == "false" && "$format_issues" != "true" && "$mypy_failed" != "true" && "$tests_failed" != "true" ]]; then
+          echo "passed=true" >> $GITHUB_OUTPUT
+          echo "status=✅ All quality checks passed" >> $GITHUB_OUTPUT
+        else
+          echo "passed=false" >> $GITHUB_OUTPUT
+          echo "status=❌ Quality checks failed" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: quality-reports
+        path: |
+          ruff-results.json
+          mypy-report/
+          bandit-report.json
+          safety-report.json
+          coverage.json
+          htmlcov/
+          coverage.xml
+
+    - name: Comment PR with quality results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          let summary = '## 🔍 Code Quality & Security Report\n\n';
+
+          // Linting results
+          const lintFailed = '${{ steps.lint.outputs.lint_failed }}';
+          summary += lintFailed === 'true' ? '❌ **Linting**: Issues found\n' : '✅ **Linting**: No issues\n';
+
+          // Security results
+          const highIssues = '${{ steps.security-scan.outputs.high_issues }}';
+          const mediumIssues = '${{ steps.security-scan.outputs.medium_issues }}';
+          summary += `🔒 **Security**: ${highIssues} high, ${mediumIssues} medium issues\n`;
+
+          // Coverage results
+          const coverage = '${{ steps.coverage.outputs.percentage }}';
+          const meetsThreshold = '${{ steps.coverage.outputs.meets_threshold }}';
+          summary += meetsThreshold === 'true'
+            ? `✅ **Coverage**: ${coverage}% (≥80%)\n`
+            : `⚠️ **Coverage**: ${coverage}% (<80%)\n`;
+
+          summary += '\n**Quality Gate**: ' + ('${{ steps.quality-check.outputs.passed }}' === 'true' ? '✅ PASSED' : '❌ FAILED');
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
+  # Phase 2: Business Test Execution with LLM Judge
+  business-tests:
+    name: Business Value Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    if: github.event.inputs.run_business_tests != 'false'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: dcmaidbot_business
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    outputs:
+      business_tests_passed: ${{ steps.business-results.outputs.passed }}
+      llm_judge_score: ${{ steps.llm-judge.outputs.overall_score }}
+      business_test_coverage: ${{ steps.business-results.outputs.coverage }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-asyncio playwright
+
+    - name: Install Playwright browsers
+      run: |
+        playwright install chromium
+
+    - name: Wait for services
+      run: |
+        timeout 60 bash -c 'until pg_isready -h localhost -p 5432; do sleep 2; done'
+        timeout 60 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 2; done'
+
+    - name: Run business E2E tests
+      id: business-tests
+      env:
+        DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/dcmaidbot_business
+        REDIS_URL: redis://localhost:6379/0
+        ENVIRONMENT: test
+        DISABLE_TG: "true"
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        # Run business-focused E2E tests
+        pytest tests/business/user_journeys/ -v \
+          --html=business-tests-report.html \
+          --self-contained-html \
+          --json-report=business-tests.json \
+          --json-report-file=business-tests.json || echo "business_tests_failed=true" >> $GITHUB_OUTPUT
+
+        # Run PRP compliance tests
+        pytest tests/business/dod_validation/ -v \
+          --html=dod-tests-report.html \
+          --self-contained-html \
+          --json-report=dod-tests.json \
+          --json-report-file=dod-tests.json || echo "dod_tests_failed=true" >> $GITHUB_OUTPUT
+
+    - name: Analyze business test results
+      id: business-results
+      run: |
+        # Analyze test results
+        total_tests=0
+        passed_tests=0
+        failed_tests=0
+
+        if [[ -f business-tests.json ]]; then
+          total_tests=$(cat business-tests.json | jq '.summary.total')
+          passed_tests=$(cat business-tests.json | jq '.summary.passed')
+          failed_tests=$(cat business-tests.json | jq '.summary.failed')
+        fi
+
+        echo "total_tests=$total_tests" >> $GITHUB_OUTPUT
+        echo "passed_tests=$passed_tests" >> $GITHUB_OUTPUT
+        echo "failed_tests=$failed_tests" >> $GITHUB_OUTPUT
+
+        # Calculate coverage
+        if [[ $total_tests -gt 0 ]]; then
+          coverage=$(echo "scale=2; $passed_tests / $total_tests * 100" | bc)
+          echo "coverage=$coverage" >> $GITHUB_OUTPUT
+
+          # Check if business tests pass
+          if [[ $failed_tests -eq 0 ]]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "passed=false" >> $GITHUB_OUTPUT
+          echo "coverage=0" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run LLM Judge Evaluation
+      id: llm-judge
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/dcmaidbot_business
+        REDIS_URL: redis://localhost:6379/0
+      run: |
+        # Run status judge demo
+        python tests/status/llm_judge.py --demo \
+          --output-file=llm-judge-results.json \
+          --environment=ci || echo "llm_judge_failed=true" >> $GITHUB_OUTPUT
+
+        # Analyze LLM judge results
+        if [[ -f llm-judge-results.json ]]; then
+          overall_score=$(cat llm-judge-results.json | jq -r '.evaluation.overall_score // 0.5')
+          confidence=$(cat llm-judge-results.json | jq -r '.evaluation.confidence // 0.5')
+          is_acceptable=$(cat llm-judge-results.json | jq -r '.evaluation.is_acceptable // false')
+
+          echo "overall_score=$overall_score" >> $GITHUB_OUTPUT
+          echo "confidence=$confidence" >> $GITHUB_OUTPUT
+          echo "is_acceptable=$is_acceptable" >> $GITHUB_OUTPUT
+
+          # LLM judge passes if acceptable and confidence > 0.7
+          if [[ "$is_acceptable" == "true" && $(echo "$confidence > 0.7" | bc -l) -eq 1 ]]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "overall_score=0.0" >> $GITHUB_OUTPUT
+          echo "confidence=0.0" >> $GITHUB_OUTPUT
+          echo "passed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run Enhanced Status Service Validation
+      id: status-validation
+      env:
+        DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/dcmaidbot_business
+        REDIS_URL: redis://localhost:6379/0
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        # Test enhanced status service
+        python -c "
+import asyncio
+import sys
+import os
+sys.path.append('.')
+
+from services.status_service import StatusService
+from services.redis_service import RedisService
+
+async def test_status_service():
+    # Mock database engine for testing
+    status_service = StatusService(db_engine=None)
+
+    # Test version info
+    version_info = status_service.get_version_info()
+    print('✅ Version info retrieved:', version_info.get('version', 'unknown'))
+
+    # Test system info
+    system_info = status_service.get_system_info()
+    print('✅ System info retrieved, uptime:', system_info.get('uptime_human', 'unknown'))
+
+    # Test thoughts generation (mock)
+    thoughts = await status_service.generate_version_thoughts({
+        'database': {'connected': True},
+        'redis': {'connected': True},
+        'system_info': system_info,
+        'version_info': version_info
+    })
+    print('✅ Version thoughts generated:', len(thoughts), 'thoughts')
+
+    self_check_thoughts = await status_service.generate_self_check_thoughts({
+        'database': {'connected': True},
+        'redis': {'connected': True},
+        'system_info': system_info,
+    })
+    print('✅ Self-check thoughts generated:', len(self_check_thoughts), 'thoughts')
+
+    # Test thoughts summary
+    summary = await status_service.generate_thoughts_summary(24)
+    print('✅ Thoughts summary generated, total thoughts:', summary.get('total_thoughts', 0))
+
+    return True
+
+result = asyncio.run(test_status_service())
+if result:
+    print('✅ Enhanced status service validation PASSED')
+    exit(0)
+else:
+    print('❌ Enhanced status service validation FAILED')
+    exit(1)
+        " || echo "status_validation_failed=true" >> $GITHUB_OUTPUT
+
+    - name: Upload business test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: business-test-results
+        path: |
+          business-tests.html
+          business-tests.json
+          dod-tests.html
+          dod-tests.json
+          llm-judge-results.json
+
+    - name: Create business test summary
+      if: always()
+      run: |
+        cat > business-test-summary.md << 'EOF'
+        # Business Test Results Summary
+
+        ## 📊 Test Coverage
+        - **Total Tests**: ${{ steps.business-results.outputs.total_tests }}
+        - **Passed**: ✅ ${{ steps.business-results.outputs.passed_tests }}
+        - **Failed**: ❌ ${{ steps.business-results.outputs.failed_tests }}
+        - **Coverage**: ${{ steps.business-results.outputs.coverage }}%
+
+        ## 🤖 LLM Judge Evaluation
+        - **Overall Score**: ${{ steps.llm-judge.outputs.overall_score }}
+        - **Confidence**: ${{ steps.llm-judge.outputs.confidence }}
+        - **Status**: ${{ steps.llm-judge.outputs.is_acceptable == 'true' && '✅ ACCEPTABLE' || '❌ NOT ACCEPTABLE' }}
+
+        ## 🏥 Enhanced Status Service
+        - **Status**: ${{ steps.status-validation.outputs.status_validation_failed != 'true' && '✅ VALIDATED' || '❌ FAILED' }}
+
+        ## Business Value Gate
+        **Result**: ${{ steps.business-results.outputs.passed == 'true' && steps.llm-judge.outputs.passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+
+        EOF
+
+    - name: Upload business test summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: business-test-summary
+        path: business-test-summary.md
+
+  # Phase 3: Container Build and Security
+  container-build:
+    name: Container Build & Security
+    runs-on: ubuntu-latest
+    needs: [code-quality, business-tests]
+    outputs:
+      image_digest: ${{ steps.build.outputs.digest }}
+      image_tag: ${{ steps.meta.outputs.tags }}
+      security_passed: ${{ steps.container-scan.outputs.passed }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Read version
+      id: version
+      run: |
+        if [ -f version.txt ]; then
+          VERSION=$(cat version.txt)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "version=0.1.0" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Get build metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+          type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.vendor=${{ github.repository_owner }}
+          org.opencontainers.image.licenses=MIT
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push container image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GIT_COMMIT=${{ github.sha }}
+          IMAGE_TAG=${{ steps.version.outputs.version }}
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: false  # Disable provenance for compatibility
+
+    - name: Container security scan
+      id: container-scan
+      uses: aquasecurity/trivy-action@master
+      if: always()
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Process Trivy results
+      run: |
+        if [[ -f trivy-results.sarif ]]; then
+          # Count vulnerabilities by severity
+          critical=$(cat trivy-results.sarif | jq '[.results[] | select(.level == "ERROR")] | length')
+          high=$(cat trivy-results.sarif | jq '[.results[] | select(.level == "WARNING")] | length')
+          medium=$(cat trivy-results.sarif | jq '[.results[] | select(.level == "NOTE")] | length')
+
+          echo "critical_vulns=$critical" >> $GITHUB_OUTPUT
+          echo "high_vulns=$high" >> $GITHUB_OUTPUT
+          echo "medium_vulns=$medium" >> $GITHUB_OUTPUT
+
+          # Security passes if no critical vulnerabilities
+          if [[ $critical -eq 0 ]]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "status=✅ Container security passed" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "status=❌ Critical vulnerabilities found" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "passed=true" >> $GITHUB_OUTPUT
+          echo "status=✅ Security scan completed" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: container-security-scan
+        path: trivy-results.sarif
+
+    - name: Generate SBOM
+      if: github.event_name != 'pull_request'
+      run: |
+        docker buildx build . --target sbom --output type=local,dest=sbom || echo "SBOM generation failed"
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: sbom
+        path: sbom/
+
+  # Phase 4: Staging Deployment and Validation
+  staging-deploy:
+    name: Staging Deployment & Validation
+    runs-on: ubuntu-latest
+    needs: [code-quality, business-tests, container-build]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging
+      run: |
+        echo "🚀 Deploying to staging environment..."
+        echo "Image: ${{ needs.container-build.outputs.image_tag }}"
+        echo "Digest: ${{ needs.container-build.outputs.image_digest }}"
+
+        # Simulate deployment (replace with actual deployment commands)
+        echo "Deployment to staging completed successfully"
+
+    - name: Wait for deployment to be ready
+      run: |
+        echo "⏳ Waiting for staging deployment to be ready..."
+        sleep 30  # Wait for deployment to stabilize
+
+    - name: Run staging validation tests
+      env:
+        ENVIRONMENT: staging
+        STAGING_URL: ${{ secrets.STAGING_URL }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        # Test staging deployment
+        curl -f $STAGING_URL/health || exit 1
+        curl -f $STAGING_URL/api/status || exit 1
+
+        # Run smoke tests against staging
+        pytest tests/e2e/ -v --base-url=$STAGING_URL --smoke || exit 1
+
+    - name: Run LLM Judge on staging
+      env:
+        ENVIRONMENT: staging
+        STAGING_URL: ${{ secrets.STAGING_URL }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python tests/status/llm_judge.py --demo \
+          --url=$STAGING_URL/api/status \
+          --output-file=staging-llm-judge.json \
+          --environment=staging
+
+    - name: Upload staging results
+      uses: actions/upload-artifact@v3
+      with:
+        name: staging-validation
+        path: staging-llm-judge.json
+
+  # Phase 5: Production Deployment (Manual Approval)
+  production-deploy:
+    name: Production Deployment
+    runs-on: ubuntu-latest
+    needs: [code-quality, business-tests, container-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Pre-deployment checklist
+      run: |
+        echo "✅ Code quality: ${{ needs.code-quality.outputs.quality_passed }}"
+        echo "✅ Security scan: ${{ needs.code-quality.outputs.security_scan_passed }}"
+        echo "✅ Test coverage: ${{ needs.code-quality.outputs.test_coverage }}%"
+        echo "✅ Business tests: ${{ needs.business-tests.outputs.business_tests_passed }}"
+        echo "✅ LLM judge score: ${{ needs.business-tests.outputs.llm_judge_score }}"
+        echo "✅ Container security: ${{ needs.container-build.outputs.security_passed }}"
+
+        # Validate all quality gates
+        if [[ "${{ needs.code-quality.outputs.quality_passed }}" != "true" ]]; then
+          echo "❌ Code quality gate failed"
+          exit 1
+        fi
+
+        if [[ "${{ needs.business-tests.outputs.business_tests_passed }}" != "true" ]]; then
+          echo "❌ Business test gate failed"
+          exit 1
+        fi
+
+        if [[ "${{ needs.container-build.outputs.security_passed }}" != "true" ]]; then
+          echo "❌ Container security gate failed"
+          exit 1
+        fi
+
+        echo "✅ All quality gates passed - ready for production deployment"
+
+    - name: Deploy to production
+      run: |
+        echo "🚀 DEPLOYING TO PRODUCTION"
+        echo "Image: ${{ needs.container-build.outputs.image_tag }}"
+        echo "Digest: ${{ needs.container-build.outputs.image_digest }}"
+
+        # Simulate production deployment (replace with actual commands)
+        echo "Production deployment initiated..."
+
+    - name: Wait for production deployment
+      run: |
+        echo "⏳ Waiting for production deployment to complete..."
+        sleep 60  # Wait for deployment to stabilize
+
+    - name: Production health check
+      env:
+        ENVIRONMENT: production
+        PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        # Test production deployment
+        curl -f $PRODUCTION_URL/health || exit 1
+        curl -f $PRODUCTION_URL/api/status || exit 1
+
+        echo "✅ Production health checks passed"
+
+    - name: Run production validation
+      env:
+        ENVIRONMENT: production
+        PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        # Run comprehensive production validation
+        pytest tests/e2e/ -v --base-url=$PRODUCTION_URL --production || exit 1
+
+        # Run LLM judge on production
+        python tests/status/llm_judge.py --demo \
+          --url=$PRODUCTION_URL/api/status \
+          --output-file=production-llm-judge.json \
+          --environment=production || exit 1
+
+    - name: Create production release
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const version = require('./version.txt') || '0.1.0';
+          const tagName = `v${version}`;
+
+          // Read CHANGELOG.md
+          const fs = require('fs');
+          let changelogContent = '';
+          try {
+            const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+            const unreleasedMatch = changelog.match(/## \[Unreleased\]([\s\S]*?)(?=## \[|$)/);
+            if (unreleasedMatch) {
+              changelogContent = unreleasedMatch[1].trim();
+            }
+          } catch (error) {
+            console.log('Could not read CHANGELOG.md:', error);
+          }
+
+          // Create release
+          await github.rest.repos.createRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_name: tagName,
+            name: `Release ${version}`,
+            body: changelogContent || `Automated release ${version}`,
+            draft: false,
+            prerelease: version.includes('-')
+          });
+
+    - name: Upload production results
+      uses: actions/upload-artifact@v3
+      with:
+        name: production-validation
+        path: production-llm-judge.json
+
+    - name: Notify production deployment
+      run: |
+        echo "🎉 PRODUCTION DEPLOYMENT COMPLETED"
+        echo "Version: $(cat version.txt)"
+        echo "Commit: ${{ github.sha }}"
+        echo "Image: ${{ needs.container-build.outputs.image_tag }}"
+
+  # Phase 6: Rollback Procedures
+  rollback-check:
+    name: Rollback Readiness Check
+    runs-on: ubuntu-latest
+    needs: [container-build]
+    if: failure() && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Initiate rollback procedure
+      run: |
+        echo "🚨 DEPLOYMENT FAILURE DETECTED"
+        echo "Initiating rollback procedure..."
+
+        # Get previous stable version
+        echo "Previous stable version: $(git describe --tags --abbrev=0 HEAD~1)"
+
+        # Rollback commands (replace with actual rollback commands)
+        echo "Rollback to previous version initiated"
+
+    - name: Create rollback issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: '🚨 Production Rollback Initiated',
+            body: `
+            ## Rollback Details
+
+            **Failed Deployment**: ${{ github.sha }}
+            **Workflow Run**: ${{ github.run_id }}
+            **Time**: ${new Date().toISOString()}
+
+            **Rollback Status**: Initiated
+            **Previous Version**: $(git describe --tags --abbrev=0 HEAD~1)
+
+            **Next Steps**:
+            - [ ] Verify rollback completion
+            - [ ] Run smoke tests on rollback version
+            - [ ] Investigate deployment failure
+            - [ ] Create incident report
+
+            /cc @dcversus
+            `,
+            labels: ['incident', 'rollback', 'critical']
+          });
+
+  # Phase 7: Comprehensive Reporting
+  final-report:
+    name: Comprehensive Pipeline Report
+    runs-on: ubuntu-latest
+    needs: [code-quality, business-tests, container-build]
+    if: always()
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Generate comprehensive report
+      run: |
+        cat > pipeline-report.md << 'EOF'
+        # Complete CI/CD Pipeline Report
+
+        ## 📊 Execution Summary
+        - **Workflow**: ${{ github.workflow }}
+        - **Run ID**: ${{ github.run_id }}
+        - **Commit**: ${{ github.sha }}
+        - **Branch**: ${{ github.ref_name }}
+        - **Trigger**: ${{ github.event_name }}
+        - **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+        ## 🏗️ Build Information
+        - **Image Tag**: ${{ needs.container-build.outputs.image_tag }}
+        - **Image Digest**: ${{ needs.container-build.outputs.image_digest }}
+        - **Build Status**: ${{ job.status }}
+
+        ## 🔍 Quality Gates
+
+        ### Code Quality & Security
+        - **Status**: ${{ needs.code-quality.outputs.quality_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+        - **Test Coverage**: ${{ needs.code-quality.outputs.test_coverage }}%
+        - **Security Scan**: ${{ needs.code-quality.outputs.security_scan_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+
+        ### Business Value Tests
+        - **Business Tests**: ${{ needs.business-tests.outputs.business_tests_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+        - **LLM Judge Score**: ${{ needs.business-tests.outputs.llm_judge_score }}
+        - **Business Coverage**: ${{ needs.business-tests.outputs.business_test_coverage }}%
+
+        ### Container Security
+        - **Status**: ${{ needs.container-build.outputs.security_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+        - **Vulnerabilities**: See security scan artifacts
+
+        ## 🚀 Deployment Status
+        EOF
+
+        # Add deployment status based on branch
+        if [[ "${{ github.ref_name }}" == "main" ]]; then
+          cat >> pipeline-report.md << 'EOF'
+        - **Production Deployment**: ${{ contains(needs.*.result, 'failure') && '❌ FAILED' || '✅ COMPLETED' }}
+        EOF
+        elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+          cat >> pipeline-report.md << 'EOF'
+        - **Staging Deployment**: ${{ contains(needs.*.result, 'failure') && '❌ FAILED' || '✅ COMPLETED' }}
+        EOF
+        fi
+
+        cat >> pipeline-report.md << 'EOF'
+
+        ## 📈 Metrics
+        - **Total Pipeline Duration**: ${{ job.status }}
+        - **Jobs Executed**: ${{ join(needs.*.result, ', ') }}
+
+        ## 📋 Artifacts Generated
+        - Quality Reports: Available
+        - Business Test Results: Available
+        - Container Security Scan: Available
+        - LLM Judge Results: Available
+
+        ## ✅ Completion Status
+        **Overall Result**: ${{ contains(needs.*.result, 'failure') && '❌ FAILED' || '✅ SUCCESS' }}
+
+        ---
+        *Report generated by Complete CI/CD Pipeline*
+        EOF
+
+    - name: Upload comprehensive report
+      uses: actions/upload-artifact@v3
+      with:
+        name: comprehensive-pipeline-report
+        path: pipeline-report.md
+
+    - name: Comment with final results
+      if: github.event_name == 'pull_request' || failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          try {
+            const report = fs.readFileSync('pipeline-report.md', 'utf8');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+          } catch (error) {
+            console.log('Could not create final comment:', error.message);
+          }

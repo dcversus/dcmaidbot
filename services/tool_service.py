@@ -222,7 +222,7 @@ class ToolService:
             try:
                 result["body"] = response.json()
                 result["is_json"] = True
-            except:
+            except Exception:
                 # Keep as text if not JSON
                 pass
 

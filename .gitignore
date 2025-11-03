@@ -42,5 +42,18 @@ tests/*.session-journal
 *.sqlite
 *.sqlite3
 
+# Cache directories (should not be in version control)
+cache/
+.cache/
+
+# Output directories (generated, should not be in version control)
+output/
+build/
+dist/
+
+# AI generated assets
+static/output/
+static/cache/
+
 # rest
 htmlcov

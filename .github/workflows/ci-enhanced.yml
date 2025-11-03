@@ -1,0 +1,598 @@
+name: Enhanced CI with Cross-Environment Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Test execution mode'
+        required: false
+        default: 'e2e'
+        type: choice
+        options:
+        - unit
+        - integration
+        - e2e
+        - performance
+      environment:
+        description: 'Target environment'
+        required: false
+        default: 'test'
+        type: choice
+        options:
+        - local
+        - test
+        - staging
+      parallel_workers:
+        description: 'Number of parallel workers'
+        required: false
+        default: '4'
+        type: string
+      llm_judge:
+        description: 'Enable LLM Judge evaluation'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.13'
+  NODE_VERSION: '18'
+
+jobs:
+  # Environment detection and setup
+  detect-environment:
+    name: Detect Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env-detect.outputs.environment }}
+      test_mode: ${{ steps.env-detect.outputs.test_mode }}
+      parallel_workers: ${{ steps.env-detect.outputs.parallel_workers }}
+      llm_judge: ${{ steps.env-detect.outputs.llm_judge }}
+    steps:
+    - name: Detect environment
+      id: env-detect
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "environment=${{ github.event.inputs.environment || 'test' }}" >> $GITHUB_OUTPUT
+          echo "test_mode=${{ github.event.inputs.test_mode || 'e2e' }}" >> $GITHUB_OUTPUT
+          echo "parallel_workers=${{ github.event.inputs.parallel_workers || '4' }}" >> $GITHUB_OUTPUT
+          echo "llm_judge=${{ github.event.inputs.llm_judge || 'true' }}" >> $GITHUB_OUTPUT
+        else
+          echo "environment=test" >> $GITHUB_OUTPUT
+          echo "test_mode=e2e" >> $GITHUB_OUTPUT
+          echo "parallel_workers=4" >> $GITHUB_OUTPUT
+          echo "llm_judge=true" >> $GITHUB_OUTPUT
+        fi
+
+  # Infrastructure setup
+  setup-infrastructure:
+    name: Setup Test Infrastructure
+    runs-on: ubuntu-latest
+    needs: detect-environment
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: dcmaidbot_ci
+          POSTGRES_USER: ${{ secrets.CI_POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    outputs:
+      postgres_url: ${{ steps.setup-urls.outputs.postgres_url }}
+      redis_url: ${{ steps.setup-urls.outputs.redis_url }}
+
+    steps:
+    - name: Setup service URLs
+      id: setup-urls
+      run: |
+        echo "postgres_url=postgresql+asyncpg://${{ secrets.CI_POSTGRES_USER }}:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/dcmaidbot_ci" >> $GITHUB_OUTPUT
+        echo "redis_url=redis://localhost:6379/0" >> $GITHUB_OUTPUT
+
+    - name: Verify services are ready
+      run: |
+        # Wait for PostgreSQL
+        timeout 60 bash -c 'until pg_isready -h localhost -p 5432; do sleep 2; done'
+
+        # Wait for Redis
+        timeout 60 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 2; done'
+
+        echo "All services are ready!"
+
+  # Code quality checks
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    needs: detect-environment
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Lint with Ruff
+      run: |
+        ruff check .
+
+    - name: Format check with Ruff
+      run: |
+        ruff format --check .
+
+    - name: Type checking with MyPy
+      run: |
+        mypy bot.py --ignore-missing-imports
+
+    - name: Security scan with Bandit
+      run: |
+        pip install bandit
+        bandit -r . -f json -o bandit-report.json || true
+
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-scan
+        path: bandit-report.json
+
+  # Containerized testing
+  containerized-tests:
+    name: Containerized Tests
+    runs-on: ubuntu-latest
+    needs: [detect-environment, setup-infrastructure]
+    strategy:
+      matrix:
+        test_mode: [unit, integration, e2e]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build test runner image
+      run: |
+        docker build -f Dockerfile.test-runner -t dcmaidbot-test-runner .
+
+    - name: Build test data seeder image
+      run: |
+        docker build -f Dockerfile.test-data -t dcmaidbot-test-data .
+
+    - name: Create test network
+      run: |
+        docker network create dcmaidbot-test-network
+
+    - name: Start test infrastructure
+      run: |
+        docker-compose -f docker-compose.test.yml up -d postgres-test redis-test mock-openai mock-telegram
+
+    - name: Wait for services
+      run: |
+        # Wait for services to be healthy
+        timeout 120 bash -c 'until docker ps --filter "name=postgres-test" --format "{{.Status}}" | grep -q "healthy"; do sleep 5; done'
+        timeout 120 bash -c 'until docker ps --filter "name=redis-test" --format "{{.Status}}" | grep -q "healthy"; do sleep 5; done'
+        timeout 120 bash -c 'until curl -f http://localhost:1080/mockserver/status; do sleep 5; done'
+        timeout 120 bash -c 'until curl -f http://localhost:1081/mockserver/status; do sleep 5; done'
+
+    - name: Seed test data
+      run: |
+        docker-compose -f docker-compose.test.yml run --rm test-data-seeder
+
+    - name: Run ${{ matrix.test_mode }} tests
+      env:
+        DATABASE_URL: ${{ needs.setup-infrastructure.outputs.postgres_url }}
+        REDIS_URL: ${{ needs.setup-infrastructure.outputs.redis_url }}
+        OPENAI_API_BASE: http://localhost:1080
+        TELEGRAM_API_BASE: http://localhost:1081
+        ENVIRONMENT: ${{ needs.detect-environment.outputs.environment }}
+        DISABLE_TG: "true"
+        SKIP_MIGRATION_CHECK: "true"
+      run: |
+        docker run --rm \
+          --network dcmaidbot-test-network \
+          -v $(pwd)/test-results:/test-results \
+          -v $(pwd)/test-reports:/test-reports \
+          -e DATABASE_URL \
+          -e REDIS_URL \
+          -e OPENAI_API_BASE \
+          -e TELEGRAM_API_BASE \
+          -e ENVIRONMENT \
+          -e DISABLE_TG \
+          -e SKIP_MIGRATION_CHECK \
+          dcmaidbot-test-runner \
+          pytest tests/ -v \
+            --test-mode=${{ matrix.test_mode }} \
+            --junitxml=/test-results/${{ matrix.test_mode }}-results.xml \
+            --html=/test-reports/${{ matrix.test_mode }}-report.html \
+            --self-contained-html
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ${{ matrix.test_mode }}-test-results
+        path: |
+          test-results/
+          test-reports/
+
+    - name: Cleanup test infrastructure
+      if: always()
+      run: |
+        docker-compose -f docker-compose.test.yml down -v
+        docker network rm dcmaidbot-test-network || true
+
+  # Advanced orchestration testing
+  orchestrated-tests:
+    name: Orchestrated Test Suite
+    runs-on: ubuntu-latest
+    needs: [detect-environment, setup-infrastructure, code-quality]
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install psutil pytest-asyncio
+
+    - name: Run orchestrated test suite
+      env:
+        DATABASE_URL: ${{ needs.setup-infrastructure.outputs.postgres_url }}
+        REDIS_URL: ${{ needs.setup-infrastructure.outputs.redis_url }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        ENVIRONMENT: ${{ needs.detect-environment.outputs.environment }}
+      run: |
+        python scripts/test_orchestrator.py \
+          --suite ${{ needs.detect-environment.outputs.test_mode }} \
+          --parallel-workers ${{ needs.detect-environment.outputs.parallel_workers }} \
+          --llm-judge ${{ needs.detect-environment.outputs.llm_judge }} \
+          --output-dir orchestrated-results
+
+    - name: Upload orchestrated test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: orchestrated-test-results
+        path: orchestrated-results/
+
+  # Performance baseline comparison
+  performance-comparison:
+    name: Performance Baseline Comparison
+    runs-on: ubuntu-latest
+    needs: [detect-environment, setup-infrastructure]
+    if: needs.detect-environment.outputs.test_mode == 'performance'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-benchmark
+
+    - name: Run performance tests
+      env:
+        DATABASE_URL: ${{ needs.setup-infrastructure.outputs.postgres_url }}
+        REDIS_URL: ${{ needs.setup-infrastructure.outputs.redis_url }}
+      run: |
+        pytest tests/e2e/test_prp008_load_benchmark.py \
+          --benchmark-only \
+          --benchmark-json=performance-results.json \
+          --benchmark-html=performance-report.html
+
+    - name: Compare with baseline
+      run: |
+        python -c "
+import json
+import sys
+
+# Load current results
+with open('performance-results.json', 'r') as f:
+    current = json.load(f)
+
+# Load baseline (if exists)
+try:
+    with open('test-data/performance_baselines.json', 'r') as f:
+        baseline = json.load(f)
+except FileNotFoundError:
+    print('No baseline found, creating new baseline')
+    baseline = {}
+
+# Compare results
+regressions = []
+improvements = []
+
+for bench_name, bench_data in current['benchmarks'].items():
+    if bench_name in baseline:
+        baseline_time = baseline[bench_name]['stats']['mean']
+        current_time = bench_data['stats']['mean']
+
+        if current_time > baseline_time * 1.2:  # 20% regression
+            regressions.append(f'{bench_name}: {baseline_time:.3f}s -> {current_time:.3f}s')
+        elif current_time < baseline_time * 0.8:  # 20% improvement
+            improvements.append(f'{bench_name}: {baseline_time:.3f}s -> {current_time:.3f}s')
+
+# Report results
+if regressions:
+    print('🚨 PERFORMANCE REGRESSIONS DETECTED:')
+    for regression in regressions:
+        print(f'  - {regression}')
+    sys.exit(1)
+
+if improvements:
+    print('🚀 PERFORMANCE IMPROVEMENTS:')
+    for improvement in improvements:
+        print(f'  - {improvement}')
+
+print('✅ No performance regressions detected')
+        "
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: |
+          performance-results.json
+          performance-report.html
+
+  # Test result aggregation and reporting
+  aggregate-results:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    needs: [detect-environment, code-quality, containerized-tests, orchestrated-tests, performance-comparison]
+    if: always()
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Aggregate test results
+      run: |
+        python -c "
+import json
+import os
+from pathlib import Path
+
+# Aggregate all test results
+aggregated = {
+    'workflow': '${{ github.workflow }}',
+    'run_id': '${{ github.run_id }}',
+    'sha': '${{ github.sha }}',
+    'branch': '${{ github.ref_name }}',
+    'environment': '${{ needs.detect-environment.outputs.environment }}',
+    'test_mode': '${{ needs.detect-environment.outputs.test_mode }}',
+    'results': {},
+    'summary': {
+        'total_tests': 0,
+        'total_passed': 0,
+        'total_failed': 0,
+        'total_skipped': 0
+    }
+}
+
+# Process test results
+for artifact_dir in Path('.').glob('*-test-results'):
+    suite_name = artifact_dir.name.replace('-test-results', '')
+
+    # Look for result JSON files
+    for result_file in artifact_dir.glob('**/*results.json'):
+        try:
+            with open(result_file, 'r') as f:
+                result_data = json.load(f)
+                aggregated['results'][suite_name] = result_data
+
+                # Update summary
+                if 'total_tests' in result_data:
+                    aggregated['summary']['total_tests'] += result_data['total_tests']
+                    aggregated['summary']['total_passed'] += result_data.get('passed', 0)
+                    aggregated['summary']['total_failed'] += result_data.get('failed', 0)
+                    aggregated['summary']['total_skipped'] += result_data.get('skipped', 0)
+        except Exception as e:
+            print(f'Failed to process {result_file}: {e}')
+
+# Calculate success rate
+total = aggregated['summary']['total_tests']
+if total > 0:
+    aggregated['summary']['success_rate'] = (aggregated['summary']['total_passed'] / total) * 100
+else:
+    aggregated['summary']['success_rate'] = 0
+
+# Save aggregated results
+with open('aggregated-test-results.json', 'w') as f:
+    json.dump(aggregated, f, indent=2)
+
+print('Aggregated test results:')
+print(f'  Total Tests: {aggregated[\"summary\"][\"total_tests\"]}')
+print(f'  Passed: {aggregated[\"summary\"][\"total_passed\"]}')
+print(f'  Failed: {aggregated[\"summary\"][\"total_failed\"]}')
+print(f'  Success Rate: {aggregated[\"summary\"][\"success_rate\"]:.1f}%')
+        "
+
+    - name: Upload aggregated results
+      uses: actions/upload-artifact@v3
+      with:
+        name: aggregated-test-results
+        path: aggregated-test-results.json
+
+    - name: Create test summary
+      run: |
+        python -c "
+import json
+
+with open('aggregated-test-results.json', 'r') as f:
+    results = json.load(f)
+
+summary = results['summary']
+success_rate = summary['success_rate']
+
+# Create markdown summary
+markdown = f'''# Test Results Summary
+
+**Environment**: {results['environment']}
+**Test Mode**: {results['test_mode']}
+**Branch**: {results['branch']}
+**Commit**: [{results['sha'][:8]}](https://github.com/${{ github.repository }}/commit/{results['sha']})
+
+## 📊 Test Summary
+
+- **Total Tests**: {summary['total_tests']}
+- **Passed**: ✅ {summary['total_passed']}
+- **Failed**: ❌ {summary['total_failed']}
+- **Skipped**: ⏭️ {summary['total_skipped']}
+- **Success Rate**: {success_rate:.1f}%
+
+## 📋 Test Suites by Status
+'''
+
+# Add suite-specific results
+for suite_name, suite_data in results['results'].items():
+    if 'total_tests' in suite_data:
+        suite_passed = suite_data.get('passed', 0)
+        suite_total = suite_data['total_tests']
+        suite_rate = (suite_passed / suite_total * 100) if suite_total > 0 else 0
+        status = '✅' if suite_passed == suite_total else '❌'
+        markdown += f'\n- {status} **{suite_name}**: {suite_passed}/{suite_total} ({suite_rate:.1f}%)'
+
+# Add performance results if available
+if any('performance' in name for name in results['results'].keys()):
+    markdown += '\n\n## 🚀 Performance Results'
+    for suite_name, suite_data in results['results'].items():
+        if 'performance' in suite_name.lower() and 'performance_metrics' in suite_data:
+            metrics = suite_data['performance_metrics']
+            markdown += f'\n- **{suite_name}**'
+            if 'cpu' in metrics:
+                markdown += f'\n  - CPU Usage: {metrics[\"cpu\"][\"avg\"]:.1f}% (max: {metrics[\"cpu\"][\"max\"]:.1f}%)'
+            if 'memory' in metrics:
+                markdown += f'\n  - Memory Usage: {metrics[\"memory\"][\"avg\"]:.1f}% (max: {metrics[\"memory\"][\"max\"]:.1f}%)'
+
+markdown += f'\n\n---\n*Generated by GitHub Actions*'
+
+# Write to file
+with open('test-summary.md', 'w') as f:
+    f.write(markdown)
+
+print('Test summary created')
+        "
+
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          try {
+            const summary = fs.readFileSync('test-summary.md', 'utf8');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+          } catch (error) {
+            console.log('Could not create PR comment:', error.message);
+          }
+
+    - name: Determine workflow status
+      if: always()
+      run: |
+        python -c "
+import json
+import sys
+
+with open('aggregated-test-results.json', 'r') as f:
+    results = json.load(f)
+
+summary = results['summary']
+failed_count = summary['total_failed']
+
+if failed_count > 0:
+    print(f'❌ Workflow failed: {failed_count} tests failed')
+    sys.exit(1)
+else:
+    print('✅ Workflow passed: All tests successful')
+    sys.exit(0)
+        "
+
+  # Notification on failure
+  notify-on-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [detect-environment, aggregate-results]
+    if: failure() && github.event_name == 'push'
+
+    steps:
+    - name: Create issue on failure
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue_body = `## 🚨 Test Suite Failure
+
+          **Workflow**: ${{ github.workflow }}
+          **Run ID**: ${{ github.run_id }}
+          **Commit**: ${{ github.sha }}
+          **Branch**: ${{ github.ref_name }}
+
+          The test suite failed on commit ${{ github.sha }}. Please investigate the failure and fix the issues.
+
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          /cc @dcversus`;
+
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: '🚨 Test Suite Failure',
+            body: issue_body,
+            labels: ['bug', 'ci-failure', 'automated']
+          });
