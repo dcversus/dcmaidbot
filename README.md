@@ -94,6 +94,12 @@ dcmaidbot/
    # Add more IDs: ADMIN_IDS=123,456,789
    DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
    OPENAI_API_KEY=your_openai_api_key
+   # Optional: point to a compatible API instead of api.openai.com
+   # OPENAI_BASE_URL=https://custom-openai.example.com/v1
+   # Optional: override model IDs when using non-standard providers
+   # TEST_MODEL=gpt-4o-mini
+   # DEFAULT_MODEL=gpt-4o-mini
+   # COMPLEX_MODEL=gpt-4o
    ```
 
 5. **Run the bot:**
