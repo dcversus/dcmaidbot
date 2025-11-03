@@ -58,6 +58,11 @@ def get_session():
     return AsyncSessionContext()
 
 
+def get_async_session():
+    """Get database session context manager (alias for compatibility)."""
+    return AsyncSessionContext()
+
+
 async def init_db():
     """Initialize database tables."""
     async with engine.begin() as conn:

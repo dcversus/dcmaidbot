@@ -7,13 +7,15 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiohttp import web
 from dotenv import load_dotenv
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from services.cron_service import cron_service
 
 from database import engine, get_session
-from handlers import waifu
+from handlers import admin, friends, tools, waifu, world
 from middlewares.admin_only import AdminOnlyMiddleware
 from middlewares.analytics import AnalyticsMiddleware
 from services.analytics_service import analytics
 from services.domik_service import DomikService
+from services.metrics_service import get_metrics_service
 from services.migration_service import check_migrations
 from services.token_service import TokenService
 
@@ -81,8 +83,12 @@ def setup_dispatcher() -> Dispatcher:
     dp.message.middleware(AdminOnlyMiddleware(admin_ids))
     dp.callback_query.middleware(AdminOnlyMiddleware(admin_ids))
 
-    # Register waifu router
+    # Register all handlers
     dp.include_router(waifu.router)
+    dp.include_router(admin.router)
+    dp.include_router(tools.router)
+    dp.include_router(world.router)
+    dp.include_router(friends.router)
 
     return dp
 
@@ -424,6 +430,15 @@ async def main():
     metrics_server = MetricsServer()
     metrics_runner = await metrics_server.start(port=metrics_port)
 
+    # Initialize services
+    logging.info("Initializing services...")
+
+    # Start metrics service
+    await get_metrics_service()
+
+    # Start cron service
+    await cron_service.start()
+
     # Start webapp server
     webapp_port = int(os.getenv("WEBAPP_PORT", "8081"))
     webapp_server = WebappServer()
@@ -434,6 +449,7 @@ async def main():
         await bot.delete_webhook(drop_pending_updates=True)
         logging.info("Starting bot polling...")
         logging.info(f"Webapp server available on port {webapp_port}")
+        logging.info("All services initialized successfully")
         await dp.start_polling(bot)
     finally:
         # Cleanup servers
