@@ -1,0 +1,304 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "DCMaidBot Analytics Dashboard",
+    "tags": ["dcmaidbot", "telegram", "bot"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Messages Per Hour",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(dcmaidbot_messages_total[1h]) * 3600",
+            "legendFormat": "{{chat_type}} - {{language}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Messages/Hour"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "title": "Active Users (24h)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "dcmaidbot_active_users_total",
+            "legendFormat": "Active Users"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "title": "Command Usage",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (command_name) (increase(dcmaidbot_commands_total[24h])))",
+            "legendFormat": "{{command_name}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "title": "Message Processing Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(dcmaidbot_message_processing_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(dcmaidbot_message_processing_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Seconds"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "title": "Error Rate",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "rate(dcmaidbot_errors_total[5m]) / rate(dcmaidbot_messages_total[5m]) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "valueMaps": [
+          {
+            "value": "null",
+            "text": "N/A"
+          }
+        ],
+        "thresholds": "1,5",
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "title": "Total Messages",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(dcmaidbot_messages_total)",
+            "legendFormat": "Total Messages"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 8
+        }
+      },
+      {
+        "title": "Jokes Told by Type",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (joke_type) (increase(dcmaidbot_jokes_told_total[24h]))",
+            "legendFormat": "{{joke_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Jokes/24h"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "title": "Joke Generation Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(dcmaidbot_joke_generation_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Seconds"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 16
+        }
+      },
+      {
+        "title": "Memory Operations",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (memory_type) (increase(dcmaidbot_memories_created_total[24h]))",
+            "legendFormat": "Created - {{memory_type}}"
+          },
+          {
+            "expr": "sum by (retrieval_method) (increase(dcmaidbot_memories_retrieved_total[24h]))",
+            "legendFormat": "Retrieved - {{retrieval_method}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Operations/24h"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 16
+        }
+      },
+      {
+        "title": "LLM Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(dcmaidbot_llm_response_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile - {{model}}"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(dcmaidbot_llm_response_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile - {{model}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Seconds"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "title": "LLM Token Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (model) (increase(dcmaidbot_llm_tokens_used_sum[1h]))",
+            "legendFormat": "Tokens/Hour - {{model}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Tokens/Hour"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "title": "Friend Interactions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (friend_name) (increase(dcmaidbot_friend_interactions_total[24h]))",
+            "legendFormat": "{{friend_name}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Interactions/24h"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "title": "Tool Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (tool_name) (increase(dcmaidbot_tool_usage_total[24h]))",
+            "legendFormat": "{{tool_name}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Uses/24h"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        }
+      },
+      {
+        "title": "Errors by Component",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "sum by (error_type, component) (increase(dcmaidbot_errors_total[24h]))",
+            "legendFormat": "{{component}} - {{error_type}}",
+            "format": "table"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 40
+        }
+      }
+    ],
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}
