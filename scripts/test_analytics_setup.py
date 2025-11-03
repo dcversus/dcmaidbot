@@ -7,10 +7,10 @@ is working correctly for dcmaidbot.
 """
 
 import asyncio
-import aiohttp
-import time
 import json
-from typing import Dict, Any, List
+from typing import Any, Dict
+
+import aiohttp
 
 
 class AnalyticsTester:
@@ -34,10 +34,10 @@ class AnalyticsTester:
 
                         # Check for expected dcmaidbot metrics
                         expected_metrics = [
-                            'dcmaidbot_messages_total',
-                            'dcmaidbot_commands_total',
-                            'dcmaidbot_active_users_total',
-                            'dcmaidbot_jokes_told_total'
+                            "dcmaidbot_messages_total",
+                            "dcmaidbot_commands_total",
+                            "dcmaidbot_active_users_total",
+                            "dcmaidbot_jokes_told_total",
                         ]
 
                         found_metrics = []
@@ -48,20 +48,19 @@ class AnalyticsTester:
                         return {
                             "status": "success",
                             "found_metrics": found_metrics,
-                            "total_metrics": len(metrics_data.split('\n')),
-                            "sample": metrics_data[:500] + "..." if len(metrics_data) > 500 else metrics_data
+                            "total_metrics": len(metrics_data.split("\n")),
+                            "sample": metrics_data[:500] + "..."
+                            if len(metrics_data) > 500
+                            else metrics_data,
                         }
                     else:
                         return {
                             "status": "error",
                             "error": f"HTTP {response.status}",
-                            "response": await response.text()
+                            "response": await response.text(),
                         }
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     async def test_health_endpoint(self) -> Dict[str, Any]:
         """Test that the /health endpoint is working"""
@@ -72,20 +71,11 @@ class AnalyticsTester:
                 async with session.get(self.health_url) as response:
                     if response.status == 200:
                         health_data = await response.json()
-                        return {
-                            "status": "success",
-                            "data": health_data
-                        }
+                        return {"status": "success", "data": health_data}
                     else:
-                        return {
-                            "status": "error",
-                            "error": f"HTTP {response.status}"
-                        }
+                        return {"status": "error", "error": f"HTTP {response.status}"}
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     async def test_prometheus_scraping(self) -> Dict[str, Any]:
         """Test that Prometheus is successfully scraping dcmaidbot metrics"""
@@ -106,23 +96,19 @@ class AnalyticsTester:
                             return {
                                 "status": "success",
                                 "metrics_found": len(data["data"]["result"]),
-                                "sample_metric": data["data"]["result"][0] if data["data"]["result"] else None
+                                "sample_metric": data["data"]["result"][0]
+                                if data["data"]["result"]
+                                else None,
                             }
                         else:
                             return {
                                 "status": "warning",
-                                "message": "No dcmaidbot metrics found in Prometheus"
+                                "message": "No dcmaidbot metrics found in Prometheus",
                             }
                     else:
-                        return {
-                            "status": "error",
-                            "error": f"HTTP {response.status}"
-                        }
+                        return {"status": "error", "error": f"HTTP {response.status}"}
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     async def test_prometheus_targets(self) -> Dict[str, Any]:
         """Test Prometheus targets configuration"""
@@ -140,27 +126,23 @@ class AnalyticsTester:
                         dcmaidbot_targets = []
                         for target in data["data"]["activeTargets"]:
                             if "dcmaidbot" in target.get("labels", {}).get("job", ""):
-                                dcmaidbot_targets.append({
-                                    "job": target["labels"]["job"],
-                                    "health": target["health"],
-                                    "lastError": target.get("lastError", "none")
-                                })
+                                dcmaidbot_targets.append(
+                                    {
+                                        "job": target["labels"]["job"],
+                                        "health": target["health"],
+                                        "lastError": target.get("lastError", "none"),
+                                    }
+                                )
 
                         return {
                             "status": "success",
                             "dcmaidbot_targets": dcmaidbot_targets,
-                            "total_targets": len(data["data"]["activeTargets"])
+                            "total_targets": len(data["data"]["activeTargets"]),
                         }
                     else:
-                        return {
-                            "status": "error",
-                            "error": f"HTTP {response.status}"
-                        }
+                        return {"status": "error", "error": f"HTTP {response.status}"}
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     async def generate_test_metrics(self) -> Dict[str, Any]:
         """Generate some test metrics by making test requests"""
@@ -176,18 +158,19 @@ class AnalyticsTester:
 
                 responses = await asyncio.gather(*tasks, return_exceptions=True)
 
-                successful_requests = sum(1 for r in responses if not isinstance(r, Exception) and r.status == 200)
+                successful_requests = sum(
+                    1
+                    for r in responses
+                    if not isinstance(r, Exception) and r.status == 200
+                )
 
                 return {
                     "status": "success",
                     "test_requests": len(tasks),
-                    "successful_requests": successful_requests
+                    "successful_requests": successful_requests,
                 }
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     async def run_all_tests(self) -> Dict[str, Any]:
         """Run all analytics tests"""
@@ -199,7 +182,7 @@ class AnalyticsTester:
             "health_endpoint": await self.test_health_endpoint(),
             "prometheus_scraping": await self.test_prometheus_scraping(),
             "prometheus_targets": await self.test_prometheus_targets(),
-            "test_metrics_generation": await self.generate_test_metrics()
+            "test_metrics_generation": await self.generate_test_metrics(),
         }
 
         print("\n" + "=" * 50)
@@ -207,7 +190,13 @@ class AnalyticsTester:
         print("=" * 50)
 
         for test_name, result in tests.items():
-            status_emoji = "✅" if result["status"] == "success" else "⚠️" if result["status"] == "warning" else "❌"
+            status_emoji = (
+                "✅"
+                if result["status"] == "success"
+                else "⚠️"
+                if result["status"] == "warning"
+                else "❌"
+            )
             print(f"{status_emoji} {test_name}: {result['status']}")
 
             if result["status"] == "error":
@@ -238,7 +227,7 @@ async def main():
     with open("analytics_test_results.json", "w") as f:
         json.dump(results, f, indent=2)
 
-    print(f"\n💾 Detailed results saved to: analytics_test_results.json")
+    print("\n💾 Detailed results saved to: analytics_test_results.json")
 
 
 if __name__ == "__main__":

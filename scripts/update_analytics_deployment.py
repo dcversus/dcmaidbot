@@ -8,7 +8,6 @@ Script to update the Kubernetes deployment to use the new analytics-enabled imag
 import subprocess
 import sys
 import time
-import json
 
 
 def run_command(command: str, check: bool = True) -> subprocess.CompletedProcess:
@@ -16,11 +15,7 @@ def run_command(command: str, check: bool = True) -> subprocess.CompletedProcess
     print(f"🔧 Running: {command}")
     try:
         result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=check
+            command, shell=True, capture_output=True, text=True, check=check
         )
         if result.stdout:
             print(f"   Output: {result.stdout.strip()}")
@@ -58,9 +53,18 @@ def update_deployment_with_analytics():
         print("🔍 Testing metrics endpoint...")
 
         # Start port forward
-        port_forward = subprocess.Popen([
-            "kubectl", "port-forward", "-n", "prod-core", "svc/dcmaidbot-prod", "8081:8080"
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        port_forward = subprocess.Popen(
+            [
+                "kubectl",
+                "port-forward",
+                "-n",
+                "prod-core",
+                "svc/dcmaidbot-prod",
+                "8081:8080",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
         time.sleep(5)  # Wait for port forward to be ready
 
@@ -75,7 +79,9 @@ def update_deployment_with_analytics():
                     print("✅ Metrics endpoint is working!")
                     print(f"   Found {metrics.count('dcmaidbot_')} dcmaidbot metrics")
                 else:
-                    print("⚠️  Metrics endpoint accessible but no dcmaidbot metrics found")
+                    print(
+                        "⚠️  Metrics endpoint accessible but no dcmaidbot metrics found"
+                    )
             else:
                 print(f"❌ Metrics endpoint returned status {response.status_code}")
 
@@ -113,8 +119,7 @@ def check_analytics_image_exists():
     # Try to pull the image to see if it exists
     try:
         result = run_command(
-            "docker pull ghcr.io/dcversus/dcmaidbot:analytics",
-            check=False
+            "docker pull ghcr.io/dcversus/dcmaidbot:analytics", check=False
         )
         if result.returncode == 0:
             print("✅ Analytics image found in registry!")
@@ -122,8 +127,8 @@ def check_analytics_image_exists():
         else:
             print("❌ Analytics image not found in registry")
             return False
-    except:
-        print("❌ Could not check image availability")
+    except Exception as e:
+        print(f"❌ Could not check image availability: {e}")
         return False
 
 
@@ -135,8 +140,12 @@ def main():
     # Check if analytics image exists
     if not check_analytics_image_exists():
         print("\n⚠️  Analytics image not ready yet.")
-        print("Please wait for the GitHub Actions build to complete, then run this script again.")
-        print("You can check the build status at: https://github.com/dcversus/dcmaidbot/actions")
+        print(
+            "Please wait for the GitHub Actions build to complete, then run this script again."
+        )
+        print(
+            "You can check the build status at: https://github.com/dcversus/dcmaidbot/actions"
+        )
         sys.exit(1)
 
     # Update deployment

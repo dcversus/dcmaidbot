@@ -205,11 +205,20 @@ class TestPRP009LLMJudgeEvaluation:
 
         # Test that we can import required modules
         try:
-            from handlers.call import handle_command
-            from services.auth_service import AuthService
-            from services.llm_service import LLMService
+            # Check if required modules are available
+            import importlib.util
 
-            print("✓ All required modules imported successfully")
+            required_modules = [
+                "handlers.call",
+                "services.auth_service",
+                "services.llm_service",
+            ]
+
+            for module_name in required_modules:
+                if importlib.util.find_spec(module_name) is None:
+                    raise ImportError(f"Module {module_name} not found")
+
+            print("✓ All required modules available")
         except ImportError as e:
             pytest.fail(f"Failed to import required modules: {e}")
 

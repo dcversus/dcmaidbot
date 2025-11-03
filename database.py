@@ -38,6 +38,26 @@ async def get_db():  # type: ignore[misc]
         yield session
 
 
+class AsyncSessionContext:
+    """Async context manager for database sessions."""
+
+    def __init__(self):
+        self._session = None
+
+    async def __aenter__(self):
+        self._session = AsyncSessionLocal()
+        return self._session
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._session:
+            await self._session.close()
+
+
+def get_session():
+    """Get database session context manager."""
+    return AsyncSessionContext()
+
+
 async def init_db():
     """Initialize database tables."""
     async with engine.begin() as conn:

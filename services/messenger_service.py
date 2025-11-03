@@ -6,11 +6,14 @@ Provides abstraction layer for different messaging platforms
 with rich content rendering capabilities.
 """
 
+import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+
+logger = logging.getLogger(__name__)
 
 # Import Telegram Bot types only when needed
 try:
@@ -706,14 +709,25 @@ class DiscordService(MessengerService):
 
     def __init__(self):
         super().__init__()
+        # Import the actual Discord service implementation
+        try:
+            from services.discord_service import DiscordService as DiscordServiceImpl
+
+            self._impl = DiscordServiceImpl()
+        except ImportError as e:
+            logger.warning(f"Discord service implementation not available: {e}")
+            self._impl = None
         self.platform_name = "Discord"
 
     async def send_message(
         self, user_id: int, content: Union[str, RichContent], **kwargs
     ) -> Dict[str, Any]:
         """Send message via Discord Bot API."""
+        if self._impl:
+            return await self._impl.send_message(user_id, content, **kwargs)
+
+        # Fallback to placeholder if implementation not available
         if isinstance(content, str):
-            # Convert plain text to RichContent
             rich_content = self.parse_markdown_to_platform(content)
         else:
             rich_content = content
@@ -724,11 +738,13 @@ class DiscordService(MessengerService):
         self, user_id: int, rich_content: RichContent, **kwargs
     ) -> Dict[str, Any]:
         """Send rich content message via Discord."""
-        # Discord implementation will be added when discord.py is available
-        # For now, return a placeholder response
+        if self._impl:
+            return await self._impl.send_rich_content(user_id, rich_content, **kwargs)
+
+        # Fallback placeholder response
         return {
-            "status": "not_implemented",
-            "error": "Discord service not yet implemented - requires discord.py dependency",
+            "status": "error",
+            "error": "Discord service implementation not available",
             "user_id": user_id,
             "platform": "Discord",
             "message_type": rich_content.message_type.value,

@@ -21,14 +21,13 @@ class AnalyticsMiddleware(BaseMiddleware):
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
         event: Message | CallbackQuery | ChatJoinRequest,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ) -> Any:
         # Skip analytics if disabled
         if not analytics.enabled:
             return await handler(event, data)
 
         start_time = time.time()
-        success = True
         error_type = None
 
         try:
@@ -45,7 +44,6 @@ class AnalyticsMiddleware(BaseMiddleware):
             return result
 
         except Exception as e:
-            
             error_type = type(e).__name__
             analytics.track_error(error_type, "message_handler")
             raise
@@ -65,13 +63,11 @@ class AnalyticsMiddleware(BaseMiddleware):
 
         # Track the message
         analytics.track_message(
-            chat_type=chat_type,
-            language=language,
-            status="success"
+            chat_type=chat_type, language=language, status="success"
         )
 
         # Track if it's a command
-        if message.text and message.text.startswith('/'):
+        if message.text and message.text.startswith("/"):
             command = message.text.split()[0][1:]  # Remove '/'
             analytics.track_command(command, "success")
 
@@ -81,19 +77,23 @@ class AnalyticsMiddleware(BaseMiddleware):
         analytics.track_message(
             chat_type=callback.message.chat.type if callback.message else "private",
             language=callback.from_user.language_code or "en",
-            status="callback"
+            status="callback",
         )
 
         # Track callback data if present
         if callback.data:
             # Extract command/action from callback data
-            action = callback.data.split(':')[0] if ':' in callback.data else callback.data
+            action = (
+                callback.data.split(":")[0] if ":" in callback.data else callback.data
+            )
             analytics.track_command(f"callback_{action}", "success")
 
-    async def _track_chat_join(self, join_request: ChatJoinRequest, data: Dict[str, Any]):
+    async def _track_chat_join(
+        self, join_request: ChatJoinRequest, data: Dict[str, Any]
+    ):
         """Track chat join request"""
         analytics.track_message(
             chat_type=join_request.chat.type,
             language=join_request.from_user.language_code or "en",
-            status="join_request"
+            status="join_request",
         )

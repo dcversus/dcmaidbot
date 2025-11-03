@@ -8,25 +8,24 @@ and provides structured scoring for confidence, acceptance, recommendations, and
 
 import asyncio
 import json
-
-# Add the project root to the path
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+# Add the project root to the path
 sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.append(str(Path(__file__).parent))
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
+from llm_judge import LLMJudge
 
-load_dotenv()
-
+# Import local modules
 from services.llm_service import LLMService
 from services.status_enhanced_service import EnhancedStatusService
 
-sys.path.append(str(Path(__file__).parent))
-from llm_judge import LLMJudge
+load_dotenv()
 
 
 class StatusJudge:

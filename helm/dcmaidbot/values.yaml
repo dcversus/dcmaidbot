@@ -1,0 +1,159 @@
+# Default values for dcmaidbot.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 3
+
+image:
+  repository: ghcr.io/dcversus/dcmaidbot
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+  hosts:
+    - host: dcmaidbot.theedgestory.org
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: dcmaidbot-tls
+      hosts:
+        - dcmaidbot.theedgestory.org
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Canary configuration
+canary:
+  enabled: false
+  replicas: 1
+  trafficPercentage: 10
+  image:
+    tag: ""
+  annotations:
+    canary: "true"
+
+# Environment specific configurations
+environment: production
+
+# Application configuration
+config:
+  # Database configuration
+  database:
+    host: "postgresql"
+    port: 5432
+    name: "dcmaidbot"
+
+  # Redis configuration
+  redis:
+    host: "redis"
+    port: 6379
+
+  # OpenAI configuration
+  openai:
+    model: "gpt-4"
+    maxTokens: 1000
+
+  # Monitoring configuration
+  monitoring:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+
+# Secret names (to be created separately)
+secrets:
+  botToken: "dcmaidbot-bot-token"
+  databaseUrl: "dcmaidbot-database-url"
+  openaiKey: "dcmaidbot-openai-key"
+  adminIds: "dcmaidbot-admin-ids"
+
+# Health check configuration
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Node selector and tolerations
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Additional volumes
+volumes: []
+volumeMounts: []
+
+# Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# Environment variables
+env: []
+envFrom: []
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []

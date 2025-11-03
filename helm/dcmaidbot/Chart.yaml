@@ -1,0 +1,15 @@
+apiVersion: v2
+name: dcmaidbot
+description: DCMAIDBOT - ROBO-CHARACTER Telegram Bot
+type: application
+version: 1.0.0
+appVersion: "0.5.0"
+keywords: ["telegram", "bot", "ai", "dcmaidbot"]
+maintainers:
+  - name: dcversus
+    email: dcversus@example.com
+dependencies: []
+annotations:
+  category: Application
+  licenses: MIT
+  repository: https://github.com/dcversus/dcmaidbot

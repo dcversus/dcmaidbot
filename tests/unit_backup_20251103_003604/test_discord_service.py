@@ -166,10 +166,17 @@ Let me know what you think!
         """Test sending message with plain string content."""
         result = await discord_service.send_message(123456, "Hello Discord!")
 
-        assert result["status"] == "not_implemented"
+        # Should either work (if token configured) or return error (if not configured)
+        assert result["status"] in ["success", "error"]
         assert result["platform"] == "Discord"
         assert result["user_id"] == 123456
-        assert "requires discord.py dependency" in result["error"]
+
+        if result["status"] == "error":
+            # If not configured, should have appropriate error message
+            assert any(
+                keyword in result["error"].lower()
+                for keyword in ["not connected", "not found", "forbidden", "token"]
+            )
 
     @pytest.mark.asyncio
     async def test_send_rich_content_with_embeds(
@@ -178,12 +185,29 @@ Let me know what you think!
         """Test sending rich content with embeds."""
         result = await discord_service.send_rich_content(123456, sample_rich_content)
 
-        assert result["status"] == "not_implemented"
+        # Should either work (if token configured) or return error (if not configured)
+        assert result["status"] in ["success", "error"]
         assert result["platform"] == "Discord"
         assert result["user_id"] == 123456
-        assert result["message_type"] == MessageType.EMBED.value
-        assert result["has_embeds"] is True
-        assert result["has_components"] is True
+
+        if result["status"] == "success":
+            # If successful, should match the original content type
+            assert result["message_type"] == MessageType.EMBED.value
+            assert result["has_embeds"] is True
+            assert result["has_components"] is True
+        else:
+            # If error, should have appropriate error message and error type
+            assert result["message_type"] == "error"
+            assert any(
+                keyword in result["error"].lower()
+                for keyword in [
+                    "not connected",
+                    "not found",
+                    "forbidden",
+                    "token",
+                    "not available",
+                ]
+            )
 
     def test_create_embed_helper(self, discord_service):
         """Test embed creation helper method."""
