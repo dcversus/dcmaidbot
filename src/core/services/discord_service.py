@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import discord
 
-from core.services.messenger_service import (
+from src.core.services.messenger_service import (
     Embed,
     EmbedAuthor,
     EmbedField,

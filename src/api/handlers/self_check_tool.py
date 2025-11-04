@@ -7,7 +7,7 @@ Provides self-check diagnostics accessible via /call command and Telegram.
 import logging
 from typing import Any, Dict
 
-from core.services.thoughts_background_service import thoughts_background_service
+from src.core.services.thoughts_background_service import thoughts_background_service
 
 logger = logging.getLogger(__name__)
 

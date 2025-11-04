@@ -9,8 +9,8 @@ Provides two modes of messaging:
 import os
 from typing import Any, Dict, List, Optional
 
-from core.services.llm_service import LLMService
-from core.services.messenger_service import (
+from src.core.services.llm_service import LLMService
+from src.core.services.messenger_service import (
     EmbedField,
     MessageType,
     RichContent,

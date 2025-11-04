@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from core.services.token_service import TokenService
+from src.core.services.token_service import TokenService
 
 logger = logging.getLogger(__name__)
 

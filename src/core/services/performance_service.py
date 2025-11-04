@@ -15,7 +15,7 @@ import psutil
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from core.services.redis_service import RedisService
+from src.core.services.redis_service import RedisService
 
 
 @dataclass

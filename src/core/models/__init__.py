@@ -1,14 +1,14 @@
 """Data models for dcmaidbot."""
 
-from core.models.api_key import ApiKey
-from core.models.event import Event
-from core.models.fact import Fact
-from core.models.game_session import GameSession, PlayerState
-from core.models.joke import Joke
-from core.models.memory import Memory
-from core.models.message import Message
-from core.models.stat import Stat
-from core.models.user import User
+from src.core.models.api_key import ApiKey
+from src.core.models.event import Event
+from src.core.models.fact import Fact
+from src.core.models.game_session import GameSession, PlayerState
+from src.core.models.joke import Joke
+from src.core.models.memory import Memory
+from src.core.models.message import Message
+from src.core.models.stat import Stat
+from src.core.models.user import User
 
 __all__ = [
     "User",

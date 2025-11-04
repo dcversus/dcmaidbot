@@ -17,9 +17,9 @@ from aiogram.types import (
 )
 from utils.markdown_renderer import MarkdownRenderer, Platform
 
-from core.services.event_service import ApiKeyService, EventService
-from core.services.nudge_token_service import NudgeTokenService
-from core.services.rpg_service import RPGService
+from src.core.services.event_service import ApiKeyService, EventService
+from src.core.services.nudge_token_service import NudgeTokenService
+from src.core.services.rpg_service import RPGService
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,7 @@ from typing import Sequence, Union
 # revision identifiers, used by Alembic.
 revision: str = "a027e3b9e6eb"
 down_revision: Union[str, Sequence[str], None] = (
-    "create_bot_mood_tables",
+    "c3f3ebfc3d19",
     "prp009_tool_execution",
 )
 branch_labels: Union[str, Sequence[str], None] = None

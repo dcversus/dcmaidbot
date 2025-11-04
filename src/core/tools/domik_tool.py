@@ -9,9 +9,9 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from core.services.domik_service import DomikService
-from core.services.event_service import EventService
-from core.services.token_service import TokenService
+from src.core.services.domik_service import DomikService
+from src.core.services.event_service import EventService
+from src.core.services.token_service import TokenService
 
 logger = logging.getLogger(__name__)
 

@@ -5,8 +5,8 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.lesson import Lesson
-from core.services.redis_service import redis_service
+from src.core.models.lesson import Lesson
+from src.core.services.redis_service import redis_service
 
 
 class LessonService:

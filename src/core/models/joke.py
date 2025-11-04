@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import BigInteger, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.services.database import Base
+from src.core.services.database import Base
 
 
 class Joke(Base):

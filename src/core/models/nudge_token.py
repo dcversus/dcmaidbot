@@ -11,7 +11,7 @@ from hashlib import sha256
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
-from core.services.database import Base
+from src.core.services.database import Base
 
 
 class NudgeToken(Base):

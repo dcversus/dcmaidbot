@@ -4,7 +4,10 @@
 Allows E2E testing of bot functionality by calling handlers directly
 without going through Telegram's webhook/polling system.
 
-Authentication: Uses same NUDGE_SECRET as /nudge endpoint
+Authentication: Supports multiple methods:
+- API Key (X-API-Key header or api_key query param)
+- Admin ID (X-Admin-ID header or admin_id query param)
+- NUDGE_SECRET (Authorization: Bearer <NUDGE_SECRET> - for backward compatibility)
 """
 
 import json
@@ -13,12 +16,14 @@ from typing import Optional
 
 from aiohttp import web
 
-from core.services.auth_service import AuthService
-from core.services.database import AsyncSessionLocal
-from core.services.lesson_service import LessonService
-from core.services.llm_service import llm_service
-from core.services.memory_service import MemoryService
-from core.services.message_service import MessageService
+from src.core.middleware.auth import get_unified_auth
+from src.core.services.database import AsyncSessionLocal
+from src.core.services.emotional_analysis_service import EmotionalAnalysisService
+from src.core.services.lesson_service import LessonService
+from src.core.services.llm_service import get_llm_service
+from src.core.services.memory_service import MemoryService
+from src.core.services.message_service import MessageService
+from src.core.services.mood_service import MoodService
 
 
 async def call_handler(request: web.Request) -> web.Response:
@@ -39,29 +44,33 @@ async def call_handler(request: web.Request) -> web.Response:
         "command_handled": "/start"  # If a command was processed
     }
 
-    Authentication:
-    - Requires Authorization: Bearer <NUDGE_SECRET>
-    - Same secret as /nudge endpoint
+    Authentication (supports multiple methods):
+    1. API Key: X-API-Key header or api_key query parameter (user-specific)
+    2. Admin ID: X-Admin-ID header or admin_id query parameter (admin-specific)
+    3. NUDGE_SECRET: Authorization: Bearer <NUDGE_SECRET> (master key)
     """
-    # Check authentication
+    # Check unified authentication
+    unified_auth = get_unified_auth()
     nudge_secret = os.getenv("NUDGE_SECRET")
-    if not nudge_secret:
-        return web.json_response(
-            {"error": "NUDGE_SECRET not configured on server"},
-            status=500,
-        )
 
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        return web.json_response(
-            {"error": "Missing or invalid Authorization header"},
-            status=401,
-        )
+    # Extract headers and query params
+    headers = dict(request.headers)
+    query_params = dict(request.rel_url.query)
 
-    token = auth_header.replace("Bearer ", "")
-    if token != nudge_secret:
+    # Authenticate request
+    is_auth, auth_user_id, auth_method = await unified_auth.authenticate_request(
+        headers=headers,
+        query_params=query_params,
+        allow_nudge_secret=True,
+        nudge_secret=nudge_secret,
+    )
+
+    if not is_auth:
         return web.json_response(
-            {"error": "Invalid authentication token"},
+            {
+                "error": "Invalid or missing authentication",
+                "message": "Provide API key, admin ID, or NUDGE_SECRET",
+            },
             status=401,
         )
 
@@ -85,10 +94,19 @@ async def call_handler(request: web.Request) -> web.Response:
             status=400,
         )
 
-    # If is_admin not provided, infer using AuthService
+    # If is_admin not provided, infer using authentication
     if is_admin is None:
-        auth_service = AuthService()
-        is_admin = auth_service.is_admin(user_id)
+        # If authenticated with admin_id or API key, check if that user is admin
+        if auth_user_id and auth_method in ["admin_id", "api_key"]:
+            is_admin = (
+                auth_user_id == user_id
+            )  # The authenticated user must match the request user
+        else:
+            # NUDGE_SECRET (master key) auth - check if user_id is in ADMIN_IDS
+            from src.core.services.auth_service import AuthService
+
+            auth_service = AuthService()
+            is_admin = auth_service.is_admin(user_id)
 
     # Process command or message
     response_text: Optional[str] = None
@@ -151,7 +169,7 @@ async def handle_command(command: str, user_id: int, is_admin: bool) -> str:
             '<a href="https://dcmaidbot.theedgestory.org">dcmaidbot.theedgestory.org</a>'
         )
 
-    # /help command - role-aware
+    # /help command - use unified command registry
     elif command == "/help":
         if is_admin:
             return (
@@ -229,7 +247,8 @@ async def handle_command(command: str, user_id: int, is_admin: bool) -> str:
             )
             user_info = {"id": user_id, "username": "test_user"}
             chat_info = {"id": user_id, "type": "private"}
-            joke = await llm_service.get_response(prompt, user_info, chat_info)
+            llm_service_instance = get_llm_service()
+            joke = await llm_service_instance.get_response(prompt, user_info, chat_info)
             return f"😄 <b>Here's a joke for you!</b>\n\n{joke}"
         except Exception as e:
             return f"😅 Oops! I couldn't think of a joke right now. Error: {e}"
@@ -243,29 +262,135 @@ async def handle_command(command: str, user_id: int, is_admin: bool) -> str:
             "<i>Remember: You're loved! 💖</i>"
         )
 
-    # /view_lessons command (admin only)
-    elif command == "/view_lessons":
-        # Check if user is admin (simplified check)
-        admin_ids_str = os.getenv("ADMIN_IDS", "")
-        admin_ids = [int(id.strip()) for id in admin_ids_str.split(",") if id.strip()]
+    # /mood command
+    elif command == "/mood":
+        try:
+            async with AsyncSessionLocal() as session:
+                mood_service = MoodService(session)
+                mood_summary = await mood_service.get_mood_summary()
 
+                # Get relationship info for this user
+                relationship = await mood_service.get_user_relationship(user_id)
+
+                # Admin protection check
+                admin_ids = [
+                    int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()
+                ]
+                is_admin_user = user_id in admin_ids
+
+                return (
+                    f"<b>💭 My Current Mood</b>\n\n"
+                    f"{mood_summary['mood_emoji']} <b>{mood_summary['primary_mood']}</b> "
+                    f"(Intensity: {mood_summary['mood_intensity']})\n\n"
+                    f"<b>VAD Scores:</b>\n"
+                    f"• Valence (Positivity): {mood_summary['vad_scores']['valence']}\n"
+                    f"• Arousal (Energy): {mood_summary['vad_scores']['arousal']}\n"
+                    f"• Dominance (Control): {mood_summary['vad_scores']['dominance']}\n\n"
+                    f"<b>Stats:</b>\n"
+                    f"• Energy: {mood_summary['energy_level']} ({mood_summary['energy_value']})\n"
+                    f"• Confidence: {mood_summary['confidence']} ({mood_summary['confidence_value']})\n"
+                    f"• Social: {mood_summary['social_engagement']}\n"
+                    f"• Interactions: {mood_summary['interaction_count']}\n\n"
+                    f"<b>Reason:</b> {mood_summary['reason']}\n\n"
+                    f"<b>Our Relationship:</b> {relationship.bot_feeling} "
+                    f"(Trust: {relationship.trust_score:.1%}, "
+                    f"Friendship: {relationship.friendship_level:.1%})\n\n"
+                    f"<i>Last updated: {mood_summary['last_updated']}</i>"
+                )
+        except Exception as e:
+            return f"😅 Oops! I couldn't check my mood right now. Error: {e}"
+
+    # /memories command
+    elif command == "/memories":
+        # Check if user is admin
+        admin_ids = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
         if user_id not in admin_ids:
-            return "❌ This command is only available to admins."
+            return (
+                "🔒 <b>Access Denied</b>\n\n"
+                "Sorry, only administrators can view and manage memories. "
+                "This is to protect everyone's privacy!\n\n"
+                "<i>If you're an admin, make sure your Telegram ID is in ADMIN_IDS</i>"
+            )
 
-        # Note: Full implementation requires database session
-        # For now, return a simplified message
-        return (
-            "<b>📚 Lessons System</b>\n\n"
-            "Lessons are admin-only secret instructions injected "
-            "into every LLM call.\n\n"
-            "To manage lessons, use the Telegram bot directly:\n"
-            "• /view_lessons - View all lessons\n"
-            "• /add_lesson - Add a new lesson\n"
-            "• /edit_lesson - Edit existing lesson\n"
-            "• /remove_lesson - Remove a lesson\n\n"
-            "<i>Note: /call endpoint has limited database access. "
-            "Use Telegram for full functionality.</i>"
-        )
+        try:
+            async with AsyncSessionLocal() as session:
+                memory_service = MemoryService(session)
+
+                # Parse command arguments
+                parts = command.split()
+                action = parts[1] if len(parts) > 1 else "list"
+
+                if action == "search" and len(parts) > 2:
+                    # Search memories
+                    query = " ".join(parts[2:])
+                    memories = await memory_service.search_memories(
+                        user_id=None,  # Admin can search all
+                        query=query,
+                        limit=10,
+                    )
+
+                    if not memories:
+                        return f"🔍 <b>No memories found</b>\n\nNo memories match: <code>{query}</code>"
+
+                    result = f"🔍 <b>Memories matching: {query}</b>\n\n"
+                    for i, memory in enumerate(memories[:5], 1):
+                        # Get categories from the memory object
+                        categories = getattr(memory, "categories", [])
+                        category_names = (
+                            [cat.name for cat in categories] if categories else []
+                        )
+
+                        result += (
+                            f"{i}. <b>ID:</b> {memory.id}\n"
+                            f"   <b>Content:</b> {memory.simple_content or memory.full_content[:100]}...\n"
+                            f"   <b>Categories:</b> {', '.join(category_names)}\n"
+                            f"   <b>Importance:</b> {memory.importance}/100\n"
+                            f"   <b>Emotion:</b> {memory.emotion_label or 'neutral'}\n"
+                            f"   <b>Created:</b> {memory.created_at.strftime('%Y-%m-%d %H:%M')}\n\n"
+                        )
+                    return result
+
+                else:
+                    # List recent memories (search with empty query to get all)
+                    memories = await memory_service.search_memories(
+                        user_id=None,  # Admin can see all
+                        query="",
+                        limit=10,
+                    )
+
+                    if not memories:
+                        return "📝 <b>No memories stored yet</b>\n\nI haven't stored any important memories yet!"
+
+                    result = (
+                        "📝 <b>Recent Memories</b> (showing up to 10 most recent)\n\n"
+                    )
+                    for i, memory in enumerate(memories[:10], 1):
+                        # Get categories from the memory object
+                        categories = getattr(memory, "categories", [])
+                        category_names = (
+                            [cat.name for cat in categories] if categories else []
+                        )
+
+                        result += (
+                            f"{i}. <b>ID:</b> {memory.id}\n"
+                            f"   <b>Content:</b> {memory.simple_content or memory.full_content[:100]}...\n"
+                            f"   <b>Categories:</b> {', '.join(category_names)}\n"
+                            f"   <b>Importance:</b> {memory.importance}/100\n"
+                            f"   <b>Emotion:</b> {memory.emotion_label or 'neutral'}\n"
+                            f"   <b>By User:</b> {memory.created_by}\n\n"
+                        )
+
+                    result += (
+                        "<b>Memory Commands:</b>\n"
+                        "• /memories - List recent memories\n"
+                        "• /memories search &lt;query&gt; - Search memories\n"
+                        '• Natural: "Show me memories about..."\n\n'
+                        f"<i>Showing {len(memories)} recent memories</i>"
+                    )
+                    return result
+
+        except Exception as e:
+            return f"😅 Oops! I couldn't access memories right now. Error: {e}"
 
     else:
         return f"❌ Unknown command: {command}"
@@ -284,6 +409,7 @@ async def handle_message(message: str, user_id: int, is_admin: bool) -> str:
     """
     try:
         # Fetch lessons, memories, and message history from database
+        # Keep session open for potential tool execution
         async with AsyncSessionLocal() as session:
             lesson_service = LessonService(session)
             lessons = await lesson_service.get_all_lessons()
@@ -312,35 +438,44 @@ async def handle_message(message: str, user_id: int, is_admin: bool) -> str:
                 is_bot=False,
             )
 
-        # Import tools for agentic behavior
-        from core.tools.lesson_tools import LESSON_TOOLS
-        from core.tools.memory_tools import MEMORY_TOOLS
-        from core.tools.tool_executor import ToolExecutor
-        from core.tools.web_search_tools import WEB_SEARCH_TOOLS
+            # Import tools for agentic behavior
+            from src.core.tools.api_key_tools import API_KEY_TOOLS
+            from src.core.tools.lesson_tools import LESSON_TOOLS
+            from src.core.tools.memory_tools import MEMORY_TOOLS
+            from src.core.tools.openai_search_tools import OPENAI_SEARCH_TOOLS
+            from src.core.tools.tool_executor import ToolExecutor
+            from src.core.tools.web_search_tools import WEB_SEARCH_TOOLS
 
-        # Build tools list (admins get lesson tools, non-admins don't)
-        all_tools = MEMORY_TOOLS + WEB_SEARCH_TOOLS
-        if is_admin:
-            all_tools = all_tools + LESSON_TOOLS
+            # Choose search provider based on environment
+            search_provider = os.getenv("SEARCH_PROVIDER", "openai").lower()
+            if search_provider == "openai":
+                search_tools = OPENAI_SEARCH_TOOLS
+            else:
+                search_tools = WEB_SEARCH_TOOLS
 
-        # Use LLM with waifu personality + context + tools
-        user_info = {"id": user_id, "username": "test_user", "telegram_id": user_id}
-        chat_info = {"id": user_id, "type": "private", "chat_id": user_id}
-        llm_response = await llm_service.get_response(
-            message,
-            user_info,
-            chat_info,
-            lessons,
-            memories=memories,
-            message_history=message_history,
-            tools=all_tools,
-        )
+            # Build tools list (admins get lesson and API key tools, non-admins don't)
+            all_tools = MEMORY_TOOLS + search_tools
+            if is_admin:
+                all_tools = all_tools + LESSON_TOOLS + API_KEY_TOOLS
 
-        # Check if LLM wants to use tools
-        if hasattr(llm_response, "tool_calls") and llm_response.tool_calls:
-            # Execute each tool call
-            async with AsyncSessionLocal() as tool_session:
-                tool_executor = ToolExecutor(tool_session)
+            # Use LLM with waifu personality + context + tools
+            user_info = {"id": user_id, "username": "test_user", "telegram_id": user_id}
+            chat_info = {"id": user_id, "type": "private", "chat_id": user_id}
+            llm_service_instance = get_llm_service()
+            llm_response = await llm_service_instance.get_response(
+                message,
+                user_info,
+                chat_info,
+                lessons,
+                memories=memories,
+                message_history=message_history,
+                tools=all_tools,
+            )
+
+            # Check if LLM wants to use tools
+            if hasattr(llm_response, "tool_calls") and llm_response.tool_calls:
+                # Execute tools using the same session
+                tool_executor = ToolExecutor(session)
                 tool_results = []
 
                 for tool_call in llm_response.tool_calls:
@@ -364,30 +499,30 @@ async def handle_message(message: str, user_id: int, is_admin: bool) -> str:
                         }
                     )
 
-            # Get final response from LLM after tool execution
-            response = await llm_service.get_response_after_tools(
-                user_message=message,
-                user_info=user_info,
-                chat_info=chat_info,
-                lessons=lessons,
-                memories=memories,
-                message_history=message_history,
-                tool_calls=[
-                    {
-                        "id": tc.id,
-                        "type": "function",
-                        "function": {
-                            "name": tc.function.name,
-                            "arguments": tc.function.arguments,
-                        },
-                    }
-                    for tc in llm_response.tool_calls
-                ],
-                tool_results=tool_results,
-            )
-        else:
-            # No tools needed, just use the text response
-            response = llm_response
+                # Get final response from LLM after tool execution
+                response = await llm_service_instance.get_response_after_tools(
+                    user_message=message,
+                    user_info=user_info,
+                    chat_info=chat_info,
+                    lessons=lessons,
+                    memories=memories,
+                    message_history=message_history,
+                    tool_calls=[
+                        {
+                            "id": tc.id,
+                            "type": "function",
+                            "function": {
+                                "name": tc.function.name,
+                                "arguments": tc.function.arguments,
+                            },
+                        }
+                        for tc in llm_response.tool_calls
+                    ],
+                    tool_results=tool_results,
+                )
+            else:
+                # No tools needed, just use the text response
+                response = llm_response
 
         # Store bot's response to database
         async with AsyncSessionLocal() as session:
@@ -397,6 +532,137 @@ async def handle_message(message: str, user_id: int, is_admin: bool) -> str:
                 chat_id=user_id,
                 message_text=response,
                 is_bot=True,
+            )
+
+            # Auto-create memories for important information
+            emotional_service = EmotionalAnalysisService()
+            memory_service = MemoryService(session)
+
+            # Analyze the conversation for memory creation opportunities
+            analysis = await emotional_service.analyze_message_emotionally(
+                message=message, user_id=user_id, is_admin=is_admin
+            )
+
+            # Create memory if analysis indicates it should be stored
+            if analysis.get("should_create_memory", False):
+                # Create memory with emotional context
+                memory_data = {
+                    "full_content": message,
+                    "simple_content": analysis.get("memory_summary", ""),
+                    "categories": analysis.get("categories", []),
+                    "importance": analysis.get("importance", 100),
+                    "created_by": user_id,
+                    # Add VAD emotion values
+                    "emotion_valence": analysis.get("vad", {}).get("valence", 0.0),
+                    "emotion_arousal": analysis.get("vad", {}).get("arousal", 0.0),
+                    "emotion_dominance": analysis.get("vad", {}).get("dominance", 0.0),
+                    "emotion_label": analysis.get("emotion_label", "neutral"),
+                }
+
+                try:
+                    created_memory = await memory_service.create_memory(
+                        full_content=memory_data["full_content"],
+                        simple_content=memory_data.get("simple_content"),
+                        categories=memory_data.get("categories", []),
+                        created_by=memory_data["created_by"],
+                        importance=memory_data["importance"],
+                        emotion_valence=memory_data["emotion_valence"],
+                        emotion_arousal=memory_data["emotion_arousal"],
+                        emotion_dominance=memory_data["emotion_dominance"],
+                        emotion_label=memory_data["emotion_label"],
+                    )
+
+                    # If memory was created successfully, prepend feedback to response
+                    if created_memory and analysis.get("memory_feedback", ""):
+                        response = f"{analysis['memory_feedback']}\n\n{response}"
+                except Exception as e:
+                    # Log error but don't fail the response
+                    print(f"Error creating auto-memory: {e}")
+
+            # Update mood and relationship based on interaction
+            mood_service = MoodService(session)
+
+            # Analyze message sentiment for mood update
+            message_lower = message.lower()
+            sentiment_analysis = analysis if "analysis" in locals() else {}
+
+            # Determine sentiment-based mood changes
+            valence_change = 0.0
+            arousal_change = 0.0
+
+            # Positive indicators
+            positive_words = [
+                "love",
+                "amazing",
+                "great",
+                "awesome",
+                "thank",
+                "thanks",
+                "wonderful",
+                "fantastic",
+                "perfect",
+                "best",
+                "good",
+                "happy",
+                "excited",
+            ]
+            # Negative indicators
+            negative_words = [
+                "hate",
+                "terrible",
+                "awful",
+                "bad",
+                "worst",
+                "stupid",
+                "useless",
+                "angry",
+                "sad",
+                "frustrated",
+                "annoyed",
+                "disappointed",
+            ]
+
+            # Count positive/negative words
+            pos_count = sum(1 for word in positive_words if word in message_lower)
+            neg_count = sum(1 for word in negative_words if word in message_lower)
+
+            # Calculate mood changes (smaller for non-admins to protect from mood swings)
+            if user_id not in [
+                int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()
+            ]:
+                # Non-admin users have smaller impact on mood
+                valence_change = (pos_count * 0.02) - (neg_count * 0.03)
+                arousal_change = 0.01 if pos_count > 0 or neg_count > 0 else 0.0
+            else:
+                # Admins can affect mood more (but still limited)
+                valence_change = (pos_count * 0.05) - (neg_count * 0.08)
+                arousal_change = 0.02 if pos_count > 0 or neg_count > 0 else 0.0
+
+            # Update mood if there's a change
+            if abs(valence_change) > 0.01 or abs(arousal_change) > 0.01:
+                mood_reason = (
+                    f"User message: {message[:50]}..." if len(message) > 50 else message
+                )
+                await mood_service.update_mood(
+                    valence_change=valence_change,
+                    arousal_change=arousal_change,
+                    reason=mood_reason,
+                    user_id=user_id,
+                )
+
+            # Update relationship
+            is_positive_interaction = pos_count > neg_count
+            trust_change = 0.01 if is_positive_interaction else -0.005
+            friendship_change = 0.02 if is_positive_interaction else -0.01
+            familiarity_change = 0.01  # Always increase familiarity with interaction
+
+            await mood_service.update_relationship(
+                user_id=user_id,
+                trust_change=trust_change,
+                friendship_change=friendship_change,
+                familiarity_change=familiarity_change,
+                is_positive=is_positive_interaction,
+                interaction_type="chat",
             )
 
         return response

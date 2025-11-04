@@ -23,14 +23,15 @@ import pytest
 # Add project root
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
-from api.handlers.call import handle_message
-from api.handlers.help import cmd_help_role_aware
-from core.services.database import AsyncSessionLocal
-from core.services.lesson_service import LessonService
-from core.services.llm_service import LLMService
+from src.api.handlers.call import handle_message
+from src.api.handlers.help import cmd_help_role_aware
+from src.core.services.database import AsyncSessionLocal
+from src.core.services.lesson_service import LessonService
+from src.core.services.llm_service import LLMService
 
 
 @pytest.mark.asyncio
+@pytest.mark.requires_openai
 async def test_lessons_injection_unified_system(async_session):
     """Test that lessons are injected consistently across all entry points"""
 

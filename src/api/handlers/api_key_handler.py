@@ -7,7 +7,7 @@ Provides endpoints for generating and managing API keys through bot commands.
 import logging
 from typing import Any, Dict, Optional
 
-from core.services.api_key_service import api_key_service
+from src.core.services.api_key_service import api_key_service
 
 logger = logging.getLogger(__name__)
 

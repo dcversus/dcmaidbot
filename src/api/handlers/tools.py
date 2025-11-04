@@ -12,8 +12,8 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from core.services.tool_service import ToolService
 from src.api.handlers.admin import is_admin
+from src.core.services.tool_service import ToolService
 
 logger = logging.getLogger(__name__)
 router = Router()

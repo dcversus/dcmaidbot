@@ -155,7 +155,7 @@ jobs:
 
     - name: Type checking with MyPy
       run: |
-        mypy bot.py --ignore-missing-imports
+        mypy src/main.py --ignore-missing-imports
 
     - name: Security scan with Bandit
       run: |
@@ -220,8 +220,6 @@ jobs:
         OPENAI_API_BASE: http://localhost:1080
         TELEGRAM_API_BASE: http://localhost:1081
         ENVIRONMENT: ${{ needs.detect-environment.outputs.environment }}
-        DISABLE_TG: "true"
-        SKIP_MIGRATION_CHECK: "true"
       run: |
         docker run --rm \
           --network dcmaidbot-test-network \
@@ -232,8 +230,8 @@ jobs:
           -e OPENAI_API_BASE \
           -e TELEGRAM_API_BASE \
           -e ENVIRONMENT \
-          -e DISABLE_TG \
           -e SKIP_MIGRATION_CHECK \
+          -e PYTHONPATH=/app/src:/app \
           dcmaidbot-test-runner \
           pytest tests/ -v \
             --test-mode=${{ matrix.test_mode }} \

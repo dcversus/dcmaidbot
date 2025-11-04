@@ -1,18 +1,18 @@
-"""Database configuration and session management."""
+"""Database configuration and session management.
+
+PostgreSQL only - connects to dev instance in Kubernetes cluster.
+"""
 
 import os
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
-# Database configuration
+# Database configuration - PostgreSQL only
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "sqlite+aiosqlite:///./dcmaidbot.db",  # Fallback for development
+    "postgresql+asyncpg://dcmaidbot:password@localhost:5432/dcmaidbot_test",
 )
-
-# Determine database type
-IS_SQLITE = "sqlite" in DATABASE_URL.lower()
 
 # Create async engine
 engine = create_async_engine(

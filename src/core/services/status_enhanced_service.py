@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.services.crypto_thoughts_service import CryptoThoughtsService
-from core.services.llm_service import LLMService
+from src.core.services.crypto_thoughts_service import CryptoThoughtsService
+from src.core.services.llm_service import LLMService
 
 
 class EnhancedStatusService:

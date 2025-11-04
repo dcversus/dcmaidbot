@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from core.services.llm_service import get_llm_service
+from src.core.services.llm_service import get_llm_service
 
 logger = logging.getLogger(__name__)
 

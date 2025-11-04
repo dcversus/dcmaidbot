@@ -11,7 +11,7 @@ from typing import Any, Optional
 from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.nudge_token import NudgeToken
+from src.core.models.nudge_token import NudgeToken
 
 logger = logging.getLogger(__name__)
 

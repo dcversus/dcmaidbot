@@ -64,6 +64,7 @@ class TestPRP009LLMJudgeEvaluation:
         return ["unit_tests", "integration_tests", "e2e_tests", "security_tests"]
 
     @pytest.mark.asyncio
+    @pytest.mark.requires_openai
     async def test_prp009_comprehensive_llm_evaluation(self, evaluator):
         """Comprehensive LLM judge evaluation of PRP-009."""
 
@@ -193,6 +194,7 @@ class TestPRP009LLMJudgeEvaluation:
         print(report)
 
     @pytest.mark.asyncio
+    @pytest.mark.requires_openai
     async def test_environment_setup_for_evaluation(self):
         """Test that environment is properly configured for evaluation."""
         # Check required environment variables
@@ -223,6 +225,7 @@ class TestPRP009LLMJudgeEvaluation:
             pytest.fail(f"Failed to import required modules: {e}")
 
     @pytest.mark.asyncio
+    @pytest.mark.requires_openai
     async def test_real_bot_functionality_evaluation(self):
         """Test real bot functionality as part of evaluation."""
         from core.services.auth_service import AuthService

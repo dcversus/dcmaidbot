@@ -12,9 +12,7 @@ def create_app() -> web.Application:
     # Setup routes
     setup_routes(app)
 
-    # Setup middleware
-    from src.api.middleware.analytics import AnalyticsMiddleware
-
-    app.middlewares.append(AnalyticsMiddleware())
+    # Note: AnalyticsMiddleware is for aiogram (Telegram bot), not aiohttp web server
+    # It should only be used in the bot setup, not the web API
 
     return app

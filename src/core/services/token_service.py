@@ -11,7 +11,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.admin_token import AdminToken
+from src.core.models.admin_token import AdminToken
 
 logger = logging.getLogger(__name__)
 

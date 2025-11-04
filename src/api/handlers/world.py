@@ -12,7 +12,7 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from core.services.world_service import get_world_service
+from src.core.services.world_service import get_world_service
 
 logger = logging.getLogger(__name__)
 router = Router()

@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from core.services.redis_service import RedisService
+from src.core.services.redis_service import RedisService
 
 logger = logging.getLogger(__name__)
 

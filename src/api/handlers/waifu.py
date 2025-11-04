@@ -7,14 +7,14 @@ from aiogram import Bot, Router, types
 from aiogram.filters import Command
 from aiogram.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
-from core.services.database import AsyncSessionLocal
-from core.services.emotional_analysis_service import EmotionalAnalysisService
-from core.services.lesson_service import LessonService
-from core.services.llm_service import get_llm_service
-from core.services.memory_service import MemoryService
-from core.services.message_service import MessageService
-from core.services.mood_service import MoodService
-from core.services.status_service import StatusService
+from src.core.services.database import AsyncSessionLocal
+from src.core.services.emotional_analysis_service import EmotionalAnalysisService
+from src.core.services.lesson_service import LessonService
+from src.core.services.llm_service import get_llm_service
+from src.core.services.memory_service import MemoryService
+from src.core.services.message_service import MessageService
+from src.core.services.mood_service import MoodService
+from src.core.services.status_service import StatusService
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,340 @@
+name: E2E Tests with LLM Judge
+
+on:
+  pull_request:
+    branches: [main, friends-update]
+  push:
+    branches: [main, friends-update]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.9"
+  NODE_VERSION: "18"
+
+jobs:
+  e2e-tests:
+    name: E2E Tests with LLM Judge
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: dcmaidbot
+          POSTGRES_DB: dcmaidbot_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install rich pytest-json-report pytest-html
+
+      - name: Read CHANGELOG.md for release quality
+        id: changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # Get unreleased section
+            UNRELEASED=$(sed -n '/## \[Unreleased\]/,/^##/p' CHANGELOG.md | sed '1d;$d')
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$UNRELEASED" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Start test server
+        run: |
+          source .env.example
+          export DATABASE_URL="postgresql+asyncpg://dcmaidbot:password@localhost:5432/dcmaidbot_test"
+          export DISABLE_TG=true
+          export SKIP_MIGRATION_CHECK=true
+          export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          export ADMIN_IDS="122657093"
+          python3 run_test_server.py &
+          sleep 5
+
+      - name: Run Comprehensive Conversation Journey
+        id: journey-test
+        run: |
+          mkdir -p test_results
+
+          # Run test with JSON report
+          python3 -m pytest tests/e2e/test_comprehensive_conversation_journey.py \
+            -v \
+            --json-report-file=test_results/journey_report.json \
+            --html=test_results/journey_report.html \
+            2>&1 | tee test_results/journey_output.log
+
+          # Check if test passed
+          if [ ${PIPESTATUS[0]} -eq 0 ]; then
+            echo "journey_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "journey_passed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Get LLM Judge results if available
+          if [ -f test_results/llm_judge_evaluation.json ]; then
+            SCORE=$(jq -r '.llm_judge_evaluation.score' test_results/llm_judge_evaluation.json)
+            CONFIDENCE=$(jq -r '.llm_judge_evaluation.confidence' test_results/llm_judge_evaluation.json)
+            ACCEPTABLE=$(jq -r '.llm_judge_evaluation.acceptable' test_results/llm_judge_evaluation.json)
+            echo "journey_score=$SCORE" >> $GITHUB_OUTPUT
+            echo "journey_confidence=$CONFIDENCE" >> $GITHUB_OUTPUT
+            echo "journey_acceptable=$ACCEPTABLE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Status Check Test
+        id: status-test
+        run: |
+          # Run test with JSON report
+          python3 -m pytest tests/e2e/test_status_check.py \
+            -v \
+            --json-report-file=test_results/status_report.json \
+            --html=test_results/status_report.html \
+            2>&1 | tee test_results/status_output.log
+
+          # Check if test passed
+          if [ ${PIPESTATUS[0]} -eq 0 ]; then
+            echo "status_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "status_passed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Get LLM Judge results if available
+          if [ -f test_results/status_check_evaluation.json ]; then
+            SCORE=$(jq -r '.judge_evaluation.score' test_results/status_check_evaluation.json)
+            CONFIDENCE=$(jq -r '.judge_evaluation.confidence' test_results/status_check_evaluation.json)
+            ACCEPTABLE=$(jq -r '.judge_evaluation.acceptable' test_results/status_check_evaluation.json)
+            echo "status_score=$SCORE" >> $GITHUB_OUTPUT
+            echo "status_confidence=$CONFIDENCE" >> $GITHUB_OUTPUT
+            echo "status_acceptable=$ACCEPTABLE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Business/DoD Tests
+        id: dod-tests
+        run: |
+          # Run all DoD validation tests
+          python3 -m pytest tests/business/dod_validation/ \
+            -v \
+            --json-report-file=test_results/dod_report.json \
+            --html=test_results/dod_report.html \
+            --junitxml=test_results/junit.xml \
+            2>&1 | tee test_results/dod_output.log
+
+          # Count passed/failed tests
+          PASSED=$(jq -r '.summary.passed' test_results/dod_report.json || echo "0")
+          FAILED=$(jq -r '.summary.failed' test_results/dod_report.json || echo "0")
+          TOTAL=$(jq -r '.summary.total' test_results/dod_report.json || echo "0")
+
+          echo "dod_passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "dod_failed=$FAILED" >> $GITHUB_OUTPUT
+          echo "dod_total=$TOTAL" >> $GITHUB_OUTPUT
+
+          if [ "$FAILED" -eq 0 ]; then
+            echo "dod_all_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "dod_all_passed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Calculate Overall Score and Verdict
+        id: verdict
+        run: |
+          # Calculate weighted score
+          JOURNEY_WEIGHT=0.4
+          STATUS_WEIGHT=0.3
+          DOD_WEIGHT=0.3
+
+          # Get scores (default to 0 if not available)
+          JOURNEY_SCORE=${{ steps.journey-test.outputs.journey_score || 0 }}
+          STATUS_SCORE=${{ steps.status-test.outputs.status_score || 0 }}
+
+          # For DoD tests, use pass rate as score
+          DOD_TOTAL=${{ steps.dod-tests.outputs.dod_total || 1 }}
+          DOD_PASSED=${{ steps.dod-tests.outputs.dod_passed || 0 }}
+          DOD_SCORE=$(echo "scale=2; $DOD_PASSED / $DOD_TOTAL" | bc -l)
+
+          # Calculate overall score
+          OVERALL_SCORE=$(echo "scale=2; $JOURNEY_SCORE * $JOURNEY_WEIGHT + $STATUS_SCORE * $STATUS_WEIGHT + $DOD_SCORE * $DOD_WEIGHT" | bc -l)
+
+          # Determine if CI should fail
+          MINIMUM_SCORE=0.7
+          CI_PASSES=$(echo "$OVERALL_SCORE >= $MINIMUM_SCORE" | bc -l)
+
+          echo "overall_score=$OVERALL_SCORE" >> $GITHUB_OUTPUT
+          echo "journey_score=$JOURNEY_SCORE" >> $GITHUB_OUTPUT
+          echo "status_score=$STATUS_SCORE" >> $GITHUB_OUTPUT
+          echo "dod_score=$DOD_SCORE" >> $GITHUB_OUTPUT
+          echo "ci_passes=$CI_PASSES" >> $GITHUB_OUTPUT
+
+          # Create verdict summary
+          if [ "$CI_PASSES" -eq 1 ]; then
+            VERDICT="✅ PASS"
+            VERDICT_COLOR="green"
+          else
+            VERDICT="❌ FAIL"
+            VERDICT_COLOR="red"
+          fi
+
+          echo "verdict=$VERDICT" >> $GITHUB_OUTPUT
+          echo "verdict_color=$VERDICT_COLOR" >> $GITHUB_OUTPUT
+
+      - name: Generate Test Report
+        run: |
+          cat > test_results/summary.md << EOF
+          # E2E Test Report
+
+          ## Overall Verdict: ${{ steps.verdict.outputs.verdict }}
+          **Overall Score: ${{ steps.verdict.outputs.overall_score }}/1.0**
+
+          ## Test Results
+
+          ### 1. Comprehensive Conversation Journey
+          - Status: ${{ steps.journey-test.outputs.journey_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+          - LLM Judge Score: ${{ steps.journey-test.outputs.journey_score || 'N/A' }}
+          - Confidence: ${{ steps.journey-test.outputs.journey_confidence || 'N/A' }}
+
+          ### 2. Status Check
+          - Status: ${{ steps.status-test.outputs.status_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+          - LLM Judge Score: ${{ steps.status-test.outputs.status_score || 'N/A' }}
+          - Confidence: ${{ steps.status-test.outputs.status_confidence || 'N/A' }}
+
+          ### 3. Business/DoD Tests
+          - Status: ${{ steps.dod-tests.outputs.dod_all_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+          - Passed: ${{ steps.dod-tests.outputs.dod_passed }}/${{ steps.dod-tests.outputs.dod_total }}
+          - Score: ${{ steps.verdict.outputs.dod_score }}
+
+          ## ChangeLog Context
+          ${{ steps.changelog.outputs.changelog || 'No changelog entries' }}
+
+          EOF
+
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read the test report
+            const report = fs.readFileSync('test_results/summary.md', 'utf8');
+
+            // Get detailed results
+            const journeyResults = fs.existsSync('test_results/llm_judge_evaluation.json')
+              ? JSON.parse(fs.readFileSync('test_results/llm_judge_evaluation.json', 'utf8'))
+              : null;
+
+            const statusResults = fs.existsSync('test_results/status_check_evaluation.json')
+              ? JSON.parse(fs.readFileSync('test_results/status_check_evaluation.json', 'utf8'))
+              : null;
+
+            // Build comment
+            let comment = `## 🤖 E2E Test Results with LLM Judge Evaluation\n\n`;
+            comment += report;
+
+            // Add LLM Judge details
+            if (journeyResults && journeyResults.llm_judge_evaluation) {
+              const eval = journeyResults.llm_judge_evaluation;
+              comment += `\n### 📝 LLM Judge Details - Journey Test\n\n`;
+              if (eval.strengths && eval.strengths.length > 0) {
+                comment += `**Strengths:**\n`;
+                eval.strengths.slice(0, 3).forEach(s => comment += `• ${s}\n`);
+              }
+              if (eval.weaknesses && eval.weaknesses.length > 0) {
+                comment += `\n**Areas for Improvement:**\n`;
+                eval.weaknesses.slice(0, 3).forEach(w => comment += `• ${w}\n`);
+              }
+              if (eval.recommendations && eval.recommendations.length > 0) {
+                comment += `\n**Recommendations:**\n`;
+                eval.recommendations.slice(0, 3).forEach(r => comment += `• ${r}\n`);
+              }
+            }
+
+            // Add confidence warning if low
+            const overallScore = parseFloat('${{ steps.verdict.outputs.overall_score }}');
+            if (overallScore < 0.7) {
+              comment += `\n### ⚠️ Confidence Score Below Threshold\n\n`;
+              comment += `The overall score (${overallScore.toFixed(2)}) is below the minimum threshold (0.70). `;
+              comment += `Please review the issues above before merging.\n`;
+            }
+
+            // Add historical comparison if available
+            comment += `\n---\n\n*This comment was generated automatically by the E2E test workflow.*`;
+
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Upload Test Artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            test_results/
+            *.json
+          retention-days: 30
+
+      - name: Check Minimum Score Threshold
+        run: |
+          if [ "${{ steps.verdict.outputs.ci_passes }}" != "1" ]; then
+            echo "❌ CI FAILED: Overall score (${{ steps.verdict.outputs.overall_score }}) is below minimum threshold (0.70)"
+            exit 1
+          else
+            echo "✅ CI PASSED: Overall score (${{ steps.verdict.outputs.overall_score }}) meets minimum threshold"
+          fi
+
+      - name: Store Historical Results
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Store results for historical tracking
+          mkdir -p .github/test-history
+
+          cat > .github/test-history/${{ github.sha }}.json << EOF
+          {
+            "commit": "${{ github.sha }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "overall_score": ${{ steps.verdict.outputs.overall_score }},
+            "journey_score": ${{ steps.verdict.outputs.journey_score }},
+            "status_score": ${{ steps.verdict.outputs.status_score }},
+            "dod_score": ${{ steps.verdict.outputs.dod_score }},
+            "journey_passed": ${{ steps.journey-test.outputs.journey_passed }},
+            "status_passed": ${{ steps.status-test.outputs.status_passed }},
+            "dod_passed": ${{ steps.dod-tests.outputs.dod_all_passed }},
+            "verdict": "${{ steps.verdict.outputs.verdict }}"
+          }
+          EOF
+
+          # Keep only last 100 results
+          ls -t .github/test-history/*.json | tail -n +101 | xargs rm -f

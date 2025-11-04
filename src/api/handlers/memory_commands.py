@@ -11,10 +11,10 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from core.models.memory import Memory
-from core.services.database import AsyncSessionLocal
-from core.services.memory_service import MemoryService
-from core.services.mood_service import MoodService
+from src.core.models.memory import Memory
+from src.core.services.database import AsyncSessionLocal
+from src.core.services.memory_service import MemoryService
+from src.core.services.mood_service import MoodService
 
 router = Router()
 

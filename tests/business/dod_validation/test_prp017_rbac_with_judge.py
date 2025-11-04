@@ -16,8 +16,8 @@ from typing import Any
 import aiohttp
 import pytest
 
-from core.models.user import User
-from core.services.llm_service import LLMService
+from src.core.models.user import User
+from src.core.services.llm_service import LLMService
 
 # Test configuration
 BASE_URL = "http://localhost:8080"

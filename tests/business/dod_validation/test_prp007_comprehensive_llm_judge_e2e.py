@@ -34,8 +34,8 @@ from typing import Any, Dict, List
 
 import pytest
 
-from core.services.llm_service import LLMService
-from core.tools.tool_executor import ToolExecutor
+from src.core.services.llm_service import LLMService
+from src.core.tools.tool_executor import ToolExecutor
 
 
 class LLMJudge:

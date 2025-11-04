@@ -13,8 +13,8 @@ from typing import Any, Optional
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.bot_state import BotMood, UserRelationship
-from core.services.redis_service import redis_service
+from src.core.models.bot_state import BotMood, UserRelationship
+from src.core.services.redis_service import redis_service
 
 logger = logging.getLogger(__name__)
 

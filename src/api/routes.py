@@ -8,7 +8,7 @@ from .handlers import (
     health_handler,
     landing_handler,
     nudge_handler,
-    version_handler,
+    status_handler,
 )
 
 
@@ -17,7 +17,7 @@ def setup_routes(app: web.Application) -> None:
     # API routes
     app.router.add_post("/call", call_handler)
     app.router.add_get("/health", health_handler)
-    app.router.add_get("/api/version", version_handler)
+    app.router.add_get("/status", status_handler)
     app.router.add_post("/nudge", nudge_handler)
     app.router.add_post("/event", event_handler)
 

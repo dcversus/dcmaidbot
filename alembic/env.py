@@ -19,13 +19,13 @@ load_dotenv()
 config = context.config
 
 # Override sqlalchemy.url from environment
-database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./dcmaidbot_test.db")
+database_url = os.getenv(
+    "DATABASE_URL", "postgresql://dcmaidbot:password@localhost:5432/dcmaidbot_test"
+)
 # Convert async drivers to sync drivers for migrations
 # For migrations, we use psycopg2 instead of asyncpg (synchronous driver)
 if database_url.startswith("postgresql+asyncpg://"):
     database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
-elif database_url.startswith("sqlite+aiosqlite://"):
-    database_url = database_url.replace("sqlite+aiosqlite://", "sqlite://")
 config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.

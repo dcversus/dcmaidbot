@@ -7,12 +7,11 @@ This implementation is based on cutting-edge research:
 - Social Graph AI: Relationship and personality modeling
 """
 
-import json
-import os
 from datetime import datetime
 from typing import Any, Optional, cast
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     Column,
@@ -28,21 +27,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.services.database import Base
+from src.core.services.database import Base
 
-# Import pgvector for vector embeddings
-try:
-    from pgvector.sqlalchemy import Vector
-
-    PGVECTOR_AVAILABLE = True
-except ImportError:
-    # Fallback for environments without pgvector
-    PGVECTOR_AVAILABLE = False
-    Vector = None
-
-# Detect database type from environment
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./dcmaidbot_test.db")
-IS_SQLITE = "sqlite" in DATABASE_URL.lower()
+# We're using PostgreSQL exclusively now - no SQLite support
 
 
 # Association table for Memory <-> Category many-to-many relationship
@@ -100,12 +87,12 @@ class Memory(Base):
     )  # "joy", "sadness", "anger", etc.
 
     # Zettelkasten Attributes (for dynamic linking and organization)
-    # Use Text for SQLite, ARRAY for PostgreSQL
+    # Using ARRAY for PostgreSQL (we're PostgreSQL-only now)
     _keywords_storage: Mapped[Optional[Any]] = mapped_column(
-        "keywords", Text if IS_SQLITE else ARRAY(String), nullable=True
+        "keywords", ARRAY(String), nullable=True
     )
     _tags_storage: Mapped[Optional[Any]] = mapped_column(
-        "tags", Text if IS_SQLITE else ARRAY(String), nullable=True
+        "tags", ARRAY(String), nullable=True
     )
     context_temporal: Mapped[Optional[str]] = mapped_column(
         Text, nullable=True
@@ -120,7 +107,7 @@ class Memory(Base):
         Integer, ForeignKey("memories.id"), nullable=True
     )
     _evolution_triggers_storage: Mapped[Optional[Any]] = mapped_column(
-        "evolution_triggers", Text if IS_SQLITE else ARRAY(Integer), nullable=True
+        "evolution_triggers", ARRAY(Integer), nullable=True
     )
 
     # Metadata
@@ -137,9 +124,9 @@ class Memory(Base):
     access_count: Mapped[int] = mapped_column(Integer, default=0)
 
     # Vector embedding for semantic search (PRP-007)
-    # Always use Text column to avoid database compatibility issues
-    # Vector data is stored as JSON string and converted to vectors in code
-    embedding: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Using JSON column for structured storage of embedding arrays
+    # Embeddings are stored as JSON arrays for efficient querying
+    embedding: Mapped[Optional[Any]] = mapped_column("embedding", JSON, nullable=True)
 
     # Relationships
     categories: Mapped[list["Category"]] = relationship(
@@ -166,51 +153,36 @@ class Memory(Base):
         back_populates="to_memory",
     )
 
-    # Property accessors for array fields (handle JSON in SQLite)
+    # Property accessors for array fields
     @property
     def keywords(self) -> Optional[list[str]]:
         """Get keywords list."""
-        if IS_SQLITE and isinstance(self._keywords_storage, str):
-            return cast(list[str], json.loads(self._keywords_storage))
         return cast(Optional[list[str]], self._keywords_storage)
 
     @keywords.setter
     def keywords(self, value: Optional[list[str]]) -> None:
         """Set keywords list."""
-        if IS_SQLITE and value is not None:
-            self._keywords_storage = cast(Any, json.dumps(value))
-        else:
-            self._keywords_storage = cast(Any, value)
+        self._keywords_storage = cast(Any, value)
 
     @property
     def tags(self) -> Optional[list[str]]:
         """Get tags list."""
-        if IS_SQLITE and isinstance(self._tags_storage, str):
-            return cast(list[str], json.loads(self._tags_storage))
         return cast(Optional[list[str]], self._tags_storage)
 
     @tags.setter
     def tags(self, value: Optional[list[str]]) -> None:
         """Set tags list."""
-        if IS_SQLITE and value is not None:
-            self._tags_storage = cast(Any, json.dumps(value))
-        else:
-            self._tags_storage = cast(Any, value)
+        self._tags_storage = cast(Any, value)
 
     @property
     def evolution_triggers(self) -> Optional[list[int]]:
         """Get evolution triggers list."""
-        if IS_SQLITE and isinstance(self._evolution_triggers_storage, str):
-            return cast(list[int], json.loads(self._evolution_triggers_storage))
         return cast(Optional[list[int]], self._evolution_triggers_storage)
 
     @evolution_triggers.setter
     def evolution_triggers(self, value: Optional[list[int]]) -> None:
         """Set evolution triggers list."""
-        if IS_SQLITE and value is not None:
-            self._evolution_triggers_storage = cast(Any, json.dumps(value))
-        else:
-            self._evolution_triggers_storage = cast(Any, value)
+        self._evolution_triggers_storage = cast(Any, value)
 
     def __repr__(self) -> str:
         cats = [c.name for c in self.categories] if self.categories else []

@@ -10,8 +10,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List
 
-from core.models.friend import Friendship
-from core.services.database import get_async_session
+from src.core.models.friend import Friendship, FriendshipStatus
+from src.core.services.database import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class FriendService:
             "from_user": user_id,
             "to_user": friend_id,
             "created_at": datetime.utcnow(),
-            "status": "pending",
+            "status": FriendshipStatus.PENDING.value,
         }
 
         logger.info(f"Friend request from {user_id} to {friend_id} created")
@@ -110,11 +110,11 @@ class FriendService:
 
         try:
             # Create friendship in database
-            async with get_async_session() as session:
+            async with AsyncSessionLocal() as session:
                 friendship = Friendship(
                     user_id=request["from_user"],
                     friend_id=request["to_user"],
-                    status="active",
+                    status=FriendshipStatus.ACCEPTED,
                     created_at=datetime.utcnow(),
                 )
                 session.add(friendship)
@@ -152,7 +152,7 @@ class FriendService:
             List of friends
         """
         try:
-            async with get_async_session() as session:
+            async with AsyncSessionLocal() as session:
                 # Query friendships where user is either user_id or friend_id
                 friendships = await session.execute(
                     """
@@ -198,7 +198,7 @@ class FriendService:
             Result of removing friend
         """
         try:
-            async with get_async_session() as session:
+            async with AsyncSessionLocal() as session:
                 # Find and delete friendship
                 await session.execute(
                     """
@@ -241,7 +241,10 @@ class FriendService:
         """
         requests = []
         for request_id, request in self.pending_requests.items():
-            if request["to_user"] == user_id and request["status"] == "pending":
+            if (
+                request["to_user"] == user_id
+                and request["status"] == FriendshipStatus.PENDING.value
+            ):
                 requests.append(
                     {
                         "request_id": request_id,
@@ -263,7 +266,7 @@ class FriendService:
             True if users are friends
         """
         try:
-            async with get_async_session() as session:
+            async with AsyncSessionLocal() as session:
                 result = await session.execute(
                     """
                     SELECT 1 FROM friendships

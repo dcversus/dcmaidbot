@@ -11,8 +11,8 @@ from typing import Any, Optional
 from sqlalchemy import and_, delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.api_key import ApiKey
-from core.models.event import Event
+from src.core.models.api_key import ApiKey
+from src.core.models.event import Event
 
 logger = logging.getLogger(__name__)
 

@@ -85,7 +85,7 @@ jobs:
     - name: Type checking with MyPy
       id: mypy
       run: |
-        mypy bot.py --ignore-missing-imports --json-report mypy-report || echo "mypy_failed=true" >> $GITHUB_OUTPUT
+        mypy src/main.py --ignore-missing-imports --json-report mypy-report || echo "mypy_failed=true" >> $GITHUB_OUTPUT
         if [[ -f mypy-report/results.json ]]; then
           mypy_errors=$(cat mypy-report/results.json | jq 'length')
           echo "mypy_error_count=$mypy_errors" >> $GITHUB_OUTPUT
@@ -122,8 +122,10 @@ jobs:
 
     - name: Run unit tests with coverage
       id: coverage
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
       run: |
-        pytest tests/unit/ -v --cov=. --cov-report=json --cov-report=html --cov-report=xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
+        pytest tests/unit/ -v --cov=src --cov-report=json --cov-report=html --cov-report=xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
 
         if [[ -f coverage.json ]]; then
           coverage_percent=$(cat coverage.json | jq '.totals.percent_covered')
@@ -270,7 +272,6 @@ jobs:
         DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/dcmaidbot_business
         REDIS_URL: redis://localhost:6379/0
         ENVIRONMENT: test
-        DISABLE_TG: "true"
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         # Run business-focused E2E tests
@@ -369,8 +370,8 @@ import sys
 import os
 sys.path.append('.')
 
-from services.status_service import StatusService
-from services.redis_service import RedisService
+from src.core.services.status_service import StatusService
+from src.core.services.redis_service import RedisService
 
 async def test_status_service():
     # Mock database engine for testing
@@ -475,15 +476,12 @@ else:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Read version
+    - name: Read version from CHANGELOG.md
       id: version
       run: |
-        if [ -f version.txt ]; then
-          VERSION=$(cat version.txt)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-        else
-          echo "version=0.1.0" >> $GITHUB_OUTPUT
-        fi
+        # Parse version from CHANGELOG.md (first version found after [Unreleased])
+        VERSION=$(head -20 CHANGELOG.md | grep -m1 "^## \[" | sed 's/^## \[\([^]]*\)\].*/\1/' | grep -v "Unreleased" || echo "0.1.0")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Get build metadata
       id: meta
@@ -718,11 +716,20 @@ else:
       uses: actions/github-script@v7
       with:
         script: |
-          const version = require('./version.txt') || '0.1.0';
+          const fs = require('fs');
+          let version = '0.1.0';
+          try {
+            const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+            const match = changelog.match(/^## \[([^\]]+)\]/m);
+            if (match && match[1] !== 'Unreleased') {
+              version = match[1];
+            }
+          } catch (error) {
+            console.log('Could not read version from CHANGELOG.md:', error);
+          }
           const tagName = `v${version}`;
 
-          // Read CHANGELOG.md
-          const fs = require('fs');
+          // Read CHANGELOG.md for release notes
           let changelogContent = '';
           try {
             const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
@@ -754,7 +761,7 @@ else:
     - name: Notify production deployment
       run: |
         echo "🎉 PRODUCTION DEPLOYMENT COMPLETED"
-        echo "Version: $(cat version.txt)"
+        echo "Version: $(head -20 CHANGELOG.md | grep -m1 "^## \[" | sed 's/^## \[\([^]]*\)\].*/\1/' | grep -v "Unreleased" || echo "0.1.0")"
         echo "Commit: ${{ github.sha }}"
         echo "Image: ${{ needs.container-build.outputs.image_tag }}"
 

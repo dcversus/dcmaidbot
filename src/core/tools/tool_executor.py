@@ -10,11 +10,13 @@ from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.services.auth_service import AuthService
-from core.services.lesson_service import LessonService
-from core.services.llm_service import LLMService
-from core.services.memory_service import MemoryService
-from core.services.tool_service import ToolService
+from src.core.mcp.server import get_mcp_server
+from src.core.services.api_key_service import get_api_key_service
+from src.core.services.auth_service import AuthService
+from src.core.services.lesson_service import LessonService
+from src.core.services.llm_service import LLMService
+from src.core.services.memory_service import MemoryService
+from src.core.services.tool_service import ToolService
 
 # TelegramTools will be imported later to avoid circular import
 
@@ -48,6 +50,7 @@ class ToolExecutor:
         self.lesson_service = LessonService(session)
         self.auth_service = AuthService()
         self.llm_service = LLMService()
+        self.mcp_server = get_mcp_server()
         self.tool_service = ToolService(session)
 
         # Initialize Telegram tools (bot will be set later if available)
@@ -127,6 +130,30 @@ class ToolExecutor:
                     "vague_message": random.choice(VAGUE_DEFLECTIONS),
                 }
 
+        # Try MCP tools first (admin-only memory/lesson management)
+        if tool_name in [
+            "view_memory",
+            "update_memory",
+            "view_lesson",
+            "update_lesson",
+        ]:
+            try:
+                return await self.mcp_server.execute_tool(tool_name, arguments, user_id)
+            except PermissionError as e:
+                logger.warning(f"MCP tool access denied: {e}")
+                return {
+                    "success": False,
+                    "error": "access_denied_admin",
+                    "vague_message": random.choice(VAGUE_DEFLECTIONS),
+                }
+            except Exception as e:
+                logger.error(f"MCP tool execution failed: {e}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": "Failed to execute memory management tool",
+                }
+
         # Special tools that use ToolService
         if tool_name == "web_search":
             return await self._execute_web_search_enhanced(arguments, user_id, chat_id)
@@ -171,6 +198,10 @@ class ToolExecutor:
             # Web search tool
             elif tool_name == "web_search":
                 return await self._execute_web_search(arguments)
+
+            # OpenAI search tool
+            elif tool_name == "openai_web_search":
+                return await self._execute_openai_web_search(arguments)
 
             # Lesson tools (admin-only)
             elif tool_name == "get_all_lessons":
@@ -591,6 +622,48 @@ class ToolExecutor:
                 "error": f"Web search failed: {str(e)}",
             }
 
+    async def _execute_openai_web_search(
+        self, arguments: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Execute openai_web_search tool using OpenAI's search capability."""
+        query = arguments.get("query")
+        max_results = arguments.get("max_results", 5)
+
+        if not query:
+            return {"success": False, "error": "Query is required"}
+
+        # Limit to max 10 results
+        max_results = min(max_results, 10)
+
+        try:
+            from src.core.tools.openai_search_tools import OpenAISearchService
+
+            search_service = OpenAISearchService()
+            result = await search_service.search(query=query, max_results=max_results)
+
+            if result.get("success"):
+                return {
+                    "success": True,
+                    "query": query,
+                    "model": result.get("model", "unknown"),
+                    "response": result.get("response", ""),
+                    "tool_used": result.get("tool_used", False),
+                    "results": [],  # OpenAI doesn't return structured results, just text
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("error", "Unknown error"),
+                    "query": query,
+                }
+
+        except Exception as e:
+            logger.error(f"OpenAI web search error: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"OpenAI web search failed: {str(e)}",
+            }
+
     async def _execute_get_all_lessons(self) -> dict[str, Any]:
         """Execute get_all_lessons tool (admin-only).
 
@@ -812,53 +885,153 @@ class ToolExecutor:
         self, arguments: dict[str, Any], user_id: int
     ) -> dict[str, Any]:
         """Execute create_api_key tool."""
-        telegram_tools = self._get_telegram_tools()
-        if not telegram_tools:
+        # Check if user is admin
+        if not self.auth_service.is_admin(user_id):
             return {
                 "success": False,
-                "error": "Telegram tools not available - bot not initialized",
+                "error": "This tool is only available to administrators",
             }
 
-        return await telegram_tools.create_api_key(admin_id=user_id, **arguments)
+        try:
+            api_key_service = get_api_key_service()
+            name = arguments.get("name", "Generated Key")
+            description = arguments.get("description", "")
+            expires_in_days = arguments.get("expires_in_days")
+
+            result = await api_key_service.generate_api_key(
+                user_id=user_id,
+                name=name,
+                description=description,
+                expires_in_days=expires_in_days,
+            )
+
+            return {
+                "success": True,
+                "api_key": result["api_key"],  # Only shown once
+                "key_info": {
+                    "id": result["key_info"]["id"],
+                    "name": result["key_info"]["name"],
+                    "key_prefix": result["key_info"]["key_prefix"],
+                    "description": result["key_info"]["description"],
+                    "expires_at": result["key_info"]["expires_at"],
+                },
+                "message": f"✅ API key '{name}' created successfully! Save the key securely, it won't be shown again.",
+            }
+        except Exception as e:
+            logger.error(f"Error creating API key: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to create API key: {str(e)}",
+            }
 
     async def _execute_list_api_keys(
         self, arguments: dict[str, Any], user_id: int
     ) -> dict[str, Any]:
         """Execute list_api_keys tool."""
-        telegram_tools = self._get_telegram_tools()
-        if not telegram_tools:
+        # Check if user is admin
+        if not self.auth_service.is_admin(user_id):
             return {
                 "success": False,
-                "error": "Telegram tools not available - bot not initialized",
+                "error": "This tool is only available to administrators",
             }
 
-        return await telegram_tools.list_api_keys(admin_id=user_id, **arguments)
+        try:
+            api_key_service = get_api_key_service()
+            keys = await api_key_service.list_api_keys(user_id)
+
+            return {
+                "success": True,
+                "keys": keys,
+                "count": len(keys),
+                "message": f"📋 Found {len(keys)} API key(s)",
+            }
+        except Exception as e:
+            logger.error(f"Error listing API keys: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to list API keys: {str(e)}",
+            }
 
     async def _execute_deactivate_api_key(
         self, arguments: dict[str, Any], user_id: int
     ) -> dict[str, Any]:
         """Execute deactivate_api_key tool."""
-        telegram_tools = self._get_telegram_tools()
-        if not telegram_tools:
+        # Check if user is admin
+        if not self.auth_service.is_admin(user_id):
             return {
                 "success": False,
-                "error": "Telegram tools not available - bot not initialized",
+                "error": "This tool is only available to administrators",
             }
 
-        return await telegram_tools.deactivate_api_key(admin_id=user_id, **arguments)
+        try:
+            api_key_service = get_api_key_service()
+            key_id = arguments.get("key_id")
+
+            if not key_id:
+                return {
+                    "success": False,
+                    "error": "key_id is required",
+                }
+
+            success = await api_key_service.revoke_api_key(key_id, user_id)
+
+            if success:
+                return {
+                    "success": True,
+                    "message": f"✅ API key {key_id} has been revoked",
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"API key {key_id} not found or you don't have permission",
+                }
+        except Exception as e:
+            logger.error(f"Error deactivating API key: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to deactivate API key: {str(e)}",
+            }
 
     async def _execute_get_api_key_info(
         self, arguments: dict[str, Any], user_id: int
     ) -> dict[str, Any]:
         """Execute get_api_key_info tool."""
-        telegram_tools = self._get_telegram_tools()
-        if not telegram_tools:
+        # Check if user is admin
+        if not self.auth_service.is_admin(user_id):
             return {
                 "success": False,
-                "error": "Telegram tools not available - bot not initialized",
+                "error": "This tool is only available to administrators",
             }
 
-        return await telegram_tools.get_api_key_info(admin_id=user_id, **arguments)
+        try:
+            api_key_service = get_api_key_service()
+            key_id = arguments.get("key_id")
+
+            if not key_id:
+                return {
+                    "success": False,
+                    "error": "key_id is required",
+                }
+
+            usage_info = await api_key_service.get_api_key_usage(key_id, user_id)
+
+            if usage_info:
+                return {
+                    "success": True,
+                    "usage_info": usage_info,
+                    "message": f"📊 API key usage info for key {key_id}",
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"API key {key_id} not found or you don't have permission",
+                }
+        except Exception as e:
+            logger.error(f"Error getting API key info: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get API key info: {str(e)}",
+            }
 
     async def _execute_create_nudge_token(
         self, arguments: dict[str, Any], user_id: int

@@ -24,10 +24,10 @@ from prometheus_client import (
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.joke import Joke
-from core.models.memory import Memory
-from core.models.message import Message
-from core.models.user import User
+from src.core.models.joke import Joke
+from src.core.models.memory import Memory
+from src.core.models.message import Message
+from src.core.models.user import User
 
 # Initialize LangSmith if API key is available
 try:

@@ -10,8 +10,8 @@ from typing import Optional
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.message import Message
-from core.models.user import User
+from src.core.models.message import Message
+from src.core.models.user import User
 
 
 class MessageService:

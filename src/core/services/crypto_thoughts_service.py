@@ -17,8 +17,8 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.services.redis_service import RedisService
-from core.services.status_service import StatusService
+from src.core.services.redis_service import RedisService
+from src.core.services.status_service import StatusService
 
 logger = logging.getLogger(__name__)
 

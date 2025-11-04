@@ -1,7 +1,7 @@
 from typing import List
 
-from core.models.data import Activity
-from core.services.pool_service import _get_storage, _save_storage
+from src.core.models.data import Activity
+from src.core.services.pool_service import _get_storage, _save_storage
 
 
 def add_activity(pool_name: str, activity: Activity) -> bool:

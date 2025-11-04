@@ -13,9 +13,9 @@ from aiohttp import web
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.api_key import ApiKey
-from core.models.event import Event
-from core.services.database import AsyncSessionLocal
+from src.core.models.api_key import ApiKey
+from src.core.models.event import Event
+from src.core.services.database import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
 

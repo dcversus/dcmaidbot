@@ -12,9 +12,9 @@ from urllib.parse import urlparse
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.tool_execution import ToolExecution
-from core.services.llm_service import LLMService
-from core.services.redis_service import get_redis_client
+from src.core.models.tool_execution import ToolExecution
+from src.core.services.llm_service import LLMService
+from src.core.services.redis_service import get_redis_client
 
 logger = logging.getLogger(__name__)
 
@@ -137,24 +137,99 @@ class ToolService:
     async def _duckduckgo_search(self, query: str, num_results: int) -> Dict[str, Any]:
         """Search using DuckDuckGo (free alternative)."""
         try:
-            from duckduckgo_search import DDGS
+            # Try using duckduckgo_search library first
+            try:
+                from duckduckgo_search import DDGS
 
-            with DDGS() as ddgs:
-                results = list(ddgs.text(query, max_results=num_results))
+                with DDGS() as ddgs:
+                    results = list(ddgs.text(query, max_results=num_results))
+
+                return {
+                    "query": query,
+                    "results": [
+                        {
+                            "title": r.get("title", ""),
+                            "snippet": r.get("body", ""),
+                            "url": r.get("link", ""),
+                        }
+                        for r in results
+                    ],
+                }
+            except ImportError:
+                # Fallback to direct HTML parsing if library not available
+                logger.warning("duckduckgo_search not available, using fallback method")
+                return await self._duckduckgo_fallback(query, num_results)
+
+        except Exception as e:
+            logger.error(f"DuckDuckGo search failed: {e}")
+            # Try fallback method
+            try:
+                return await self._duckduckgo_fallback(query, num_results)
+            except:
+                return {"success": False, "error": f"Web search failed: {str(e)}"}
+
+    async def _duckduckgo_fallback(
+        self, query: str, num_results: int
+    ) -> Dict[str, Any]:
+        """Fallback web search using direct HTML parsing."""
+        from urllib.parse import quote_plus
+
+        import aiohttp
+        from bs4 import BeautifulSoup
+
+        try:
+            # Use DuckDuckGo HTML version
+            url = f"https://duckduckgo.com/html/?q={quote_plus(query)}"
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, timeout=10) as response:
+                    if response.status != 200:
+                        raise Exception(f"HTTP {response.status}")
+
+                    html = await response.text()
+
+                    # Parse HTML
+                    soup = BeautifulSoup(html, "html.parser")
+                    results = []
+
+                    # Find result divs
+                    for result_div in soup.find_all("div", class_="result")[
+                        :num_results
+                    ]:
+                        # Extract title and link
+                        title_tag = result_div.find("a", class_="result__a")
+                        title = title_tag.get_text(strip=True) if title_tag else ""
+                        link = title_tag.get("href", "") if title_tag else ""
+
+                        # Extract snippet
+                        snippet_tag = result_div.find("a", class_="result__snippet")
+                        snippet = (
+                            snippet_tag.get_text(strip=True) if snippet_tag else ""
+                        )
+
+                        if title and link:
+                            results.append(
+                                {"title": title, "snippet": snippet, "url": link}
+                            )
 
             return {
                 "query": query,
-                "results": [
-                    {
-                        "title": r.get("title", ""),
-                        "snippet": r.get("body", ""),
-                        "url": r.get("link", ""),
-                    }
-                    for r in results
-                ],
+                "results": results,
+            }
+
+        except ImportError:
+            # If BeautifulSoup not available, return error
+            logger.error("BeautifulSoup not available for fallback search")
+            return {
+                "success": False,
+                "error": "Web search requires duckduckgo-search or beautifulsoup package",
             }
         except Exception as e:
-            logger.error(f"DuckDuckGo search failed: {e}")
+            logger.error(f"Fallback search failed: {e}")
             raise
 
     async def curl_request(

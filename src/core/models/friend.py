@@ -7,6 +7,7 @@ Implements PRP-019 Friends System functionality.
 """
 
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import (
     Column,
@@ -16,10 +17,22 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
+
+
+class FriendshipStatus(Enum):
+    """Friendship status enumeration."""
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    BLOCKED = "blocked"
 
 
 class Friendship(Base):
@@ -31,7 +44,10 @@ class Friendship(Base):
     user_id = Column(Integer, nullable=False, comment="User who initiated friendship")
     friend_id = Column(Integer, nullable=False, comment="User who received friendship")
     status = Column(
-        String(20), nullable=False, default="pending", comment="pending/active/blocked"
+        SQLEnum(FriendshipStatus),
+        nullable=False,
+        default=FriendshipStatus.PENDING,
+        comment="pending/active/blocked",
     )
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(

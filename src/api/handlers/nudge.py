@@ -2,17 +2,23 @@
 Nudge endpoint handler for agent-to-user communication.
 
 Provides POST /nudge endpoint that:
-1. Validates authentication via NUDGE_SECRET
+1. Validates authentication (API key, admin ID, or NUDGE_SECRET)
 2. Validates request payload
 3. Sends message directly or via LLM pipeline to Telegram users
 4. Returns response or error
+
+Authentication (supports multiple methods):
+1. API Key: X-API-Key header or api_key query parameter
+2. Admin ID: X-Admin-ID header or admin_id query parameter
+3. NUDGE_SECRET: Authorization: Bearer <NUDGE_SECRET> (legacy)
 """
 
 import os
 
 from aiohttp import web
 
-from core.services.nudge_service import NudgeService
+from src.core.middleware.auth import get_unified_auth
+from src.core.services.nudge_service import NudgeService
 
 # Lazy-loaded service instance (created on first use)
 _nudge_service = None
@@ -29,8 +35,10 @@ def get_nudge_service() -> NudgeService:
 async def nudge_handler(request: web.Request) -> web.Response:
     """POST /nudge - Send messages to admins via Telegram.
 
-    Authentication:
-        Requires Authorization: Bearer <NUDGE_SECRET> header
+    Authentication (supports multiple methods):
+    1. API Key: X-API-Key header or api_key query parameter (user-specific)
+    2. Admin ID: X-Admin-ID header or admin_id query parameter (admin-specific)
+    3. NUDGE_SECRET: Authorization: Bearer <NUDGE_SECRET> (master key)
 
     Request Body (JSON):
         {
@@ -42,34 +50,33 @@ async def nudge_handler(request: web.Request) -> web.Response:
     Returns:
         200: Success - message sent to user(s)
         400: Bad Request - invalid payload
-        401: Unauthorized - missing or invalid auth token
+        401: Unauthorized - missing or invalid auth
         500: Internal Server Error - failed to send message
     """
-    # 1. Validate authentication
-    auth_header = request.headers.get("Authorization", "")
-    expected_token = os.getenv("NUDGE_SECRET")
+    # 1. Validate unified authentication
+    unified_auth = get_unified_auth()
+    nudge_secret = os.getenv("NUDGE_SECRET")
 
-    if not expected_token:
-        return web.json_response(
-            {"status": "error", "error": "NUDGE_SECRET not configured on server"},
-            status=500,
-        )
+    # Extract headers and query params
+    headers = dict(request.headers)
+    query_params = dict(request.rel_url.query)
 
-    if not auth_header.startswith("Bearer "):
+    # Authenticate request
+    is_auth, user_id, auth_method = await unified_auth.authenticate_request(
+        headers=headers,
+        query_params=query_params,
+        allow_nudge_secret=True,
+        nudge_secret=nudge_secret,
+    )
+
+    if not is_auth:
         return web.json_response(
             {
                 "status": "error",
-                "error": (
-                    "Invalid authorization header format. Expected: Bearer <token>"
-                ),
+                "error": "Invalid or missing authentication",
+                "message": "Provide API key, admin ID, or NUDGE_SECRET",
             },
             status=401,
-        )
-
-    provided_token = auth_header.split(" ", 1)[1]
-    if provided_token != expected_token:
-        return web.json_response(
-            {"status": "error", "error": "Invalid authorization token"}, status=401
         )
 
     # 2. Parse and validate request body

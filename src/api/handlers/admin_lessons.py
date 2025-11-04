@@ -6,8 +6,8 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from core.services.database import AsyncSessionLocal
-from core.services.lesson_service import LessonService
+from src.core.services.database import AsyncSessionLocal
+from src.core.services.lesson_service import LessonService
 
 router = Router()
 

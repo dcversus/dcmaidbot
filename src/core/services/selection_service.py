@@ -2,8 +2,8 @@ import random
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from core.models.data import Activity, Pool
-from core.services.pool_service import _get_storage, _save_storage, get_pool
+from src.core.models.data import Activity, Pool
+from src.core.services.pool_service import _get_storage, _save_storage, get_pool
 
 # Constants for penalty calculation
 PENALTY_BASE = 1.5

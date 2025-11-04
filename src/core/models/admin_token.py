@@ -12,7 +12,7 @@ from sqlalchemy import BigInteger, Boolean, DateTime, String, Text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.services.database import Base
+from src.core.services.database import Base
 
 
 class AdminToken(Base):

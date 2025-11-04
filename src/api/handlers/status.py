@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from aiohttp import web
 
-from core.services.status_service import StatusService
+from src.core.services.status_service import StatusService
 
 logger = logging.getLogger(__name__)
 

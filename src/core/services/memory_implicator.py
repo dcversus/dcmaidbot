@@ -7,8 +7,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List
 
-from core.services.llm_service import LLMService
-from core.services.memory_service import MemoryService
+from src.core.services.llm_service import LLMService
+from src.core.services.memory_service import MemoryService
 
 logger = logging.getLogger(__name__)
 

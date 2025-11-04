@@ -12,8 +12,8 @@ from typing import Any, Optional
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models.game_session import GameSession, PlayerState
-from core.services.llm_service import LLMService
+from src.core.models.game_session import GameSession, PlayerState
+from src.core.services.llm_service import LLMService
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,7 @@ from typing import Any, Awaitable, Callable, Dict, Union
 from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, ChatJoinRequest, Message
 
-from core.services.analytics_service import analytics
+from src.core.services.analytics_service import analytics
 
 
 class AnalyticsMiddleware(BaseMiddleware):

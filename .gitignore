@@ -22,11 +22,11 @@ MANIFEST
 .pytest_cache/
 .ruff_cache/
 
-# Database
+# Database - PostgreSQL only (no local files)
+# SQLite databases for local development and testing
 *.db
 *.sqlite
 *.sqlite3
-test.db
 
 # Coverage
 .coverage

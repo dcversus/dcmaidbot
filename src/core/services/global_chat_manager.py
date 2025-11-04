@@ -8,8 +8,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Set
 
-from core.services.chat_buffer import ChatSummary, chat_buffer
-from core.services.llm_service import LLMService
+from src.core.services.chat_buffer import ChatSummary, chat_buffer
+from src.core.services.llm_service import LLMService
 
 logger = logging.getLogger(__name__)
 

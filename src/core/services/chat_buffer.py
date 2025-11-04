@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Deque, Dict, List, Optional, Set
 
-from core.services.llm_service import LLMService
+from src.core.services.llm_service import LLMService
 
 logger = logging.getLogger(__name__)
 

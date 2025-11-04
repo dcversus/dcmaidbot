@@ -11,7 +11,7 @@ from typing import Optional
 from sqlalchemy import String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.services.database import Base
+from src.core.services.database import Base
 
 
 class ApiKey(Base):
