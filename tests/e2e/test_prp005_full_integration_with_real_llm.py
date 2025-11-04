@@ -14,14 +14,15 @@ Run with:
 """
 
 import os
-import pytest
+
 import aiohttp
+import pytest
 from sqlalchemy import select
 
-from services.memory_service import MemoryService
-from services.llm_service import LLMService
-from models.user import User
 from models.memory import Memory, MemoryLink
+from models.user import User
+from services.llm_service import LLMService
+from services.memory_service import MemoryService
 
 # Test configuration
 BASE_URL = "http://localhost:8080"
@@ -540,12 +541,15 @@ async def test_bot_generates_zettelkasten_attributes_with_llm(
     print("\n🏷️  Zettelkasten attributes extracted:")
     print(f"  Keywords: {attributes.get('keywords', [])}")
     print(f"  Tags: {attributes.get('tags', [])}")
-    print(f"  Contexts: {attributes.get('contexts', [])}")
+    print(f"  Context Temporal: {attributes.get('context_temporal')}")
+    print(f"  Context Situational: {attributes.get('context_situational')}")
 
     # Step 3: Validate attributes were generated
     assert "keywords" in attributes, "Should extract keywords"
     assert "tags" in attributes, "Should extract tags"
-    assert "contexts" in attributes, "Should extract contexts"
+    assert "context_temporal" in attributes or "context_situational" in attributes, (
+        "Should extract context"
+    )
 
     keywords = attributes["keywords"]
     assert len(keywords) > 0, "Should extract at least one keyword"
@@ -713,13 +717,14 @@ async def test_full_prp005_workflow_end_to_end(
     if len(memories) > 0:
         latest = memories[0]
         print(f"  Latest memory has keywords: {latest.keywords is not None}")
-        print(f"  Latest memory has VAD scores: {latest.valence is not None}")
+        print(f"  Latest memory has VAD scores: {latest.emotion_valence is not None}")
         if latest.keywords:
             print(f"  Keywords: {latest.keywords[:3]}...")
-        if latest.valence is not None:
+        if latest.emotion_valence is not None:
             print(
-                f"  VAD: valence={latest.valence}, "
-                f"arousal={latest.arousal}, dominance={latest.dominance}"
+                f"  VAD: valence={latest.emotion_valence}, "
+                f"arousal={latest.emotion_arousal}, "
+                f"dominance={latest.emotion_dominance}"
             )
 
     # Check for links

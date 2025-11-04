@@ -1,16 +1,17 @@
-import os
 import asyncio
 import json
-from aiogram import Router, types, Bot
+import os
+
+from aiogram import Bot, Router, types
 from aiogram.filters import Command
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
+from aiogram.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from database import AsyncSessionLocal
-from services.llm_service import get_llm_service
 from services.lesson_service import LessonService
-from services.status_service import StatusService
+from services.llm_service import get_llm_service
 from services.memory_service import MemoryService
 from services.message_service import MessageService
+from services.status_service import StatusService
 
 router = Router()
 
@@ -235,11 +236,11 @@ async def handle_message(message: types.Message):
         llm_service = get_llm_service()
 
         # Import tools for agentic behavior
-        from tools.memory_tools import MEMORY_TOOLS
-        from tools.web_search_tools import WEB_SEARCH_TOOLS
-        from tools.lesson_tools import LESSON_TOOLS
-        from tools.tool_executor import ToolExecutor
         from services.auth_service import AuthService
+        from tools.lesson_tools import LESSON_TOOLS
+        from tools.memory_tools import MEMORY_TOOLS
+        from tools.tool_executor import ToolExecutor
+        from tools.web_search_tools import WEB_SEARCH_TOOLS
 
         # Check if user is admin for tool filtering
         auth_service = AuthService()

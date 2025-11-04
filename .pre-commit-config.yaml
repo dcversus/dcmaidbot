@@ -50,13 +50,12 @@ repos:
         pass_filenames: false
         args: [tests/unit/, -v, --tb=short]
         always_run: true
-      # Tests requiring OPENAI_API_KEY (mandatory before commit)
-      # Runs ALL tests marked with @pytest.mark.requires_openai, including integration tests
-      # Integration tests will be skipped automatically if bot is not running (connection refused)
-      - id: pytest-requires-openai
-        name: pytest-requires-openai
-        entry: pytest
+      # E2E tests with auto-started server and LLM judge (mandatory before commit)
+      # Automatically starts dev server, runs all E2E tests, then cleans up
+      # Tests all endpoints, LLM instruments, and validates with LLM as judge
+      - id: e2e-with-server
+        name: e2e-with-server
+        entry: bash scripts/run_e2e_tests_with_server.sh
         language: system
         pass_filenames: false
-        args: [-m, "requires_openai", -v, --tb=short]
         always_run: true

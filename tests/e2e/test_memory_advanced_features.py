@@ -8,11 +8,12 @@ Tests:
 5. generate_relation_reason() - LLM integration for relation reasoning
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from services.memory_service import MemoryService
+import pytest
+
 from services.llm_service import LLMService
+from services.memory_service import MemoryService
 
 # async_session and test_categories fixtures provided by tests/conftest.py (PostgreSQL)
 

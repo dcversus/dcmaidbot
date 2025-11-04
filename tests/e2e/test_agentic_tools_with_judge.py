@@ -12,12 +12,13 @@ Run with:
 """
 
 import os
-import pytest
-import aiohttp
 from typing import Any
 
-from services.llm_service import LLMService
+import aiohttp
+import pytest
+
 from models.user import User
+from services.llm_service import LLMService
 
 # Test configuration
 BASE_URL = "http://localhost:8080"

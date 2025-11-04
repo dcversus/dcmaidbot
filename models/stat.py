@@ -1,8 +1,10 @@
 """Stat model for dcmaidbot."""
 
 from datetime import datetime
-from sqlalchemy import String, Float, DateTime, ForeignKey, Integer
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
 
 

@@ -7,18 +7,18 @@ without going through Telegram's webhook/polling system.
 Authentication: Uses same NUDGE_SECRET as /nudge endpoint
 """
 
-import os
 import json
+import os
 from typing import Optional
 
 from aiohttp import web
 
 from database import AsyncSessionLocal
-from services.llm_service import llm_service
+from services.auth_service import AuthService
 from services.lesson_service import LessonService
+from services.llm_service import llm_service
 from services.memory_service import MemoryService
 from services.message_service import MessageService
-from services.auth_service import AuthService
 
 
 async def call_handler(request: web.Request) -> web.Response:
@@ -139,7 +139,7 @@ async def handle_command(command: str, user_id: int, is_admin: bool) -> str:
     if command == "/start":
         return (
             "💕 <b>Nya~ Welcome, dear friend!</b>\n\n"
-            "I'm <b>Lilit</b>, your kawaii maid bot! I'm here to chat, "
+            "I'm <b>Lilith</b>, your kawaii maid bot! I'm here to chat, "
             "tell jokes, and spread love! 🎀\n\n"
             "<b>Available commands:</b>\n"
             "• /help - Show all commands\n"
@@ -313,10 +313,10 @@ async def handle_message(message: str, user_id: int, is_admin: bool) -> str:
             )
 
         # Import tools for agentic behavior
-        from tools.memory_tools import MEMORY_TOOLS
-        from tools.web_search_tools import WEB_SEARCH_TOOLS
         from tools.lesson_tools import LESSON_TOOLS
+        from tools.memory_tools import MEMORY_TOOLS
         from tools.tool_executor import ToolExecutor
+        from tools.web_search_tools import WEB_SEARCH_TOOLS
 
         # Build tools list (admins get lesson tools, non-admins don't)
         all_tools = MEMORY_TOOLS + WEB_SEARCH_TOOLS

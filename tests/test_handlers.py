@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, patch
-from aiogram.types import Message, User, Chat
 
-from handlers import waifu
+import pytest
+from aiogram.types import Chat, Message, User
+
 from handlers import help as help_handler
+from handlers import waifu
 
 
 @pytest.fixture

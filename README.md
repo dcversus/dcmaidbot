@@ -248,6 +248,31 @@ See [AGENTS.md](AGENTS.md) for detailed architecture, PRPs, and development work
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
+## 🎵 Music Attribution
+
+### Background Music: "Eternal Study"
+
+**Artist**: Lofi Fruits Music
+**Track**: Eternal Study
+**Duration**: 12:00
+**License**: Creative Commons Attribution 4.0 International License
+**Source**: [Lofi Fruits Music YouTube Channel](https://www.youtube.com/@LofiFruitsMusic)
+
+#### Attribution Notice
+
+> "Eternal Study" by Lofi Fruits Music is licensed under CC BY 4.0
+
+This beautiful lofi anime track creates the perfect atmosphere for Lilith's interactive world. The modern retro style complements the pixel art aesthetic while providing a calming backdrop for exploration and interaction.
+
+#### Usage Rights
+
+✅ **Commercial Use**: Allowed
+✅ **Modification**: Allowed
+✅ **Distribution**: Allowed
+✅ **Attribution**: Provided as required
+
+Thank you to Lofi Fruits Music for creating this wonderful piece and making it available for commercial use with proper attribution!
+
 ## License
 
 GNU Affero General Public License v3.0 (AGPL-3.0)

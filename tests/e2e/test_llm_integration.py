@@ -1,11 +1,12 @@
 """E2E test for LLM integration with lessons."""
 
 import os
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from services.llm_service import LLMService
+import pytest
+
 from services.lesson_service import LessonService
+from services.llm_service import LLMService
 
 # async_session fixture is provided by tests/conftest.py (PostgreSQL)
 

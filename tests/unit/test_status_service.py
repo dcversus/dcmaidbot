@@ -1,6 +1,7 @@
 """Unit tests for StatusService."""
 
 import pytest
+
 from services.status_service import StatusService
 
 
