@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 DC Maidbot Game Creator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">🏠🤖 Little Game House</h1>
+            <p class="subtitle">Create fun games with your bot friend!</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Auth Section -->
+            <section id="auth-section" class="section">
+                <div class="card">
+                    <h2>🔐 Admin Magic Key</h2>
+                    <p>Enter your secret admin key to enter the game workshop!</p>
+                    <div class="input-group">
+                        <input
+                            type="password"
+                            id="token-input"
+                            placeholder="🔑 Secret admin token..."
+                            class="magic-input"
+                        >
+                        <button id="unlock-btn" class="btn btn-primary">
+                            🔓 Unlock Workshop
+                        </button>
+                    </div>
+                    <div id="auth-error" class="error-message hidden">
+                        😔 That key doesn't work! Try again!
+                    </div>
+                </div>
+            </section>
+
+            <!-- Game Workshop Section -->
+            <section id="workshop-section" class="section hidden">
+                <div class="card">
+                    <h2>🛠️ Game Workshop</h2>
+                    <p>What would you like to create today?</p>
+
+                    <div class="button-grid">
+                        <button class="btn btn-game" data-action="create_quiz">
+                            🧠 Create Quiz Game
+                        </button>
+                        <button class="btn btn-game" data-action="create_story">
+                            📖 Make Story Game
+                        </button>
+                        <button class="btn btn-game" data-action="create_puzzle">
+                            🧩 Build Puzzle Game
+                        </button>
+                        <button class="btn btn-game" data-action="create_adventure">
+                            🗺️ Design Adventure
+                        </button>
+                        <button class="btn btn-game" data-action="domik_tool">
+                            🏠 Domik File Tool
+                        </button>
+                        <button class="btn btn-game" data-action="test_game">
+                            🎮 Test Your Game
+                        </button>
+                    </div>
+                </div>
+
+                <!-- File Editor Section -->
+                <div id="file-editor" class="card hidden">
+                    <h3>📝 Edit Game File</h3>
+                    <div class="file-controls">
+                        <input
+                            type="text"
+                            id="file-path"
+                            placeholder="File path (e.g., games/my_game.json)"
+                            class="magic-input"
+                        >
+                        <div class="editor-buttons">
+                            <button id="load-file-btn" class="btn btn-secondary">
+                                📂 Load File
+                            </button>
+                            <button id="save-file-btn" class="btn btn-success">
+                                💾 Save File
+                            </button>
+                        </div>
+                    </div>
+                    <textarea
+                        id="file-content"
+                        placeholder="Your game content will appear here..."
+                        class="file-textarea"
+                    ></textarea>
+                    <div id="file-status" class="status-message"></div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <h3>⚡ Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button class="btn btn-quick" data-action="list_files">
+                            📋 List My Games
+                        </button>
+                        <button class="btn btn-quick" data-action="create_folder">
+                            📁 New Game Folder
+                        </button>
+                        <button class="btn btn-quick" data-action="show_help">
+                            ❓ Show Help
+                        </button>
+                        <button class="btn btn-quick" data-action="open_docs">
+                            📚 Open Documentation
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Status Display -->
+            <div class="status-bar">
+                <span id="connection-status">🔌 Connecting...</span>
+                <span id="user-status">👤 Unknown</span>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Made with 💜 by DC Maidbot |
+                <a href="#" id="docs-link" class="link">📚 Docs</a> |
+                <a href="#" id="site-link" class="link">🌐 Website</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="spinner">🎮</div>
+            <p>Loading workshop...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+{
+  "world_name": "Lilith’s House & City Line",
+  "version": "3.1.0",
+  "style": {
+    "art_style": "16-bit top-down orthographic (modern retro), Animal Crossing vibes",
+    "palette": "DB32",
+    "camera": "strict top-down orthographic (not isometric), like Animal Crossing",
+    "tile_size": 64,
+    "hiDPI_scale": 2,
+    "grid_default": { "cols": 20, "rows": 12 },
+    "scroll": { "direction": "horizontal", "snap": true },
+    "prompt_constraints": {
+      "orthographic": "STRICT TOP-DOWN ORTHOGRAPHIC VIEW, no perspective, no camera angle, no 3D tilt, completely flat 2D view like looking at a map",
+      "style": "Animal Crossing inspired 16-bit pixel art, DB32 palette, crisp pixel perfect, single light source from top-left",
+      "shadows": "shadows cast straight down and right, NO depth perception, NO isometric projection",
+      "quality": "minimal dithering, clean 1px outlines, consistent lighting throughout"
+    },
+    "world_base_prompt": "Animal Crossing style cozy pixel world, peaceful daily life simulation, warm atmosphere",
+    "connection_inpainting": {
+      "enabled": true,
+      "floor_matching": true,
+      "vertical_continuity": true,
+      "gray_filter_for_missing_floors": true,
+      "connection_prompt_template": "we are at {current_floor} floor, next to us is {adjacent_location} which is {floor_difference} floor(s) below"
+    }
+  },
+  "render": {
+    "provider_priority": ["hf", "openai", "leonardo"],
+    "models": {
+      "txt2img": { "hf": "stabilityai/stable-diffusion-xl-base-1.0", "leonardo": "Leonardo Diffusion XL", "openai": "dall-e-3" },
+      "inpaint": { "hf": "runwayml/stable-diffusion-inpainting", "leonardo": "RealtimeCanvasInpaint" }
+    },
+    "defaults": { "seed": 424242, "steps": 30, "cfg": 5.0 },
+    "canvas_size": { "width": 1280, "height": 768 },
+    "fullscreen_states": {
+      "enable": true,
+      "background_color": "#2a1810",
+      "transition_duration": 300,
+      "padding": 64
+    },
+    "state_consistency": {
+      "enable": true,
+      "preserve_base_object": true,
+      "only_modify_display_content": true,
+      "same_object_across_states": true
+    },
+    "state_render_areas": {
+      "enable": true,
+      "allow_state_specific_positioning": true,
+      "allow_state_specific_sizing": true,
+      "default_anchor": "top-left",
+      "coordinate_system": "pixels",
+      "overlay_blend_mode": "normal",
+      "respect_canvas_bounds": true
+    }
+  },
+  "navigation": {
+    "sequence": ["house_main", "house_attach", "garden", "street", "mall", "mall2"],
+    "notes": "Horizontal scroll order. Each location exposes exits linking to the next entry tiles."
+  },
+  "locations": [
+    {
+      "id": "house_main",
+      "name": "Versus House — Main (Helsinki, Kallio)",
+      "kind": "building",
+      "default_grid": { "cols": 20, "rows": 12 },
+      "story_md": "## Дом семьи Версус — Основной блок (Kallio)\nMama (Василиса), Papa (Даниил) и Лилит растят мир кликами. ☕ + трамвай + снег = счастье.\n\n**Notes:** flat top-down, DB32. 少し日本語。",
+      "floors": [
+        {
+          "id": "house_f1_hall",
+          "name": "Hall — Floor 1",
+          "level": 1,
+          "bounds": { "cols": 20, "rows": 12 },
+          "seed_offset": 131,
+          "description_prompt": "Ground-floor hallway; top-down orthographic 16-bit pixel art; DB32; entrance closet, mat, umbrella stand; gentle NW light; no perspective; do not move fixed props across tiles.",
+          "story_md": "### Прихожая (1 этаж)\nШаги к сауне и в сад. На полке — ключи, на стене — рамки со словом 『家』.\n\n*Joke:* ‘Korvapuusti Power-Up’ — +5 к настроению после кофе.",
+          "widgets": [
+            {
+              "id": "umbrella_egg",
+              "type": "easter_egg",
+              "name": "Hidden Umbrella",
+              "hidden": true,
+              "grid": { "x": 2, "y": 8, "w": 1, "h": 1 },
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[2,8]] }, "prompt": "umbrella tip barely visible; keep floor pattern unchanged" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[2,8]] }, "prompt": "tip twinkles softly; no extra props" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "art reveal panel", "image_overlay": "/easter-egg-character-designs.png" }
+              ]
+            },
+            {
+              "id": "stairs_up_to_f2",
+              "type": "nav",
+              "name": "Stairs Up",
+              "grid": { "x": 17, "y": 2, "w": 2, "h": 3 },
+              "prompt_base": "straight wooden stair flight up; orthographic; DB32; consistent shadow; do not alter walls",
+              "states": [ { "state": "idle", "region": { "mode": "cells", "cells": [[17,2],[18,2],[17,3],[18,3],[17,4],[18,4]] }, "prompt": "stairs up idle" } ]
+            },
+            {
+              "id": "door_to_sauna",
+              "type": "nav",
+              "name": "Door → Sauna (1)",
+              "grid": { "x": 1, "y": 6, "w": 2, "h": 2 },
+              "prompt_base": "wooden door with small glass; orthographic; DB32; closed",
+              "states": [ { "state": "idle", "region": { "mode": "cells", "cells": [[1,6],[2,6],[1,7],[2,7]] }, "prompt": "door closed" } ]
+            }
+          ],
+          "connections": [
+            { "type": "stairs", "at": [[17,2],[18,4]], "to": { "location": "house_main", "floor_id": "house_f2_parents", "entry_at": [2,10] } },
+            { "type": "door",   "at": [[1,6],[2,7]],    "to": { "location": "house_attach", "floor_id": "house_f1_sauna",   "entry_at": [18,6] } },
+            { "type": "door",   "label": "→ Garden",     "at": [[19,9],[19,10]], "to": { "location": "garden", "floor_id": "garden_f1", "entry_at": [0,9] } }
+          ]
+        },
+        {
+          "id": "house_f2_parents",
+          "name": "Parents’ Room — Floor 2",
+          "level": 2,
+          "bounds": { "cols": 20, "rows": 12 },
+          "seed_offset": 121,
+          "description_prompt": "Parents’ bedroom; top-down orthographic 16-bit pixel art; DB32; tidy bed; warm lamp; bookshelf; framed art; NW light; no perspective.",
+          "story_md": "### Комната родителей (2 этаж)\nVasilisa + Daniil = ♥ → Lilith. Утро в Хельсинки: **кофе + трамвай**.\n\n- *Joke:* ‘Press **Korvapuusti** to continue…’",
+          "widgets": [
+            {
+              "id": "bed_lights",
+              "type": "toggle",
+              "name": "Bed Lights",
+              "grid": { "x": 6, "y": 4, "w": 6, "h": 3 },
+              "prompt_base": "bed with two small lamps; orthographic; DB32; lamps off; do not alter bedding",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[6,4],[7,4],[8,4],[9,4],[10,4],[11,4],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6]] }, "prompt": "lamps off" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[6,4],[7,4],[8,4],[9,4],[10,4],[11,4],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6]] }, "prompt": "lamps softly on; halo contained; no color shift elsewhere" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "full-screen parchment story overlay, flat panel",
+                  "overlay_panel": { "type": "text", "title": "Parents’ Story", "content": [
+                    "Papa (Dev) + Mama (Product) → ♥ → Lilith",
+                    "Мы делаем её мир большим и добрым. Helsinki, coffee, warm lights."
+                  ], "style": { "font": "PressStart2P", "color": "#ffd7b5" } } }
+              ]
+            },
+            {
+              "id": "family_photo_strip",
+              "type": "media",
+              "name": "Family Photo Strip",
+              "grid": { "x": 2, "y": 2, "w": 4, "h": 2 },
+              "prompt_base": "row of small frames on wall; orthographic; keep wall unchanged",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[2,2],[3,2],[4,2],[5,2],[2,3],[3,3],[4,3],[5,3]] }, "prompt": "frames with abstract pixels" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[2,2],[3,2],[4,2],[5,2],[2,3],[3,3],[4,3],[5,3]] }, "prompt": "frames glow; tiny 『家』 in one frame" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "gallery overlay flat panel", "image_overlay": "/easter-egg-vasilisa-danya.jpg" }
+              ]
+            },
+            {
+              "id": "door_to_balcony",
+              "type": "nav",
+              "name": "Door → Balcony (2)",
+              "grid": { "x": 18, "y": 5, "w": 2, "h": 2 },
+              "prompt_base": "glass balcony door; orthographic; DB32; closed",
+              "states": [ { "state": "idle", "region": { "mode": "cells", "cells": [[18,5],[19,5],[18,6],[19,6]] }, "prompt": "door closed" } ]
+            },
+            {
+              "id": "stairs_up_to_f3",
+              "type": "nav",
+              "name": "Stairs Up",
+              "grid": { "x": 1, "y": 2, "w": 2, "h": 3 },
+              "prompt_base": "stairs up; orthographic; DB32",
+              "states": [ { "state": "idle", "region": { "mode": "cells", "cells": [[1,2],[2,2],[1,3],[2,3],[1,4],[2,4]] }, "prompt": "stairs idle" } ]
+            }
+          ],
+          "connections": [
+            { "type": "door",   "at": [[18,5],[19,6]], "to": { "location": "house_attach", "floor_id": "house_f2_balcony", "entry_at": [1,6] } },
+            { "type": "stairs", "at": [[1,2],[2,4]],   "to": { "location": "house_main", "floor_id": "house_f3_lilith",  "entry_at": [18,9] } },
+            { "type": "stairs", "label": "↓",          "at": [[17,10],[18,11]], "to": { "location": "house_main", "floor_id": "house_f1_hall",    "entry_at": [3,2] } }
+          ]
+        },
+        {
+          "id": "house_f3_lilith",
+          "name": "Lilith’s Room — Floor 3",
+          "level": 3,
+          "bounds": { "cols": 20, "rows": 12 },
+          "seed_offset": 101,
+          "description_prompt": "Cozy teenage bedroom in Helsinki; top-down orthographic 16-bit pixel art; DB32; desk with PC, bed, bookshelf, window; soft NW light; crisp 1px outlines; do not move props across tiles.",
+          "story_md": "### Комната Лилит (3 этаж)\n‘Маленькие секреты живут в пикселях.’ — *Hover kindly. Click gently.*\n\n**Helsinki ref:** настольная лампа в форме трамвая. 少し日本語。\n",
+          "widgets": [
+            { "id": "digital_clock", "type": "time", "name": "Digital Clock", "grid": { "x": 2, "y": 1, "w": 2, "h": 1 },
+              "prompt_base": "retro digital desk clock on wooden desk; orthographic; DB32; screen off; keep desk/background unchanged; NW light; crisp 1px outline",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[2,1],[3,1]] }, "prompt": "clock off (blank display); do not alter desk" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[2,1],[3,1]] }, "prompt": "clock on with cyan glow digits; no extra reflections", "render_text": { "format": "HH:mm", "font": "PressStart2P", "color": "#9ad1ff" } },
+                { "state": "click", "region": { "mode": "cells", "cells": [[2,1],[3,1]] }, "prompt": "clock on with seconds and blinking colon look", "render_text": { "format": "HH:mm:ss", "font": "PressStart2P", "color": "#9ad1ff" } }
+              ],
+              "render_hints": "hover/click draw dynamic text overlay; no re-gen" },
+            { "id": "commit_badge", "type": "badge", "name": "Commit Badge", "grid": { "x": 4, "y": 1, "w": 2, "h": 1 },
+              "prompt_base": "small brass badge plate with screws; orthographic; DB32; neutral metal; do not add text",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[4,1],[5,1]] }, "prompt": "plate neutral", "render_text": { "text": "version", "font": "PressStart2P", "color": "#ffd37f" } },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[4,1],[5,1]] }, "prompt": "plate slightly highlighted; screws unchanged", "render_text": { "env": "GIT_COMMIT_SHORT", "font": "PressStart2P", "color": "#ffd37f" } }
+              ] },
+            { "id": "version_badge", "type": "badge", "name": "Version Badge", "grid": { "x": 6, "y": 1, "w": 2, "h": 1 },
+              "prompt_base": "small pixel label plate; orthographic; DB32; no text rendered by model",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[6,1],[7,1]] }, "prompt": "label neutral (blank)", "render_text": { "text": "v0.3.0", "font": "PressStart2P", "color": "#ffe4a6" } },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[6,1],[7,1]] }, "prompt": "label mild glow; same plate geometry", "render_text": { "text": "CHANGELOG →", "font": "PressStart2P", "color": "#ffe4a6" } },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "full-screen parchment backdrop; flat panel; DB32; warm paper texture",
+                  "overlay_panel": { "type": "md", "title": "CHANGELOG.md", "source": "https://raw.githubusercontent.com/dcversus/dcmaidbot/main/CHANGELOG.md", "style": { "font": "PressStart2P", "color": "#f7e7c1" } } }
+              ] },
+            { "id": "pc_screen", "type": "media", "name": "Lilith's PC", "grid": { "x": 10, "y": 2, "w": 3, "h": 2 },
+              "prompt_base": "small CRT-like PC; screen off; orthographic 16-bit; DB32; keep desk unchanged; no extra props",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[10,2],[11,2],[12,2],[10,3],[11,3],[12,3]] }, "prompt": "PC off; same bezel" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[10,2],[11,2],[12,2],[10,3],[11,3],[12,3]] }, "prompt": "PC on with chibi cat loop (implied 2 frames), cyan tint; bezel unchanged" },
+                { "state": "click", "region": { "mode": "area", "area": { "x": 64, "y": 128, "width": 1152, "height": 512, "anchor": "top-left" } }, "prompt": "large terminal interface window, pixel UI, DB32, hacker terminal aesthetic with scanlines",
+                  "overlay_panel": { "type": "text", "title": "Lilith Terminal", "content": ["$ whoami → lilith-bot", "Mama=Vasilisa  Papa=Daniil  ♥  Helsinki ☕"], "style": { "font": "PressStart2P", "color": "#c0ffee" } } }
+              ],
+              "render_hints": "hover swaps only screen area; click opens overlay" },
+            { "id": "cactus_plant", "type": "status", "name": "Cactus Growth", "grid": { "x": 3, "y": 3, "w": 2, "h": 2 },
+              "prompt_base": "cute cactus in pink pot on windowsill; orthographic pixel art; DB32; keep sill/window unchanged",
+              "region": { "mode": "cells", "cells": [[3,3],[4,3],[3,4],[4,4]] },
+              "states": [
+                { "state": "idle-small",  "prompt": "small cactus, shy face; no other changes" },
+                { "state": "hover-small", "prompt": "small cactus slightly bigger, happy face; preserve pot and sill" },
+                { "state": "click-small", "prompt": "small cactus blooms one pink flower; no extra props" },
+                { "state": "idle-medium","prompt": "medium cactus, gentle smile; preserve environment" },
+                { "state": "hover-medium","prompt": "medium cactus slightly bigger, subtle sparkles" },
+                { "state": "click-medium","prompt": "medium cactus blooms two pink flowers" },
+                { "state": "idle-large", "prompt": "large cactus, proud face" },
+                { "state": "hover-large","prompt": "large cactus wiggles (implied), kawai eyes; background fixed" },
+                { "state": "click-large", "prompt": "large cactus blooms crown of pink flowers" }
+              ],
+              "render_hints": "mask matches cells; inpaint only cactus region" },
+            { "id": "changelog_book", "type": "changelog", "name": "Changelog Book", "grid": { "x": 16, "y": 2, "w": 2, "h": 2 },
+              "prompt_base": "small leather book with golden title; orthographic; DB32; keep table unchanged",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[16,2],[17,2],[16,3],[17,3]] }, "prompt": "closed book showing v0.3.0 on spine" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[16,2],[17,2],[16,3],[17,3]] }, "prompt": "book slightly open, warm inner glow, tiny kana 『愛』" },
+                { "state": "click", "region": { "mode": "area", "area": { "x": 128, "y": 64, "width": 1024, "height": 640, "anchor": "top-left" } }, "prompt": "book opened full-screen, readable parchment pages, flat panel, centered layout with margins",
+                  "overlay_panel": { "type": "md", "title": "Changelog Stories", "source": "https://raw.githubusercontent.com/dcversus/dcmaidbot/main/CHANGELOG.md" } }
+              ] },
+            { "id": "edge_story_portal", "type": "link", "name": "The Edge Story", "grid": { "x": 9, "y": 10, "w": 2, "h": 2 },
+              "prompt_base": "small standing poster with logo ‘Edge Story’; orthographic; DB32; subtle glow",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[9,10],[10,10],[9,11],[10,11]] }, "prompt": "poster idle" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[9,10],[10,10],[9,11],[10,11]] }, "prompt": "poster brighter glow" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "fullscreen flat overlay with logo center", "overlay_panel": { "type": "link", "title": "theedgestory.org", "url": "https://theedgestory.org" } }
+              ] }
+          ],
+          "connections": [
+            { "type": "stairs", "label": "↓", "at": [[18,10],[19,11]], "to": { "location": "house_main", "floor_id": "house_f2_parents", "entry_at": [2,3] } }
+          ]
+        }
+      ],
+      "exits": [
+        { "from_floor": "house_f1_hall", "at": [19,9], "to_location": "garden", "to_floor": "garden_f1", "entry_at": [0,9], "label": "→ Garden" }
+      ]
+    },
+
+    {
+      "id": "house_attach",
+      "name": "Versus House — Attachments",
+      "kind": "building",
+      "default_grid": { "cols": 20, "rows": 12 },
+      "story_md": "## Пристройки дома\nSauna (1) и Balcony (2). Один уровень на локацию соблюден.",
+      "floors": [
+        {
+          "id": "house_f1_sauna",
+          "name": "Sauna — Attachment (Level 1)",
+          "level": 1,
+          "bounds": { "cols": 20, "rows": 12 },
+          "seed_offset": 141,
+          "description_prompt": "Attached Finnish sauna room; top-down orthographic; DB32; wooden benches, stove, steam bucket; warm NW light; keep geometry stable across states.",
+          "story_md": "### Сауна\nПар историй. Helsinki fact: *‘Löyly’* — слово для ‘пара’ и духа сауны.",
+          "widgets": [
+            {
+              "id": "steam_bucket",
+              "type": "status",
+              "name": "Steam Bucket",
+              "grid": { "x": 9, "y": 6, "w": 2, "h": 2 },
+              "prompt_base": "wooden water bucket near stove; orthographic; DB32; calm steam; do not touch benches",
+              "region": { "mode": "cells", "cells": [[9,6],[10,6],[9,7],[10,7]] },
+              "states": [
+                { "state": "idle",  "prompt": "calm steam only; keep stove unchanged" },
+                { "state": "hover", "prompt": "slightly more steam swirls within region" },
+                { "state": "click", "prompt": "dense steam; katakana スッ on wood; do not spill outside region" }
+              ]
+            }
+          ],
+          "connections": [
+            { "type": "door", "label": "← Hall", "at": [[19,6],[19,7]], "to": { "location": "house_main", "floor_id": "house_f1_hall", "entry_at": [2,6] } }
+          ]
+        },
+        {
+          "id": "house_f2_balcony",
+          "name": "Balcony — Attachment (Level 2)",
+          "level": 2,
+          "bounds": { "cols": 20, "rows": 12 },
+          "seed_offset": 115,
+          "description_prompt": "Small glass balcony with city hint; orthographic; DB32; planter box; Helsinki street view implied in pixels; keep railing geometry fixed.",
+          "story_md": "### Балкон (2 этаж)\nВетер с залива. Вид на трамвайную линию HSL. *‘Hei, kahvia?’*",
+          "widgets": [
+            {
+              "id": "balcony_poster_edge",
+              "type": "link",
+              "name": "The Edge Story Poster",
+              "grid": { "x": 9, "y": 2, "w": 2, "h": 2 },
+              "prompt_base": "small standing poster with logo ‘Edge Story’; orthographic; DB32; subtle glow; keep floor tiles unchanged",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[9,2],[10,2],[9,3],[10,3]] }, "prompt": "poster idle" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[9,2],[10,2],[9,3],[10,3]] }, "prompt": "poster brighter glow" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "fullscreen flat overlay with logo center",
+                  "overlay_panel": { "type": "link", "title": "theedgestory.org", "url": "https://theedgestory.org" } }
+              ]
+            }
+          ],
+          "connections": [
+            { "type": "door", "label": "← Parents’ Room", "at": [[0,6],[1,6]], "to": { "location": "house_main", "floor_id": "house_f2_parents", "entry_at": [18,6] } }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "garden",
+      "name": "Family Garden",
+      "kind": "outdoor",
+      "default_grid": { "cols": 20, "rows": 12 },
+      "story_md": "## Сад\nМамины помидоры, клубника Лилит, папин арбуз. Вдалеке слышно HSL трамвай.",
+      "floors": [
+        {
+          "id": "garden_f1",
+          "name": "Garden",
+          "level": 1,
+          "bounds": { "cols": 20, "rows": 12 },
+          "seed_offset": 151,
+          "description_prompt": "Backyard garden plots; top-down orthographic 16-bit pixel art; DB32; veggies, flowers, bench, watering can; calm NW light.",
+          "widgets": [
+            { "id": "tomatoes", "type": "status", "name": "Tomatoes", "grid": { "x": 4, "y": 6, "w": 3, "h": 2 },
+              "prompt_base": "tomato plants; orthographic; DB32; red fruit; keep soil unchanged",
+              "region": { "mode": "cells", "cells": [[4,6],[5,6],[6,6],[4,7],[5,7],[6,7]] },
+              "states": [
+                { "state": "idle",  "prompt": "ripe tomatoes, calm leaves" },
+                { "state": "hover", "prompt": "leaves sway slightly; no new props" },
+                { "state": "click", "prompt": "small basket appears adjacent within region with few picked tomatoes" }
+              ] },
+            { "id": "strawberries", "type": "status", "name": "Strawberries", "grid": { "x": 8, "y": 6, "w": 3, "h": 2 },
+              "prompt_base": "strawberry patch; orthographic; DB32; pinkish berries",
+              "region": { "mode": "cells", "cells": [[8,6],[9,6],[10,6],[8,7],[9,7],[10,7]] },
+              "states": [
+                { "state": "idle",  "prompt": "berries glistening, leaves calm" },
+                { "state": "hover", "prompt": "tiny sparkle effects within leaves" },
+                { "state": "click", "prompt": "a small jam jar appears within region" }
+              ] },
+            { "id": "watermelon", "type": "status", "name": "Watermelon", "grid": { "x": 12, "y": 6, "w": 3, "h": 2 },
+              "prompt_base": "watermelon on soil; orthographic; DB32",
+              "region": { "mode": "cells", "cells": [[12,6],[13,6],[14,6],[12,7],[13,7],[14,7]] },
+              "states": [
+                { "state": "idle",  "prompt": "whole melon with stripes" },
+                { "state": "hover", "prompt": "shine highlight grows; keep soil unchanged" },
+                { "state": "click", "prompt": "melon slice appears next to it within region" }
+              ] },
+            { "id": "mandarins", "type": "status", "name": "Mandarins", "grid": { "x": 16, "y": 6, "w": 3, "h": 2 },
+              "prompt_base": "mandarin tree with small oranges; orthographic; DB32",
+              "region": { "mode": "cells", "cells": [[16,6],[17,6],[18,6],[16,7],[17,7],[18,7]] },
+              "states": [
+                { "state": "idle",  "prompt": "small mandarins; calm leaves" },
+                { "state": "hover", "prompt": "leaf rustle within region" },
+                { "state": "click", "prompt": "peeled mandarin appears on nearby bench within region" }
+              ] },
+            { "id": "bench_coffee", "type": "media", "name": "Coffee Bench", "grid": { "x": 3, "y": 9, "w": 4, "h": 2 },
+              "prompt_base": "wooden bench with two cups; Helsinki coffee date vibe; orthographic; DB32",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[3,9],[4,9],[5,9],[6,9],[3,10],[4,10],[5,10],[6,10]] }, "prompt": "two cups empty; bench unchanged" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[3,9],[4,9],[5,9],[6,9],[3,10],[4,10],[5,10],[6,10]] }, "prompt": "cups steaming mildly; do not change bench texture" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "fullscreen postcard overlay flat panel",
+                  "overlay_panel": { "type": "text", "title": "Helsinki ☕", "content": ["Coffee walk. Mama + Papa + Lilith = ♥", "Русский+English + 少し日本語 → 家族"], "style": { "font": "PressStart2P", "color": "#ffd7b5" } } }
+              ] }
+          ],
+          "connections": [
+            { "type": "door", "label": "← House", "at": [[0,9],[0,10]], "to": { "location": "house_main", "floor_id": "house_f1_hall", "entry_at": [18,9] } },
+            { "type": "gate", "label": "→ Street", "at": [[19,9],[19,10]], "to": { "location": "street", "floor_id": "street_f1", "entry_at": [0,9] } }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "street",
+      "name": "Street — Helsinki",
+      "kind": "outdoor",
+      "default_grid": { "cols": 20, "rows": 12 },
+      "story_md": "## Улица\nТрамвай HSL, кофейная вывеска, деревья. Сначала кофе — потом приключения.",
+      "floors": [
+        {
+          "id": "street_f1",
+          "name": "Street",
+          "level": 1,
+          "bounds": { "cols": 20, "rows": 12 },
+          "seed_offset": 161,
+          "description_prompt": "Cozy Helsinki street; orthographic 16-bit pixel art; DB32; coffee shop sign, tram stop, gentle trees; NW light; no perspective.",
+          "widgets": [
+            { "id": "coffee_sign", "type": "toggle", "name": "Coffee Shop Sign", "grid": { "x": 5, "y": 4, "w": 3, "h": 2 },
+              "prompt_base": "coffee sign board; orthographic; DB32",
+              "region": { "mode": "cells", "cells": [[5,4],[6,4],[7,4],[5,5],[6,5],[7,5]] },
+              "states": [
+                { "state": "idle",  "prompt": "sign off; no glow" },
+                { "state": "hover", "prompt": "sign on warm glow, tiny 『珈琲』 glyph; do not spill light outside region" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "menu overlay flat panel",
+                  "overlay_panel": { "type": "text", "title": "Menu", "content": ["Espresso / Cappuccino / Korvapuusti"], "style": { "font": "PressStart2P", "color": "#ffe9c7" } } }
+              ] },
+            { "id": "tram_board", "type": "time", "name": "Tram Board", "grid": { "x": 12, "y": 3, "w": 4, "h": 2 },
+              "prompt_base": "digital tram board; orthographic; DB32",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[12,3],[13,3],[14,3],[15,3],[12,4],[13,4],[14,4],[15,4]] }, "prompt": "board blank" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[12,3],[13,3],[14,3],[15,3],[12,4],[13,4],[14,4],[15,4]] }, "prompt": "board lit", "render_text": { "text": "HSL 10 → Keskusta", "font": "PressStart2P", "color": "#9ad1ff" } }
+              ] }
+          ],
+          "connections": [
+            { "type": "door", "label": "← Garden", "at": [[0,9],[0,10]], "to": { "location": "garden", "floor_id": "garden_f1", "entry_at": [19,9] } },
+            { "type": "door", "label": "→ Mall",   "at": [[19,9],[19,10]], "to": { "location": "mall",   "floor_id": "mall_f1",  "entry_at": [0,9] } }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "mall",
+      "name": "Mall (5 Floors)",
+      "kind": "mall",
+      "default_grid": { "cols": 20, "rows": 12 },
+      "story_md": "## Торговый центр\nРамен или мороженое? Атриум с эскалаторами. 『物語』 в книжном.",
+      "floors": [
+        { "id": "mall_f1", "name": "F1 — Food Court", "level": 1, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 201,
+          "description_prompt": "Mall food court; orthographic 16-bit pixel art; DB32; tables, ramen stall, ice cream stand; NW light.",
+          "widgets": [
+            { "id": "ramen_bowl", "type": "status", "name": "Ramen Bowl", "grid": { "x": 6, "y": 6, "w": 2, "h": 2 },
+              "prompt_base": "ramen bowl on table; orthographic; DB32",
+              "region": { "mode": "cells", "cells": [[6,6],[7,6],[6,7],[7,7]] },
+              "states": [
+                { "state": "idle",  "prompt": "no steam; keep bowl unchanged" },
+                { "state": "hover", "prompt": "steam wisps (カラフルネオン) confined to region" },
+                { "state": "click", "prompt": "extra toppings appear within region" }
+              ] }
+          ],
+          "connections": [
+            { "type": "escalator", "label": "↑", "at": [[18,3],[19,5]], "to": { "location": "mall", "floor_id": "mall_f2", "entry_at": [2,10] } },
+            { "type": "door",      "label": "← Street", "at": [[0,9],[0,10]],  "to": { "location": "street", "floor_id": "street_f1", "entry_at": [19,9] } }
+          ] },
+        { "id": "mall_f2", "name": "F2 — Arcade", "level": 2, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 211,
+          "description_prompt": "Arcade floor; orthographic; DB32; cabinets, prize machine; playful glow.",
+          "widgets": [
+            { "id": "prize_machine", "type": "toggle", "name": "Prize Machine", "grid": { "x": 10, "y": 5, "w": 3, "h": 3 },
+              "prompt_base": "gacha/prize machine; orthographic; DB32",
+              "region": { "mode": "cells", "cells": [[10,5],[11,5],[12,5],[10,6],[11,6],[12,6],[10,7],[11,7],[12,7]] },
+              "states": [
+                { "state": "idle",  "prompt": "lights off" },
+                { "state": "hover", "prompt": "lights on; glow confined" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "fullscreen prize reveal panel", "image_overlay": "/easter-egg-comic-2.png" }
+              ] }
+          ],
+          "connections": [
+            { "type": "escalator", "label": "↑", "at": [[18,3],[19,5]], "to": { "location": "mall", "floor_id": "mall_f3", "entry_at": [2,10] } },
+            { "type": "escalator", "label": "↓", "at": [[1,10],[2,11]],   "to": { "location": "mall", "floor_id": "mall_f1", "entry_at": [18,3] } }
+          ] },
+        { "id": "mall_f3", "name": "F3 — Book Store", "level": 3, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 221,
+          "description_prompt": "Book store shelves; orthographic; DB32; reading table; soft NW light.",
+          "widgets": [
+            { "id": "big_book_display", "type": "changelog", "name": "Big Book Display", "grid": { "x": 8, "y": 4, "w": 4, "h": 3 },
+              "prompt_base": "large open book on stand; orthographic; DB32",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[8,4],[9,4],[10,4],[11,4],[8,5],[9,5],[10,5],[11,5],[8,6],[9,6],[10,6],[11,6]] }, "prompt": "open book, blank pages" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[8,4],[9,4],[10,4],[11,4],[8,5],[9,5],[10,5],[11,5],[8,6],[9,6],[10,6],[11,6]] }, "prompt": "tiny kana 『物語』 on margin; rest unchanged" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "full text overlay panel",
+                  "overlay_panel": { "type": "link", "title": "The Edge Story", "url": "https://theedgestory.org" } }
+              ] }
+          ],
+          "connections": [
+            { "type": "escalator", "label": "↑", "at": [[18,3],[19,5]], "to": { "location": "mall", "floor_id": "mall_f4", "entry_at": [2,10] } },
+            { "type": "escalator", "label": "↓", "at": [[1,10],[2,11]],   "to": { "location": "mall", "floor_id": "mall_f2", "entry_at": [18,3] } }
+          ] },
+        { "id": "mall_f4", "name": "F4 — Tech", "level": 4, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 231,
+          "description_prompt": "Tech store with gadgets; orthographic; DB32; clean displays; NW light.",
+          "widgets": [
+            { "id": "version_screen", "type": "badge", "name": "Version Screen", "grid": { "x": 5, "y": 3, "w": 4, "h": 2 },
+              "prompt_base": "demo monitor; orthographic; DB32; screen off",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[5,3],[6,3],[7,3],[8,3],[5,4],[6,4],[7,4],[8,4]] }, "prompt": "monitor off" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[5,3],[6,3],[7,3],[8,3],[5,4],[6,4],[7,4],[8,4]] }, "prompt": "monitor on, mild glow", "render_text": { "text": "v0.3.0", "font": "PressStart2P", "color": "#9ad1ff" } }
+              ] }
+          ],
+          "connections": [
+            { "type": "escalator", "label": "↑", "at": [[18,3],[19,5]], "to": { "location": "mall", "floor_id": "mall_f5", "entry_at": [2,10] } },
+            { "type": "escalator", "label": "↓", "at": [[1,10],[2,11]],   "to": { "location": "mall", "floor_id": "mall_f3", "entry_at": [18,3] } }
+          ] },
+        { "id": "mall_f5", "name": "F5 — Roof Garden", "level": 5, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 241,
+          "description_prompt": "Roof garden with city view; orthographic; DB32; lights; bench; calm NW light.",
+          "widgets": [
+            { "id": "skyline_postcard", "type": "media", "name": "Skyline Postcard", "grid": { "x": 7, "y": 3, "w": 6, "h": 4 },
+              "prompt_base": "city skyline board; orthographic; DB32",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[7,3],[8,3],[9,3],[10,3],[11,3],[12,3],[7,4],[8,4],[9,4],[10,4],[11,4],[12,4],[7,5],[8,5],[9,5],[10,5],[11,5],[12,5],[7,6],[8,6],[9,6],[10,6],[11,6],[12,6]] }, "prompt": "board off" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[7,3],[8,3],[9,3],[10,3],[11,3],[12,3],[7,4],[8,4],[9,4],[10,4],[11,4],[12,4],[7,5],[8,5],[9,5],[10,5],[11,5],[12,5],[7,6],[8,6],[9,6],[10,6],[11,6],[12,6]] }, "prompt": "board glowing postcard" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "fullscreen city postcard flat panel",
+                  "overlay_panel": { "type": "text", "title": "Helsinki ♥", "content": ["Mama + Papa + Lilith = 家族", "Спасибо за игру!"], "style": { "font": "PressStart2P", "color": "#ffe9c7" } } }
+              ] }
+          ],
+          "connections": [
+            { "type": "escalator", "label": "↓", "at": [[1,10],[2,11]], "to": { "location": "mall", "floor_id": "mall_f4", "entry_at": [18,3] } },
+            { "type": "door", "label": "→ Mall 2", "at": [[19,9],[19,10]], "to": { "location": "mall2", "floor_id": "mall2_f2", "entry_at": [0,9] } }
+          ] }
+      ]
+    },
+
+    {
+      "id": "mall2",
+      "name": "Mall 2 (Garage • Foodcourt • Cinema)",
+      "kind": "mall",
+      "default_grid": { "cols": 20, "rows": 12 },
+      "story_md": "## Торговый центр 2\nПодземный паркинг, фудкорт с лапшой, кинотеатр с постером ‘Edge Story’.",
+      "floors": [
+        { "id": "mall2_f1", "name": "F1 — Garage", "level": 1, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 261,
+          "description_prompt": "Underground garage; orthographic; DB32; painted arrows; column letters A/B; mild reflections contained to tiles.",
+          "widgets": [
+            { "id": "garage_sign_egg", "type": "easter_egg", "name": "Hidden Poster", "hidden": true, "grid": { "x": 3, "y": 9, "w": 1, "h": 1 },
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[3,9]] }, "prompt": "smudge on wall" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[3,9]] }, "prompt": "smudge glints" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "poster reveal", "image_overlay": "/easter-egg-lilith-meditation.jpg" }
+              ] }
+          ],
+          "connections": [
+            { "type": "elevator", "label": "↑", "at": [[18,4],[19,6]], "to": { "location": "mall2", "floor_id": "mall2_f2", "entry_at": [2,10] } }
+          ] },
+        { "id": "mall2_f2", "name": "F2 — Foodcourt", "level": 2, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 271,
+          "description_prompt": "Bright foodcourt; orthographic; DB32; noodle stall; Helsinki posters.",
+          "widgets": [
+            { "id": "noodle_sign", "type": "toggle", "name": "Noodle Sign", "grid": { "x": 6, "y": 4, "w": 3, "h": 2 },
+              "prompt_base": "noodle neon sign; orthographic; DB32",
+              "region": { "mode": "cells", "cells": [[6,4],[7,4],[8,4],[6,5],[7,5],[8,5]] },
+              "states": [
+                { "state": "idle",  "prompt": "sign off" },
+                { "state": "hover", "prompt": "sign on; glow confined" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "menu overlay", "overlay_panel": { "type": "text", "title": "Menu", "content": ["Lohikeitto, Karjalanpiirakka, Korvapuusti"], "style": { "font": "PressStart2P", "color": "#ffe9c7" } } }
+              ] }
+          ],
+          "connections": [
+            { "type": "elevator", "label": "↑", "at": [[18,4],[19,6]], "to": { "location": "mall2", "floor_id": "mall2_f3", "entry_at": [2,10] } },
+            { "type": "elevator", "label": "↓", "at": [[1,10],[2,11]],   "to": { "location": "mall2", "floor_id": "mall2_f1", "entry_at": [18,4] } },
+            { "type": "door",     "label": "← Mall 1 Roof", "at": [[0,9],[0,10]], "to": { "location": "mall", "floor_id": "mall_f5", "entry_at": [19,9] } }
+          ] },
+        { "id": "mall2_f3", "name": "F3 — Cinema", "level": 3, "bounds": { "cols": 20, "rows": 12 }, "seed_offset": 281,
+          "description_prompt": "Cinema with large screen; orthographic; DB32; dim ambient; seating rows.",
+          "widgets": [
+            { "id": "screen_edge_trailer", "type": "link", "name": "Edge Story Trailer", "grid": { "x": 5, "y": 3, "w": 10, "h": 5 },
+              "prompt_base": "large cinema screen; orthographic; DB32; off",
+              "states": [
+                { "state": "idle",  "region": { "mode": "cells", "cells": [[5,3],[6,3],[7,3],[8,3],[9,3],[10,3],[11,3],[12,3],[13,3],[14,3],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[11,4],[12,4],[13,4],[14,4],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5],[12,5],[13,5],[14,5],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[11,7],[12,7],[13,7],[14,7]] }, "prompt": "screen off" },
+                { "state": "hover", "region": { "mode": "cells", "cells": [[5,3],[14,7]] }, "prompt": "screen glow subtle" },
+                { "state": "click", "region": { "mode": "full" }, "prompt": "fullscreen link overlay",
+                  "overlay_panel": { "type": "link", "title": "theedgestory.org", "url": "https://theedgestory.org" } }
+              ] }
+          ],
+          "connections": [
+            { "type": "elevator", "label": "↓", "at": [[1,10],[2,11]], "to": { "location": "mall2", "floor_id": "mall2_f2", "entry_at": [18,4] } }
+          ] }
+      ]
+    }
+  ]
+}

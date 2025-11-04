@@ -1,13 +1,12 @@
-from logging.config import fileConfig
 import os
 import sys
+from logging.config import fileConfig
 from pathlib import Path
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from dotenv import load_dotenv
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -20,13 +19,13 @@ load_dotenv()
 config = context.config
 
 # Override sqlalchemy.url from environment
-database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./dcmaidbot_test.db")
+database_url = os.getenv(
+    "DATABASE_URL", "postgresql://dcmaidbot:password@localhost:5432/dcmaidbot_test"
+)
 # Convert async drivers to sync drivers for migrations
 # For migrations, we use psycopg2 instead of asyncpg (synchronous driver)
 if database_url.startswith("postgresql+asyncpg://"):
     database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
-elif database_url.startswith("sqlite+aiosqlite://"):
-    database_url = database_url.replace("sqlite+aiosqlite://", "sqlite://")
 config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
@@ -35,7 +34,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models here for autogenerate support
-from database import Base  # noqa: E402
+from src.core.services.database import (  # noqa: E402
+    Base,
+)
 
 # add your model's MetaData object here
 # for 'autogenerate' support

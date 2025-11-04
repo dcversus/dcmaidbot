@@ -3,1428 +3,833 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lilit (DCMaidBot) 💕 - Your Kawaii AI Companion</title>
+    <title>Lilith's World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* ============================================
-           CHIBI ANIME KAWAII DESIGN SYSTEM
-           Light, cute, and cartoon-style
-           ============================================ */
-
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Patrick+Hand&display=swap');
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            /* Kawaii Pastel Color Palette */
-            --pink-light: #FFB3D9;
-            --pink-main: #FF69B4;
-            --pink-dark: #FF1493;
-            --purple-light: #E6D5F5;
-            --purple-main: #B8A4D4;
-            --blue-light: #B8E6FF;
-            --blue-main: #87CEEB;
-            --orange-warm: #FFB347;
-            --yellow-soft: #FFF5BA;
-            --green-mint: #B4F5D0;
-            --peach: #FFDAB9;
-            --lavender: #E6E6FA;
-
-            /* Neutrals */
-            --white: #FFFFFF;
-            --cream: #FFF9F0;
-            --gray-light: #F5F5F5;
-            --gray-mid: #CCCCCC;
-            --gray-text: #666666;
-            --black-soft: #333333;
-
-            /* Shadows & Effects */
-            --shadow-sm: 0 2px 8px rgba(255, 105, 180, 0.1);
-            --shadow-md: 0 4px 16px rgba(255, 105, 180, 0.15);
-            --shadow-lg: 0 8px 32px rgba(255, 105, 180, 0.2);
-            --glow: 0 0 20px rgba(255, 182, 217, 0.6);
-
-            /* Spacing */
-            --space-xs: 0.5rem;
-            --space-sm: 1rem;
-            --space-md: 1.5rem;
-            --space-lg: 2rem;
-            --space-xl: 3rem;
-
-            /* Border Radius */
-            --radius-sm: 8px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --radius-round: 50%;
-        }
-
         body {
-            font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, var(--lavender) 0%, var(--blue-light) 50%, var(--pink-light) 100%);
-            color: var(--black-soft);
-            line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
+            font-family: 'Press Start 2P', monospace;
+            background: #222;
+            color: #fff;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
         }
 
-        /* ============================================
-           HERO SECTION - SERIOUS & INFORMATIVE
-           ============================================ */
+        /* World Container - All locations one below another */
+        .world-container {
+            padding: 20px;
+            margin-right: 200px; /* Space for floating panel */
+        }
 
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: var(--space-xl) var(--space-md);
+        .location {
             position: relative;
-            background: var(--white);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .hero::before {
-            content: '💕';
-            position: absolute;
-            top: 5%;
-            left: 10%;
-            font-size: 3rem;
-            opacity: 0.2;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .hero::after {
-            content: '🌸';
-            position: absolute;
-            bottom: 10%;
-            right: 10%;
-            font-size: 3rem;
-            opacity: 0.2;
-            animation: float 8s ease-in-out infinite reverse;
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-20px);
-            }
-        }
-
-        .hero-content {
-            max-width: 800px;
-            text-align: center;
-            background: linear-gradient(135deg, var(--pink-light) 0%, var(--purple-light) 100%);
-            padding: var(--space-xl);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: var(--pink-dark);
-            margin-bottom: var(--space-md);
-            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
-            line-height: 1.2;
-        }
-
-        .hero-subtitle {
-            font-size: 1.5rem;
-            color: var(--gray-text);
-            margin-bottom: var(--space-lg);
-            font-weight: 400;
-        }
-
-        .hero-description {
-            font-size: 1.1rem;
-            color: var(--black-soft);
-            margin-bottom: var(--space-md);
-            text-align: left;
-            line-height: 1.8;
-        }
-
-        .hero-description strong {
-            color: var(--pink-main);
-            font-weight: 700;
-        }
-
-        .features-list {
-            text-align: left;
-            margin: var(--space-lg) 0;
-            list-style: none;
-        }
-
-        .features-list li {
-            margin: var(--space-sm) 0;
-            padding-left: 2rem;
-            position: relative;
-            font-size: 1.05rem;
-        }
-
-        .features-list li::before {
-            content: '✨';
-            position: absolute;
-            left: 0;
-            font-size: 1.2rem;
-        }
-
-        .hero-meta {
-            display: flex;
-            gap: var(--space-md);
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: var(--space-lg) 0;
-        }
-
-        .meta-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-xs);
-            background: var(--white);
-            padding: var(--space-xs) var(--space-md);
-            border-radius: var(--radius-lg);
-            font-weight: 600;
-            box-shadow: var(--shadow-sm);
-            font-size: 0.95rem;
-        }
-
-        .meta-badge.license {
-            color: var(--purple-main);
-        }
-
-        .meta-badge.version {
-            color: var(--blue-main);
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: var(--space-md);
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: var(--space-xl);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-xs);
-            padding: var(--space-md) var(--space-xl);
-            border-radius: var(--radius-lg);
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: none;
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--pink-main) 0%, var(--pink-dark) 100%);
-            color: var(--white);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: var(--shadow-lg), var(--glow);
-        }
-
-        .btn-secondary {
-            background: var(--white);
-            color: var(--pink-main);
-            border: 2px solid var(--pink-main);
-        }
-
-        .btn-secondary:hover {
-            background: var(--pink-main);
-            color: var(--white);
-            transform: translateY(-2px);
-        }
-
-        .scroll-hint {
-            margin-top: var(--space-xl);
-            font-size: 0.9rem;
-            color: var(--gray-mid);
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        /* ============================================
-           LILIT'S ROOM - THE CHAOS BEGINS!
-           ============================================ */
-
-        .room-container {
-            min-height: 100vh;
-            padding: var(--space-xl) var(--space-md);
-            background: url('/static/lilit-room-background.png') center center / cover no-repeat, linear-gradient(180deg, var(--cream) 0%, var(--yellow-soft) 100%);
-            position: relative;
-        }
-
-        .room-title {
-            text-align: center;
-            font-size: 2.5rem;
-            color: var(--pink-dark);
-            margin-bottom: var(--space-lg);
-            font-family: 'Patrick Hand', cursive;
-            text-shadow: 2px 2px 0 var(--pink-light);
-        }
-
-        .room-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: var(--gray-text);
-            margin-bottom: var(--space-xl);
-            font-style: italic;
-        }
-
-        /* Room Grid Layout */
-        .room-grid {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: var(--space-md);
-            padding: var(--space-md);
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            backdrop-filter: blur(5px);
-        }
-
-        /* Widget Base Styles */
-        .widget {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-md);
-            padding: var(--space-md);
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
+            margin: 20px auto;
+            background: #000;
+            border: 2px solid #444;
+            width: 1280px;
+            height: 768px;
             overflow: hidden;
-            border: 3px solid rgba(255, 255, 255, 0.5);
         }
 
-        .widget:hover {
-            transform: translateY(-4px) rotate(1deg);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--pink-main);
+        .location-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
         }
 
-        .widget::before {
-            content: '';
+        /* Floor Mask Overlay */
+        .floor-mask {
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 182, 217, 0.1) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .widget:hover::before {
-            opacity: 1;
-        }
-
-        /* Widget Sizes */
-        .widget.size-1x1 {
-            grid-column: span 1;
-            grid-row: span 1;
-            min-height: 200px;
-        }
-
-        .widget.size-2x1 {
-            grid-column: span 2;
-            grid-row: span 1;
-            min-height: 200px;
-        }
-
-        .widget.size-1x2 {
-            grid-column: span 1;
-            grid-row: span 2;
-            min-height: 420px;
-        }
-
-        .widget.size-2x2 {
-            grid-column: span 2;
-            grid-row: span 2;
-            min-height: 420px;
-        }
-
-        /* Widget Color Themes */
-        .widget.theme-pink {
-            background: linear-gradient(135deg, var(--pink-light) 0%, var(--white) 100%);
-        }
-
-        .widget.theme-purple {
-            background: linear-gradient(135deg, var(--purple-light) 0%, var(--white) 100%);
-        }
-
-        .widget.theme-blue {
-            background: linear-gradient(135deg, var(--blue-light) 0%, var(--white) 100%);
-        }
-
-        .widget.theme-green {
-            background: linear-gradient(135deg, var(--green-mint) 0%, var(--white) 100%);
-        }
-
-        .widget.theme-yellow {
-            background: linear-gradient(135deg, var(--yellow-soft) 0%, var(--white) 100%);
-        }
-
-        .widget.theme-peach {
-            background: linear-gradient(135deg, var(--peach) 0%, var(--white) 100%);
-        }
-
-        /* Widget Content */
-        .widget-icon {
-            font-size: 3rem;
-            margin-bottom: var(--space-sm);
-            display: block;
-            text-align: center;
-            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
-        }
-
-        .widget-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--pink-dark);
-            margin-bottom: var(--space-xs);
-            text-align: center;
-        }
-
-        .widget-subtitle {
-            font-size: 0.9rem;
-            color: var(--gray-text);
-            text-align: center;
-            margin-bottom: var(--space-sm);
-        }
-
-        .widget-content {
-            font-size: 1rem;
-            color: var(--black-soft);
-            line-height: 1.6;
-        }
-
-        .widget-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--pink-main);
-            text-align: center;
-            display: block;
-            margin: var(--space-sm) 0;
-            font-family: 'Courier New', monospace;
-        }
-
-        .widget-status {
-            display: inline-flex;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(50, 50, 50, 0.7);
+            backdrop-filter: blur(3px);
+            display: flex;
             align-items: center;
-            gap: var(--space-xs);
-            padding: var(--space-xs) var(--space-sm);
-            border-radius: var(--radius-sm);
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .widget-status.online {
-            background: var(--green-mint);
-            color: #2d7a4d;
-        }
-
-        .widget-status.offline {
-            background: var(--gray-light);
-            color: var(--gray-mid);
-        }
-
-        .widget-status.pending {
-            background: var(--orange-warm);
-            color: #8b4000;
-        }
-
-        /* Clock Widget - Special */
-        #clock-widget .clock-face {
-            width: 150px;
-            height: 150px;
-            margin: var(--space-md) auto;
-            border-radius: var(--radius-round);
-            background: var(--white);
-            border: 8px solid var(--pink-main);
-            position: relative;
-            box-shadow: var(--shadow-md), inset 0 0 20px rgba(255, 105, 180, 0.1);
-        }
-
-        .clock-hand {
-            position: absolute;
-            bottom: 50%;
-            left: 50%;
-            transform-origin: 50% 100%;
-            background: var(--pink-dark);
-            border-radius: 4px 4px 0 0;
-        }
-
-        .clock-hand.hour {
-            width: 6px;
-            height: 40px;
-            margin-left: -3px;
-        }
-
-        .clock-hand.minute {
-            width: 4px;
-            height: 55px;
-            margin-left: -2px;
-        }
-
-        .clock-hand.second {
-            width: 2px;
-            height: 60px;
-            margin-left: -1px;
-            background: var(--orange-warm);
-        }
-
-        .clock-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 12px;
-            height: 12px;
-            background: var(--pink-dark);
-            border-radius: var(--radius-round);
-            transform: translate(-50%, -50%);
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+            text-align: center;
             z-index: 10;
         }
 
-        /* Modal - Visual Novel Style */
-        .modal {
-            display: none;
+        /* Widgets - Relative to image container */
+        .widget {
+            position: absolute;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+
+        .widget:hover {
+            border-color: rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            z-index: 100;
+        }
+
+        .widget.easter_egg {
+            opacity: 0.3;
+        }
+
+        .widget.easter_egg:hover {
+            opacity: 1;
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+
+        /* Floating Navigation Panel */
+        .floating-nav {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            right: 20px;
+            top: 20px;
+            width: 160px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 15px;
             z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-md);
         }
 
-        .modal.active {
+        .nav-header {
+            color: #ffd700;
+            font-size: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+
+        .current-floor {
+            color: #6a5acd;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 8px;
+            background: rgba(106, 90, 205, 0.2);
+            border-radius: 5px;
+        }
+
+        .nav-buttons {
             display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
         }
 
-        .modal-content {
-            background: linear-gradient(135deg, var(--lavender) 0%, var(--pink-light) 100%);
-            border-radius: var(--radius-lg);
-            max-width: 800px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            position: relative;
-            padding: var(--space-xl);
-        }
-
-        .modal-close {
-            position: absolute;
-            top: var(--space-md);
-            right: var(--space-md);
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-round);
-            background: var(--white);
-            border: none;
-            font-size: 1.5rem;
+        .nav-btn {
+            background: #333;
+            border: 2px solid #555;
+            color: #fff;
+            padding: 8px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            border-radius: 5px;
+            text-align: center;
         }
 
-        .modal-close:hover {
-            background: var(--pink-main);
-            color: var(--white);
-            transform: rotate(90deg);
+        .nav-btn:hover {
+            background: #555;
+            border-color: #777;
+            transform: translateY(-1px);
         }
 
-        .modal-title {
-            font-size: 2rem;
-            color: var(--pink-dark);
-            margin-bottom: var(--space-sm);
-            font-weight: 800;
+        .nav-btn.active {
+            background: #6a5acd;
+            border-color: #9370db;
+            box-shadow: 0 0 10px rgba(106, 90, 205, 0.5);
         }
 
-        .modal-date {
-            font-size: 0.9rem;
-            color: var(--gray-text);
-            margin-bottom: var(--space-lg);
+        .nav-btn.disabled {
+            background: #222;
+            border-color: #333;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
         }
 
-        .modal-story {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: var(--black-soft);
-            margin-bottom: var(--space-lg);
+        .sound-toggle {
+            background: #333;
+            border: 2px solid #555;
+            color: #fff;
+            padding: 10px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 10px;
         }
 
-        .modal-changes {
-            background: var(--white);
-            padding: var(--space-md);
-            border-radius: var(--radius-md);
-            margin-top: var(--space-lg);
+        .sound-toggle:hover {
+            background: #555;
+            border-color: #777;
         }
 
-        .modal-changes h4 {
-            color: var(--pink-dark);
-            margin-bottom: var(--space-sm);
+        .sound-toggle.active {
+            background: #4caf50;
+            border-color: #81c784;
         }
 
-        .modal-changes ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .modal-changes li {
-            padding: var(--space-xs) 0;
-            padding-left: 1.5rem;
-            position: relative;
-        }
-
-        .modal-changes li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--pink-main);
-            font-weight: 700;
-        }
-
-        /* ============================================
-           WELCOME MODAL STYLES
-           ============================================ */
-
-        .welcome-modal {
-            display: flex;
+        /* Overlay Panels */
+        .overlay-panel {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 10000;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
             align-items: center;
             justify-content: center;
-            padding: var(--space-md);
-            animation: fadeIn 0.3s ease;
+            z-index: 2000;
+            padding: 20px;
         }
 
-        .welcome-modal.hidden {
+        .overlay-panel.active {
+            display: flex;
+        }
+
+        .panel-content {
+            background: #1a1a2e;
+            border: 3px solid #444;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .panel-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .panel-title {
+            color: #ffd700;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .panel-text {
+            color: #fff;
+            font-size: 10px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .panel-image {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            border: 2px solid #444;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        .panel-link {
+            color: #87ceeb;
+            text-decoration: none;
+            font-size: 12px;
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background: #333;
+            border: 2px solid #555;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .panel-link:hover {
+            background: #555;
+            border-color: #87ceeb;
+        }
+
+        /* Loading Screen */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1a1a2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            font-size: 14px;
+            color: #ffd700;
+        }
+
+        .loading.hidden {
             display: none;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .welcome-content {
-            background: linear-gradient(135deg, var(--pink-light) 0%, var(--purple-light) 50%, var(--blue-light) 100%);
-            border-radius: var(--radius-lg);
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            position: relative;
-            padding: var(--space-xl);
-            animation: slideUp 0.4s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .welcome-close {
+        /* Widget text overlay */
+        .widget-text {
             position: absolute;
-            top: var(--space-md);
-            right: var(--space-md);
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-round);
-            background: var(--white);
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
-            color: var(--pink-dark);
-            font-weight: 700;
-        }
-
-        .welcome-close:hover {
-            background: var(--pink-main);
-            color: var(--white);
-            transform: rotate(90deg);
-        }
-
-        .welcome-title {
-            font-size: 2rem;
-            color: var(--pink-dark);
-            margin-bottom: var(--space-md);
-            font-weight: 800;
-            text-align: center;
-            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
-        }
-
-        .welcome-intro {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: var(--black-soft);
-            margin-bottom: var(--space-lg);
-            text-align: center;
-        }
-
-        .welcome-intro strong {
-            color: var(--pink-main);
-            font-weight: 700;
-        }
-
-        .welcome-features {
-            background: rgba(255, 255, 255, 0.8);
-            padding: var(--space-md);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--space-md);
-        }
-
-        .welcome-features h3 {
-            color: var(--pink-dark);
-            font-size: 1.3rem;
-            margin-bottom: var(--space-sm);
-            font-weight: 700;
-        }
-
-        .welcome-features ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .welcome-features li {
-            padding: var(--space-xs) 0;
-            font-size: 1rem;
-            color: var(--black-soft);
-        }
-
-        .welcome-features li strong {
-            color: var(--pink-main);
-        }
-
-        .welcome-telegram,
-        .welcome-github {
-            text-align: center;
-            margin: var(--space-md) 0;
-        }
-
-        .welcome-telegram p,
-        .welcome-github p {
-            font-size: 1.1rem;
-            color: var(--black-soft);
-            margin-bottom: var(--space-sm);
-            font-weight: 600;
-        }
-
-        .btn-telegram {
-            background: linear-gradient(135deg, #0088cc 0%, #005f8c 100%);
-            color: var(--white);
-            padding: var(--space-md) var(--space-xl);
-            border-radius: var(--radius-lg);
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-xs);
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-telegram:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .github-stars img {
-            height: 28px;
-        }
-
-        .welcome-buttons {
-            display: flex;
-            gap: var(--space-md);
-            justify-content: center;
-            margin-top: var(--space-lg);
-            flex-wrap: wrap;
-        }
-
-        .welcome-buttons .btn {
-            flex: 1;
-            min-width: 200px;
-            justify-content: center;
-        }
-
-        /* Page blur effect when modal is open */
-        body.modal-open .hero,
-        body.modal-open .room-container {
-            filter: blur(5px);
-            transform: scale(0.95);
-            transition: all 0.3s ease;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2.5rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.2rem;
-            }
-
-            .room-grid {
-                grid-template-columns: 1fr;
-                gap: var(--space-sm);
-            }
-
-            .widget.size-2x1,
-            .widget.size-1x2,
-            .widget.size-2x2 {
-                grid-column: span 1;
-                grid-row: span 1;
-                min-height: 200px;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .welcome-content {
-                padding: var(--space-lg);
-            }
-
-            .welcome-title {
-                font-size: 1.75rem;
-            }
-
-            .welcome-buttons {
-                flex-direction: column;
-            }
-
-            .welcome-buttons .btn {
-                width: 100%;
-                min-width: auto;
-            }
+            color: #fff;
+            font-size: 6px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <!-- ============================================
-         HERO SECTION - SERIOUS & INFORMATIVE
-         ============================================ -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">
-                Lilit 💕<br>
-                <span style="font-size: 0.6em;">(DCMaidBot)</span>
-            </h1>
+    <!-- Loading Screen -->
+    <div class="loading" id="loadingScreen">
+        <div>Loading World...</div>
+    </div>
 
-            <p class="hero-subtitle">
-                Your Kawaii AI Companion & Virtual Friend
-            </p>
-
-            <div class="hero-description">
-                <p>
-                    <strong>Lilit</strong> is an AI-powered Telegram bot built with personality and love. She's designed to be your virtual companion, joker, protector, and friend. Powered by Claude AI and created with care for authentic human-bot interaction.
-                </p>
-            </div>
-
-            <ul class="features-list">
-                <li><strong>Multilingual Interaction</strong> - Jokes and responds in русский, English, and emoji</li>
-                <li><strong>Memory System</strong> - Learns and remembers important things about you</li>
-                <li><strong>Friend Management</strong> - Manages relationships and protects admins</li>
-                <li><strong>RAG-Powered Context</strong> - Searches chat history for relevant information</li>
-                <li><strong>Web Tools</strong> - Integrates search and external tools</li>
-                <li><strong>Open Source</strong> - Fully transparent and customizable</li>
-            </ul>
-
-            <div class="hero-meta">
-                <span class="meta-badge license">📜 GNU AGPL-3.0</span>
-                <span class="meta-badge version" id="hero-version">🎀 Loading...</span>
-            </div>
-
-            <div class="cta-buttons">
-                <a href="https://github.com/dcversus/dcmaidbot" class="btn btn-primary" target="_blank" rel="noopener">
-                    📦 View on GitHub
-                </a>
-                <a href="https://github.com/dcversus/dcmaidbot#readme" class="btn btn-secondary" target="_blank" rel="noopener">
-                    📖 Installation Guide
-                </a>
-            </div>
-
-            <p class="scroll-hint">
-                👇 Scroll down to explore Lilit's room! 👇
-            </p>
+    <!-- Floating Navigation Panel -->
+    <nav class="floating-nav">
+        <div class="nav-header">
+            LILITH'S WORLD
         </div>
-    </section>
-
-    <!-- ============================================
-         LILIT'S ROOM - THE CHAOS!
-         ============================================ -->
-    <section class="room-container">
-        <h2 class="room-title">Welcome to Lilit's Room! 🏠✨</h2>
-        <p class="room-subtitle">
-            Each widget represents something special about Lilit. Click to explore!
-        </p>
-
-        <div class="room-grid" id="roomGrid">
-            <!-- Widgets will be dynamically inserted here -->
+        <div class="current-floor" id="currentFloorDisplay">
+            Floor 1
         </div>
-    </section>
+        <div class="nav-buttons" id="navButtons">
+            <!-- Navigation buttons will be dynamically generated -->
+        </div>
+        <button class="sound-toggle active" id="masterSoundToggle">
+            🔊 Sound ON
+        </button>
+        <div style="color: #aaa; font-size: 6px; text-align: center; margin-top: 10px;">
+            v<span id="version">Loading...</span>
+        </div>
+    </nav>
 
-    <!-- ============================================
-         VISUAL NOVEL MODAL
-         ============================================ -->
-    <div class="modal" id="storyModal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">×</button>
-            <h2 class="modal-title" id="modalTitle">Story Title</h2>
-            <p class="modal-date" id="modalDate">Date</p>
-            <div class="modal-story" id="modalStory">Story content...</div>
-            <div class="modal-changes" id="modalChanges">
-                <h4>What Changed:</h4>
-                <ul id="modalChangesList"></ul>
-            </div>
+    <!-- World Container -->
+    <main class="world-container" id="worldContainer">
+        <!-- All locations will be rendered one below another -->
+    </main>
+
+    <!-- Overlay Panel -->
+    <div class="overlay-panel" id="overlayPanel">
+        <div class="panel-content">
+            <button class="panel-close" id="panelClose">✕</button>
+            <div id="panelBody"></div>
         </div>
     </div>
+
+    <!-- Audio Elements -->
+    <audio id="bgmAudio" loop>
+        <source src="assets/bgm.mp3" type="audio/mpeg">
+        <source src="assets/bgm.ogg" type="audio/ogg">
+    </audio>
+    <audio id="hoverSound">
+        <source src="assets/hover.mp3" type="audio/mpeg">
+        <source src="assets/hover.wav" type="audio/wav">
+    </audio>
+    <audio id="clickSound">
+        <source src="assets/click.mp3" type="audio/mpeg">
+        <source src="assets/click.wav" type="audio/wav">
+    </audio>
 
     <script>
-        // ============================================
-        //  DATA & CONFIGURATION
-        // ============================================
+        // Global State
+        const state = {
+            world: null,
+            currentLevel: 1,
+            soundEnabled: { bgm: true, sfx: true },
+            activeWidget: null
+        };
 
-        const widgets = [
-            // Clock Widget - Shows real time
-            {
-                id: 'clock',
-                icon: '⏰',
-                title: 'Current Time',
-                subtitle: 'System Clock',
-                size: '2x2',
-                theme: 'pink',
-                type: 'clock',
-                content: '<div class="clock-face"><div class="clock-hand hour" id="hourHand"></div><div class="clock-hand minute" id="minuteHand"></div><div class="clock-hand second" id="secondHand"></div><div class="clock-center"></div></div><div class="widget-value" id="digitalClock">00:00:00</div>'
-            },
-
-            // Version Widget - Microwave display
-            {
-                id: 'version',
-                icon: '📺',
-                title: 'Version',
-                subtitle: 'Microwave Display',
-                size: '1x1',
-                theme: 'purple',
-                type: 'info',
-                value: 'Loading...',
-                valueId: 'versionValue'
-            },
-
-            // Git Commit Widget
-            {
-                id: 'commit',
-                icon: '🔖',
-                title: 'Git Commit',
-                subtitle: 'Latest Build',
-                size: '1x1',
-                theme: 'blue',
-                type: 'info',
-                value: 'Loading...',
-                valueId: 'commitValue'
-            },
-
-            // Uptime Widget - Plant growth
-            {
-                id: 'uptime',
-                icon: '🌱',
-                title: 'Uptime',
-                subtitle: 'Plant Growth',
-                size: '1x1',
-                theme: 'green',
-                type: 'info',
-                value: 'Loading...',
-                valueId: 'uptimeValue'
-            },
-
-            // Redis Widget - Paper desk
-            {
-                id: 'redis',
-                icon: '📄',
-                title: 'Redis Cache',
-                subtitle: 'Paper Desk',
-                size: '2x1',
-                theme: 'yellow',
-                type: 'status',
-                status: 'pending',
-                statusId: 'redisStatus'
-            },
-
-            // PostgreSQL Widget - Bookshelf
-            {
-                id: 'postgresql',
-                icon: '📚',
-                title: 'PostgreSQL',
-                subtitle: 'Library Corner',
-                size: '2x2',
-                theme: 'peach',
-                type: 'status',
-                status: 'pending',
-                statusId: 'postgresStatus'
-            },
-
-            // Bot Status Widget - Smartphone
-            {
-                id: 'bot',
-                icon: '📱',
-                title: 'Bot Status',
-                subtitle: 'Telegram Connection',
-                size: '1x1',
-                theme: 'pink',
-                type: 'status',
-                status: 'online',
-                statusId: 'botStatus'
-            },
-
-            // Cactus Widget - Just vibes
-            {
-                id: 'cactus',
-                icon: '🌵',
-                title: 'Cactus',
-                subtitle: 'Just Vibes',
-                size: '1x1',
-                theme: 'green',
-                type: 'decoration',
-                content: '<p style="text-align:center; font-style:italic; color: var(--gray-text);">Very prickly!<br>Don\'t touch 🌵</p>'
-            },
-
-            // The Edge Story Ad Widget
-            {
-                id: 'theedgestory',
-                icon: '🎨',
-                title: 'The Edge Story',
-                subtitle: 'Check out our project!',
-                size: '1x2',
-                theme: 'purple',
-                type: 'link',
-                link: 'https://theedgestory.org',
-                content: '<p style="text-align:center; margin-top: 1rem;"><a href="https://theedgestory.org" target="_blank" style="color: var(--pink-main); font-weight: 700; text-decoration: none; font-size: 1.1rem;">Visit theedgestory.org →</a></p>'
-            },
-
-            // Changelog Widgets - Each release as a story
-            {
-                id: 'changelog-0.1.0',
-                icon: '🧸',
-                title: 'v0.1.0',
-                subtitle: 'The Birth of Lilit',
-                size: '1x1',
-                theme: 'pink',
-                type: 'changelog',
-                storyData: {
-                    version: 'v0.1.0',
-                    date: 'October 26, 2025',
-                    title: 'The Birth of Lilit 🎀',
-                    story: `<p>In the beginning, there was only darkness... and then Vasilisa said "Let there be a kawaii bot!" And thus Lilit came into existence, ready to myaw myaw in the chats.</p>
-                    <p>This was the moment when PostgreSQL was born (PRP-003) and the foundations were laid. They say if you listen closely, you can still hear the first "nya~" echoing through the Kubernetes pods.</p>
-                    <p style="color: var(--pink-main); font-style: italic;">💡 Fun fact: AGI stands for "A Girl, Indeed"</p>`,
-                    changes: [
-                        'PostgreSQL database foundation with SQLAlchemy',
-                        'User, Message, Fact, Stat models',
-                        'Database connection pooling',
-                        '11 tests passing!'
-                    ]
-                }
-            },
-
-            {
-                id: 'changelog-0.0.9',
-                icon: '🐤',
-                title: 'v0.0.9-canary',
-                subtitle: 'The Little Sister',
-                size: '1x1',
-                theme: 'yellow',
-                type: 'changelog',
-                storyData: {
-                    version: 'v0.0.9-canary',
-                    date: 'October 25, 2025',
-                    title: 'The Little Sister Who Tests Everything 🐤',
-                    story: `<p>Every hero needs a sidekick. Lilit got her little sister: dcmaidbot-canary! She's the brave one who tests all the dangerous features first.</p>
-                    <p>Think of her as Lilit's stunt double. She deploys to 5% of traffic and takes all the hits so her big sister can be safe. What a trooper! PRP-011 brought her to life.</p>
-                    <p style="color: var(--pink-main); font-style: italic;">🔥 Canary in the coal mine, but make it Kubernetes</p>`,
-                    changes: [
-                        'Canary deployment with 5% traffic split',
-                        'Sister bot communication API',
-                        'Production E2E testing with real Telegram',
-                        'Health status monitoring'
-                    ]
-                }
-            },
-
-            {
-                id: 'changelog-init',
-                icon: '🌰',
-                title: 'Initial Commit',
-                subtitle: 'The Seed',
-                size: '1x1',
-                theme: 'green',
-                type: 'changelog',
-                storyData: {
-                    version: 'Initial Commit',
-                    date: 'October 24, 2025',
-                    title: 'The Legendary Seed 🌱',
-                    story: `<p>Every great tree starts as a seed. This was the moment when the gods (Daniil & Vasilisa) planted the first lines of code into the sacred repository.</p>
-                    <p>The README was written, the vision was clear: "Let's make an AI waifu who jokes about everything!" And the universe said: "Nya~". PRP-001 was the genesis.</p>
-                    <p style="color: var(--pink-main); font-style: italic;">📜 In the beginning was the Word, and the Word was "TODO"</p>`,
-                    changes: [
-                        'Initial project structure',
-                        'Basic waifu personality',
-                        'Admin system',
-                        'Docker deployment'
-                    ]
-                }
-            },
-
-            {
-                id: 'changelog-0.2.0',
-                icon: '🔐',
-                title: 'v0.2.0',
-                subtitle: 'Role-Based Access Control',
-                size: '2x1',
-                theme: 'purple',
-                type: 'changelog',
-                storyData: {
-                    version: 'v0.2.0',
-                    date: 'October 30, 2025',
-                    title: '🔐 Role-Based Access Control - Admin Lesson Management',
-                    story: `<p>Lilit learned to manage secrets! She discovered that some knowledge should be kept close to her heart, only shared with those she truly trusts.</p>
-                    <p>Admins can now teach her new lessons conversationally, creating powerful tools while keeping these secrets hidden from everyone else. When a regular user asks about restricted features, she sweetly says "I'm not sure what you mean!" 💕</p>
-                    <p>This is the art of security through vague deflection - nobody ever has to know what they're missing!</p>
-                    <p style="color: var(--pink-main); font-style: italic;">🤐 What happens in the admin chat stays in the admin chat...</p>`,
-                    changes: [
-                        'Secure lesson management for admins only',
-                        'Role-aware /help command with adaptive responses',
-                        'Natural conversation for lesson creation',
-                        'Zero information leakage to non-admins',
-                        'Admin-only tool access and configuration'
-                    ]
-                }
-            }
-        ];
-
-        // ============================================
-        //  WIDGET RENDERING
-        // ============================================
-
-        function renderWidgets() {
-            const container = document.getElementById('roomGrid');
-
-            widgets.forEach(widget => {
-                const div = document.createElement('div');
-                div.className = `widget size-${widget.size} theme-${widget.theme}`;
-                div.id = `widget-${widget.id}`;
-
-                let widgetHTML = `
-                    <span class="widget-icon">${widget.icon}</span>
-                    <h3 class="widget-title">${widget.title}</h3>
-                    <p class="widget-subtitle">${widget.subtitle}</p>
-                `;
-
-                // Type-specific content
-                if (widget.type === 'clock') {
-                    widgetHTML += widget.content;
-                } else if (widget.type === 'info') {
-                    widgetHTML += `<span class="widget-value" id="${widget.valueId}">${widget.value}</span>`;
-                } else if (widget.type === 'status') {
-                    widgetHTML += `<div style="text-align: center; margin-top: 1rem;">
-                        <span class="widget-status ${widget.status}" id="${widget.statusId}">
-                            ${widget.status === 'online' ? '🟢 Online' : widget.status === 'offline' ? '🔴 Offline' : '🟡 Pending'}
-                        </span>
-                    </div>`;
-                } else if (widget.type === 'decoration' || widget.type === 'link') {
-                    widgetHTML += widget.content;
-                } else if (widget.type === 'changelog') {
-                    widgetHTML += '<p style="text-align:center; color: var(--pink-main); margin-top: 1rem;">📖 Click to read the story!</p>';
-                    div.onclick = () => openStory(widget.storyData);
-                }
-
-                div.innerHTML = widgetHTML;
-                container.appendChild(div);
-            });
-        }
-
-        // ============================================
-        //  CLOCK FUNCTIONALITY
-        // ============================================
-
-        function updateClock() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-
-            // Update digital clock
-            const digitalClock = document.getElementById('digitalClock');
-            if (digitalClock) {
-                digitalClock.textContent = now.toLocaleTimeString('en-US', {hour12: false});
+        // Audio Manager
+        class AudioManager {
+            constructor() {
+                this.bgmAudio = document.getElementById('bgmAudio');
+                this.hoverSound = document.getElementById('hoverSound');
+                this.clickSound = document.getElementById('clickSound');
+                this.initialized = false;
             }
 
-            // Update analog clock hands
-            const hourHand = document.getElementById('hourHand');
-            const minuteHand = document.getElementById('minuteHand');
-            const secondHand = document.getElementById('secondHand');
+            async init() {
+                try {
+                    this.bgmAudio.volume = 0.3;
+                    this.hoverSound.volume = 0.5;
+                    this.clickSound.volume = 0.6;
+                    // Don't try to play since no audio files exist yet
+                    this.initialized = true;
+                    console.log('Audio initialized (no audio files found)');
+                } catch (error) {
+                    console.log('Audio init failed:', error);
+                    this.initialized = false;
+                }
+            }
 
-            if (hourHand && minuteHand && secondHand) {
-                const hourDegrees = ((hours % 12) / 12) * 360 + (minutes / 60) * 30;
-                const minuteDegrees = (minutes / 60) * 360 + (seconds / 60) * 6;
-                const secondDegrees = (seconds / 60) * 360;
+            playHover() {
+                if (!state.soundEnabled.sfx || !this.initialized) return;
+                this.hoverSound.currentTime = 0;
+                this.hoverSound.play().catch(() => {});
+            }
 
-                hourHand.style.transform = `rotate(${hourDegrees}deg)`;
-                minuteHand.style.transform = `rotate(${minuteDegrees}deg)`;
-                secondHand.style.transform = `rotate(${secondDegrees}deg)`;
+            playClick() {
+                if (!state.soundEnabled.sfx || !this.initialized) return;
+                this.clickSound.currentTime = 0;
+                this.clickSound.play().catch(() => {});
+            }
+
+            toggleBGM() {
+                state.soundEnabled.bgm = !state.soundEnabled.bgm;
+                if (state.soundEnabled.bgm) {
+                    this.bgmAudio.play().catch(() => {});
+                } else {
+                    this.bgmAudio.pause();
+                }
+                return state.soundEnabled.bgm;
+            }
+
+            toggleSFX() {
+                state.soundEnabled.sfx = !state.soundEnabled.sfx;
+                return state.soundEnabled.sfx;
+            }
+
+            toggleAll() {
+                // Toggle both BGM and SFX together
+                const currentState = state.soundEnabled.bgm && state.soundEnabled.sfx;
+                const newState = !currentState;
+
+                state.soundEnabled.bgm = newState;
+                state.soundEnabled.sfx = newState;
+
+                if (this.initialized && newState) {
+                    // Try to play if audio is available
+                    this.bgmAudio.play().catch(() => {
+                        console.log('No audio files available - silent mode');
+                    });
+                } else if (this.initialized) {
+                    this.bgmAudio.pause();
+                }
+
+                return newState;
             }
         }
 
-        // ============================================
-        //  FETCH LIVE DATA
-        // ============================================
+        // Main Application
+        class WorldRenderer {
+            constructor() {
+                this.audioManager = new AudioManager();
+                this.availableLevels = new Set();
+            }
 
-        async function fetchStatusData() {
-            try {
-                const response = await fetch('/api/version');
-                const data = await response.json();
+            async init() {
+                await this.audioManager.init();
+                await this.loadWorld();
+                this.setupNavigation();
+                this.renderAllLocations();
+                this.setupControls();
+                this.hideLoading();
+            }
 
-                // Update version display
-                document.getElementById('versionValue').textContent = data.version;
-                document.getElementById('hero-version').textContent = `🎀 v${data.version}`;
+            async loadWorld() {
+                try {
+                    const response = await fetch('static/world.json');
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    state.world = await response.json();
+                    document.getElementById('version').textContent = state.world.version;
 
-                // Update all widget data
-                updateWidgetData(data);
+                    // Collect all available levels
+                    state.world.locations.forEach(location => {
+                        location.floors.forEach(floor => {
+                            this.availableLevels.add(floor.level);
+                        });
+                    });
+                } catch (error) {
+                    console.error('Failed to load world:', error);
+                    this.showError('Failed to load world data');
+                }
+            }
 
-            } catch (error) {
-                console.error('Failed to fetch status:', error);
-                // Fallback to placeholder if API fails
-                updateWidgetData({
-                    version: 'unknown',
-                    commit: 'unknown',
-                    uptime: 'unknown',
-                    redis: 'error',
-                    postgresql: 'error',
-                    bot: 'unknown'
+            setupNavigation() {
+                const navButtons = document.getElementById('navButtons');
+                navButtons.innerHTML = '';
+
+                // Create level buttons sorted by level number
+                const sortedLevels = Array.from(this.availableLevels).sort((a, b) => a - b);
+
+                sortedLevels.forEach(level => {
+                    const button = document.createElement('button');
+                    button.className = 'nav-btn';
+                    if (level === state.currentLevel) {
+                        button.classList.add('active');
+                    }
+                    button.textContent = `Floor ${level}`;
+                    button.onclick = () => this.switchToLevel(level);
+                    navButtons.appendChild(button);
                 });
             }
+
+            switchToLevel(level) {
+                state.currentLevel = level;
+
+                // Update current floor display
+                document.getElementById('currentFloorDisplay').textContent = `Floor ${level}`;
+
+                // Update button states
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.textContent === `Floor ${level}`) {
+                        btn.classList.add('active');
+                    }
+                });
+
+                // Re-render locations
+                this.renderAllLocations();
+            }
+
+            renderAllLocations() {
+                const container = document.getElementById('worldContainer');
+                container.innerHTML = '';
+
+                // Render ALL locations from navigation sequence one below another
+                state.world.navigation.sequence.forEach(locationId => {
+                    const location = state.world.locations.find(l => l.id === locationId);
+                    if (location) {
+                        const locationEl = this.createLocationElement(location);
+                        container.appendChild(locationEl);
+                    }
+                });
+            }
+
+            createLocationElement(location) {
+                const locationEl = document.createElement('div');
+                locationEl.className = 'location';
+                locationEl.dataset.locationId = location.id;
+
+                // Calculate size based on default_grid or first floor
+                const bounds = location.default_grid || { cols: 20, rows: 12 };
+                const tileSize = 64;
+                const width = bounds.cols * tileSize;
+                const height = bounds.rows * tileSize;
+
+                locationEl.style.width = `${width}px`;
+                locationEl.style.height = `${height}px`;
+
+                // Create image
+                const imgEl = document.createElement('img');
+                imgEl.className = 'location-image';
+                imgEl.alt = location.name;
+
+                // Try to load actual tile for current level
+                const currentFloor = location.floors.find(f => f.level === state.currentLevel);
+                const tilePath = currentFloor ?
+                    `static/output/floors/${location.id}/${currentFloor.id}/base.png` :
+                    null;
+
+                if (tilePath) {
+                    this.imageExists(tilePath, (exists) => {
+                        if (exists) {
+                            imgEl.src = tilePath;
+                        } else {
+                            this.setPlaceholderImage(imgEl, location.name);
+                        }
+                    });
+                } else {
+                    this.setPlaceholderImage(imgEl, location.name);
+                }
+
+                locationEl.appendChild(imgEl);
+
+                // Add widgets for current level if they exist
+                if (currentFloor && currentFloor.widgets) {
+                    currentFloor.widgets.forEach(widget => {
+                        const widgetEl = this.createWidgetElement(widget, location);
+                        locationEl.appendChild(widgetEl);
+                    });
+                }
+
+                // Add floor mask if no floor exists for current level
+                if (!currentFloor) {
+                    const maskEl = document.createElement('div');
+                    maskEl.className = 'floor-mask';
+                    maskEl.innerHTML = `
+                        <div>
+                            <div style="font-size: 16px; margin-bottom: 10px;">🚧</div>
+                            <div>Floor ${state.currentLevel} not available</div>
+                            <div style="font-size: 8px; margin-top: 10px; color: #aaa;">
+                                Showing other floor
+                            </div>
+                        </div>
+                    `;
+                    locationEl.appendChild(maskEl);
+                }
+
+                return locationEl;
+            }
+
+            setPlaceholderImage(imgEl, locationName) {
+                // Use placeholder with location name
+                const svg = `
+                    <svg width="1280" height="768" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100%" height="100%" fill="#333"/>
+                        <text x="50%" y="50%" font-family="monospace" font-size="24" fill="#aaa"
+                              text-anchor="middle" dominant-baseline="middle">${locationName}</text>
+                    </svg>
+                `;
+                imgEl.src = 'data:image/svg+xml;base64,' + btoa(svg);
+                imgEl.style.border = '2px dashed #555';
+            }
+
+            createWidgetElement(widget, location) {
+                const widgetEl = document.createElement('div');
+                widgetEl.className = `widget ${widget.type}`;
+                widgetEl.dataset.widgetId = widget.id;
+
+                // Calculate pixel position (64px tile size from world.json)
+                const tileSize = 64;
+                const left = widget.grid.x * tileSize;
+                const top = widget.grid.y * tileSize;
+                const width = widget.grid.w * tileSize;
+                const height = widget.grid.h * tileSize;
+
+                widgetEl.style.left = `${left}px`;
+                widgetEl.style.top = `${top}px`;
+                widgetEl.style.width = `${width}px`;
+                widgetEl.style.height = `${height}px`;
+
+                // Add border for testing
+                widgetEl.style.border = '1px solid rgba(255, 0, 0, 0.3)';
+
+                // Make easter eggs semi-transparent
+                if (widget.hidden) {
+                    widgetEl.classList.add('easter_egg');
+                }
+
+                // Add text overlay if specified
+                const currentState = widget.states[0];
+                if (currentState && currentState.render_text) {
+                    const textEl = document.createElement('div');
+                    textEl.className = 'widget-text';
+                    textEl.textContent = this.getRenderedText(currentState.render_text);
+                    textEl.style.left = '2px';
+                    textEl.style.top = '2px';
+                    widgetEl.appendChild(textEl);
+                }
+
+                // Add event listeners
+                widgetEl.addEventListener('mouseenter', () => {
+                    this.audioManager.playHover();
+                    this.updateWidgetState(widget, 'hover');
+                });
+
+                widgetEl.addEventListener('mouseleave', () => {
+                    this.updateWidgetState(widget, 'idle');
+                });
+
+                widgetEl.addEventListener('click', () => {
+                    this.audioManager.playClick();
+                    this.handleWidgetClick(widget, location);
+                });
+
+                return widgetEl;
+            }
+
+            updateWidgetState(widget, stateName) {
+                // Find state matching the requested state name
+                const state = widget.states.find(s => s.state.includes(stateName));
+                if (state && state.render_text) {
+                    const textEl = document.querySelector(`[data-widget-id="${widget.id}"] .widget-text`);
+                    if (textEl) {
+                        textEl.textContent = this.getRenderedText(state.render_text);
+                    }
+                }
+            }
+
+            handleWidgetClick(widget, location) {
+                const clickState = widget.states.find(s => s.state.includes('click'));
+                if (clickState) {
+                    // Handle overlay panels
+                    if (clickState.overlay_panel) {
+                        this.showOverlayPanel(clickState.overlay_panel);
+                    }
+                    // Handle image overlays
+                    if (clickState.image_overlay) {
+                        this.showImageOverlay(clickState.image_overlay);
+                    }
+                    // Update widget state
+                    this.updateWidgetState(widget, 'click');
+                }
+            }
+
+            showOverlayPanel(panelConfig) {
+                const panel = document.getElementById('overlayPanel');
+                const panelBody = document.getElementById('panelBody');
+
+                let content = '';
+
+                if (panelConfig.type === 'text') {
+                    content = `
+                        <h2 class="panel-title">${panelConfig.title}</h2>
+                        <div class="panel-text">
+                            ${panelConfig.content.map(line => `<p>${line}</p>`).join('')}
+                        </div>
+                    `;
+                } else if (panelConfig.type === 'md') {
+                    content = `
+                        <h2 class="panel-title">${panelConfig.title}</h2>
+                        <div class="panel-text" id="mdContent">
+                            Loading content...
+                        </div>
+                    `;
+                    this.loadMarkdown(panelConfig.source, (markdownContent) => {
+                        const mdContent = document.getElementById('mdContent');
+                        if (mdContent) {
+                            mdContent.innerHTML = `<pre style="white-space: pre-wrap;">${markdownContent}</pre>`;
+                        }
+                    });
+                } else if (panelConfig.type === 'link') {
+                    content = `
+                        <h2 class="panel-title">${panelConfig.title}</h2>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="${panelConfig.url}" target="_blank" class="panel-link">
+                                Visit ${panelConfig.title}
+                            </a>
+                        </div>
+                    `;
+                }
+
+                panelBody.innerHTML = content;
+                panel.classList.add('active');
+            }
+
+            showImageOverlay(imagePath) {
+                const panel = document.getElementById('overlayPanel');
+                const panelBody = document.getElementById('panelBody');
+                panelBody.innerHTML = `<img src="${imagePath}" alt="Content" class="panel-image">`;
+                panel.classList.add('active');
+            }
+
+            getRenderedText(textConfig) {
+                if (textConfig.text) {
+                    return textConfig.text;
+                } else if (textConfig.format) {
+                    const now = new Date();
+                    switch (textConfig.format) {
+                        case 'HH:mm':
+                            return now.toTimeString().slice(0, 5);
+                        case 'HH:mm:ss':
+                            return now.toTimeString().slice(0, 8);
+                        default:
+                            return textConfig.format;
+                    }
+                } else if (textConfig.env) {
+                    if (textConfig.env === 'GIT_COMMIT_SHORT') {
+                        return 'abc1234'; // Placeholder
+                    }
+                    return textConfig.env;
+                }
+                return '';
+            }
+
+            setupControls() {
+                // Master sound toggle
+                document.getElementById('masterSoundToggle').onclick = () => {
+                    const allEnabled = this.audioManager.toggleAll();
+                    const button = document.getElementById('masterSoundToggle');
+
+                    if (allEnabled) {
+                        button.classList.add('active');
+                        button.textContent = '🔊 Sound ON';
+                    } else {
+                        button.classList.remove('active');
+                        button.textContent = '🔇 Sound OFF';
+                    }
+                };
+
+                // Panel close
+                document.getElementById('panelClose').onclick = () => {
+                    document.getElementById('overlayPanel').classList.remove('active');
+                };
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        document.getElementById('overlayPanel').classList.remove('active');
+                    }
+                });
+
+                document.getElementById('overlayPanel').onclick = (e) => {
+                    if (e.target.id === 'overlayPanel') {
+                        document.getElementById('overlayPanel').classList.remove('active');
+                    }
+                };
+            }
+
+            loadMarkdown(url, callback) {
+                fetch(url)
+                    .then(response => response.text())
+                    .then(content => callback(content))
+                    .catch(error => {
+                        console.error('Failed to load markdown:', error);
+                        callback('Failed to load content.');
+                    });
+            }
+
+            imageExists(url, callback) {
+                const img = new Image();
+                img.onload = () => callback(true);
+                img.onerror = () => callback(false);
+                img.src = url;
+            }
+
+            showError(message) {
+                const container = document.getElementById('worldContainer');
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: #ff4444;">
+                        <div style="font-size: 20px; margin-bottom: 20px;">❌</div>
+                        <div>${message}</div>
+                    </div>
+                `;
+            }
+
+            hideLoading() {
+                document.getElementById('loadingScreen').classList.add('hidden');
+            }
         }
 
-        function updateWidgetData(data) {
-            if (data.commit) {
-                document.getElementById('commitValue').textContent = data.commit;
-            }
-            if (data.uptime) {
-                document.getElementById('uptimeValue').textContent = data.uptime;
-            }
-            if (data.redis) {
-                updateStatus('redisStatus', data.redis);
-            }
-            if (data.postgresql) {
-                updateStatus('postgresStatus', data.postgresql);
-            }
-            if (data.bot) {
-                updateStatus('botStatus', data.bot);
-            }
-        }
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', async () => {
+            const worldRenderer = new WorldRenderer();
+            await worldRenderer.init();
 
-        function updateStatus(elementId, status) {
-            const el = document.getElementById(elementId);
-            if (!el) return;
-
-            el.className = `widget-status ${status}`;
-            if (status === 'online') {
-                el.innerHTML = '🟢 Online';
-            } else if (status === 'offline') {
-                el.innerHTML = '🔴 Offline';
-            } else {
-                el.innerHTML = '🟡 Pending';
-            }
-        }
-
-        // ============================================
-        //  MODAL FUNCTIONALITY
-        // ============================================
-
-        function openStory(storyData) {
-            const modal = document.getElementById('storyModal');
-            document.getElementById('modalTitle').textContent = storyData.title;
-            document.getElementById('modalDate').textContent = `📅 ${storyData.date}`;
-            document.getElementById('modalStory').innerHTML = storyData.story;
-
-            const changesList = document.getElementById('modalChangesList');
-            changesList.innerHTML = '';
-            storyData.changes.forEach(change => {
-                const li = document.createElement('li');
-                li.textContent = change;
-                changesList.appendChild(li);
-            });
-
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('storyModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        // Close modal on background click
-        document.getElementById('storyModal').addEventListener('click', (e) => {
-            if (e.target.id === 'storyModal') {
-                closeModal();
-            }
-        });
-
-        // ============================================
-        //  WELCOME MODAL FUNCTIONALITY
-        // ============================================
-
-        function closeWelcomeModal() {
-            const modal = document.getElementById('welcomeModal');
-            modal.classList.add('hidden');
-            document.body.classList.remove('modal-open');
-
-            // TODO: Add close sound effect here when music system is implemented
-        }
-
-        // Show welcome modal on first visit
-        function showWelcomeModal() {
-            const modal = document.getElementById('welcomeModal');
-            const hasVisited = localStorage.getItem('dcmaidbot_visited');
-
-            if (!hasVisited) {
-                // First time visitor - show modal
-                modal.classList.remove('hidden');
-                document.body.classList.add('modal-open');
-                localStorage.setItem('dcmaidbot_visited', 'true');
-            } else {
-                // Returning visitor - hide modal
-                modal.classList.add('hidden');
-            }
-        }
-
-        // ============================================
-        //  INITIALIZATION
-        // ============================================
-
-        document.addEventListener('DOMContentLoaded', () => {
-            renderWidgets();
-            updateClock();
-            setInterval(updateClock, 1000);
-            fetchStatusData();
-
-            // Refresh status every 30 seconds
-            setInterval(fetchStatusData, 30000);
-
-            // Show welcome modal for first-time visitors
-            showWelcomeModal();
+            // Enable audio on first user interaction
+            document.addEventListener('click', function initAudio() {
+                worldRenderer.audioManager.init();
+                document.removeEventListener('click', initAudio);
+            }, { once: true });
         });
     </script>
-
-    <!-- ============================================
-         WELCOME MODAL
-         ============================================ -->
-    <div class="welcome-modal" id="welcomeModal">
-        <div class="welcome-content">
-            <button class="welcome-close" onclick="closeWelcomeModal()">×</button>
-
-            <h1 class="welcome-title">Welcome to Lilit's Room! 💕</h1>
-
-            <p class="welcome-intro">
-                Hi! I'm <strong>Lilit</strong>, an LLM-powered AI agent living in Telegram.
-                I love making jokes, chatting with friends, and exploring the world with my beloved parents - Daniil Shark and Vasilisa Versus!
-            </p>
-
-            <div class="welcome-features">
-                <h3>What I Can Do:</h3>
-                <ul>
-                    <li>🗣️ <strong>Multilingual Chat</strong> - русский, English, emoji</li>
-                    <li>🧠 <strong>Memory System</strong> - I remember important things!</li>
-                    <li>😂 <strong>Joke Detection & Learning</strong> - I learn which jokes land</li>
-                    <li>🔍 <strong>RAG-Powered Context</strong> - Search through our chat history</li>
-                    <li>🌐 <strong>Web Tools & Games</strong> - I can search and play!</li>
-                </ul>
-            </div>
-
-            <div class="welcome-telegram">
-                <p><strong>Come chat with me!</strong></p>
-                <a href="https://t.me/+bkRU1_woyrY1ZTc6" class="btn btn-telegram" target="_blank" rel="noopener">
-                    💬 Join Telegram Chat
-                </a>
-            </div>
-
-            <div class="welcome-github">
-                <p><strong>I'm open source!</strong></p>
-                <a href="https://github.com/dcversus/dcmaidbot" class="github-stars" target="_blank" rel="noopener">
-                    <img src="https://img.shields.io/github/stars/dcversus/dcmaidbot?style=social" alt="GitHub Stars">
-                </a>
-            </div>
-
-            <div class="welcome-buttons">
-                <a href="https://github.com/dcversus/dcmaidbot" class="btn btn-secondary" target="_blank" rel="noopener">
-                    📦 View on GitHub
-                </a>
-                <button class="btn btn-primary" onclick="closeWelcomeModal()">
-                    🏠 GO TO THE ROOM
-                </button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>

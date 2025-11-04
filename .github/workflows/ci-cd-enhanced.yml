@@ -1,0 +1,395 @@
+name: Enhanced CI/CD Pipeline with Canary Deployment
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run linting
+      run: |
+        ruff check .
+        ruff format . --check
+        mypy src/main.py
+
+    - name: Run unit tests
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+      run: |
+        pytest tests/unit/ -v --cov=src --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run security audit
+      run: |
+        pip-audit
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  build:
+    needs: [test, security]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+
+    - name: Generate version
+      id: version
+      run: |
+        if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          VERSION=$(date +%Y.%m.%d)-${{ github.sha }}
+        else
+          VERSION=${{ github.ref_name }}-$(date +%Y.%m.%d)-${{ github.sha }}
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  deploy-canary:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.13.0'
+
+    - name: Deploy canary
+      run: |
+        helm upgrade --install dcmaidbot-canary ./helm/dcmaidbot \
+          --namespace dcmaidbot \
+          --create-namespace \
+          --set canary.enabled=true \
+          --set canary.image.tag=${{ needs.build.outputs.version }} \
+          --set environment=production \
+          --wait \
+          --timeout=10m
+
+    - name: Wait for canary rollout
+      run: |
+        kubectl rollout status deployment/dcmaidbot-canary -n dcmaidbot --timeout=300s
+
+    - name: Get canary pod info
+      run: |
+        kubectl get pods -n dcmaidbot -l app.kubernetes.io/component=canary -o wide
+
+  llm-judge-validation:
+    if: github.ref == 'refs/heads/main'
+    needs: [build, deploy-canary]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install requests asyncio openai
+
+    - name: Run LLM Judge Validation
+      run: |
+        python scripts/llm-judge-validation.py \
+          --version "${{ needs.build.outputs.version }}" \
+          --environment "canary" \
+          --endpoint "https://dcmaidbot.theedgestory.org" \
+          --openai-key "${{ secrets.OPENAI_API_KEY }}" \
+          --nudge-url "${{ secrets.NUDGE_WEBHOOK_URL }}"
+
+    - name: Upload validation results
+      uses: actions/upload-artifact@v3
+      with:
+        name: llm-judge-results
+        path: validation-results.json
+
+  promote-or-rollback:
+    if: github.ref == 'refs/heads/main'
+    needs: [build, deploy-canary, llm-judge-validation]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.13.0'
+
+    - name: Download validation results
+      uses: actions/download-artifact@v3
+      with:
+        name: llm-judge-results
+
+    - name: Promote to Production
+      run: |
+        # Check validation results and decide whether to promote
+        VALIDATION_RESULT=$(python -c "
+        import json
+        with open('validation-results.json') as f:
+            data = json.load(f)
+        print(data.get('decision', 'rollback'))
+        ")
+
+        if [ "$VALIDATION_RESULT" = "promote" ]; then
+          echo "✅ LLM Judge approved deployment - promoting to production"
+
+          # Update stable deployment
+          helm upgrade --install dcmaidbot ./helm/dcmaidbot \
+            --namespace dcmaidbot \
+            --set image.tag="${{ needs.build.outputs.version }}" \
+            --set environment=production \
+            --set canary.enabled=false \
+            --wait \
+            --timeout=10m
+
+          # Wait for rollout
+          kubectl rollout status deployment/dcmaidbot -n dcmaidbot --timeout=300s
+
+          # Remove canary
+          helm uninstall dcmaidbot-canary -n dcmaidbot || true
+
+          echo "🚀 Successfully promoted ${{ needs.build.outputs.version }} to production"
+
+        else
+          echo "❌ LLM Judge rejected deployment - rolling back"
+
+          # Remove canary deployment
+          helm uninstall dcmaidbot-canary -n dcmaidbot || true
+
+          echo "⚠️ Rolled back canary deployment"
+          exit 1
+        fi
+
+    - name: Update GitOps repository
+      if: success()
+      run: |
+        # Trigger update in uz0/core-charts repository
+        curl -X POST \
+          -H "Authorization: token ${{ secrets.GITOPS_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/uz0/core-charts/dispatches \
+          -d '{
+            "event_type": "deploy_update",
+            "client_payload": {
+              "repository": "dcversus/dcmaidbot",
+              "version": "${{ needs.build.outputs.version }}",
+              "environment": "production",
+              "status": "promoted"
+            }
+          }'
+
+    - name: Send /nudge notification
+      if: always()
+      run: |
+        STATUS=${{ job.status }}
+        VERSION="${{ needs.build.outputs.version }}"
+
+        if [ "$STATUS" = "success" ]; then
+          MESSAGE="✅ PRP-011 deployment successful - $VERSION promoted to production"
+        else
+          MESSAGE="🚨 PRP-011 deployment failed - $VERSION - rolling back"
+        fi
+
+        curl -X POST "${{ secrets.NUDGE_WEBHOOK_URL }}" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"user_ids\": [${{ secrets.ADMIN_IDS }}],
+            \"message\": \"$MESSAGE\",
+            \"prp_file\": \"PRPs/PRP-011.md\",
+            \"prp_section\": \"progress\"
+          }"
+
+  deploy-development:
+    if: github.ref == 'refs/heads/develop'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG_DEV }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.13.0'
+
+    - name: Deploy to development
+      run: |
+        helm upgrade --install dcmaidbot-dev ./helm/dcmaidbot \
+          --namespace dcmaidbot-dev \
+          --create-namespace \
+          --set image.tag="${{ needs.build.outputs.version }}" \
+          --set environment=development \
+          --set ingress.hosts[0].host="dcmaidbot-dev.theedgestory.org" \
+          --set canary.enabled=false \
+          --wait \
+          --timeout=10m
+
+    - name: Wait for rollout
+      run: |
+        kubectl rollout status deployment/dcmaidbot-dev -n dcmaidbot-dev --timeout=300s
+
+  post-deployment-monitoring:
+    if: github.ref == 'refs/heads/main'
+    needs: promote-or-rollback
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Wait for stabilization
+      run: |
+        echo "Waiting 5 minutes for deployment to stabilize..."
+        sleep 300
+
+    - name: Health check
+      run: |
+        curl -f https://dcmaidbot.theedgestory.org/health || exit 1
+        echo "✅ Health check passed"
+
+    - name: Performance check
+      run: |
+        # Basic performance check
+        RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' https://dcmaidbot.theedgestory.org/health)
+        echo "Response time: ${RESPONSE_TIME}s"
+
+        if (( $(echo "$RESPONSE_TIME > 2.0" | bc -l) )); then
+          echo "❌ Response time too high: ${RESPONSE_TIME}s"
+          exit 1
+        else
+          echo "✅ Performance check passed"
+        fi

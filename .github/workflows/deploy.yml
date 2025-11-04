@@ -27,15 +27,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Read version
+      - name: Read version from CHANGELOG.md
         id: version
         run: |
-          if [ -f version.txt ]; then
-            VERSION=$(cat version.txt)
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "version=0.1.0" >> $GITHUB_OUTPUT
-          fi
+          # Parse version from CHANGELOG.md (first version found after [Unreleased])
+          VERSION=$(head -20 CHANGELOG.md | grep -m1 "^## \[" | sed 's/^## \[\([^]]*\)\].*/\1/' | grep -v "Unreleased" || echo "0.1.0")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get build timestamp
         id: timestamp

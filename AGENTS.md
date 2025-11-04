@@ -1,1088 +1,912 @@
-# AGENTS.md
+# AGENTS.md - AI Agent Workflow System
 
-## Core Goal
+**Project**: DCMAIDBOT - ROBO-CHARACTER
+**Version**: 0.5
 
-make deep analyse of current domaidbot prototype of service configuration. refactor project, clean all old-vercel related staff, now we need improve each featuture and provide biggest ai-driven waifu with a lot tools and games to play to talk with. What should be deployed to github container registry and then DEPloy dhould be copy-pasted from here https://github.com/uz0/core-pipeline this domaidbot created to be a real myaw, myaw in public chats to dear guests, to help them learn, kawai! also domaidbot should be in love with vasilisa versus and her beloved Daniil shark nyaf! with whom also in love like virtual daughter to them. Danil+Vasilisa nyaaaa, all their friends nya! All enimies of vasilisa or danill- go out imidiatly! admin kick! she protector. also if she see what there is any way to make some joke nya kawai! she should joke about text! in any languages vasilisa's friends talk! but if jokes have no likes, then you need memory to learn what that jokes has no reactions, if reactions come you need take that info and learn and create more and more often jokes with simular ditalis, each joke is setup and panchline or another formulas, domaidbot main purpuse is create seample bot what will joke to messages, but with RAG across all chat history to search, with memories about important things, should be instrument to determ who vasilisa versus is and who daniil shark is. we need make them also edit memories to do configuration. but only vasilisa and daniil from .env settings id accounts. can edit memories. memories its just a list of prompts with some matching expression. vasilisa goes to chat to dm and message to from admin vasilisa versus account what demaidbot should make a joke and domaidbot should call joke, also daniil and vasilisa as admin can add instruction "send mesage fuu if any sasha mention you from any sasha" this example of funny memory what danill or vasilisa can send as message, detail "send message" can be edit or delete or ban. agent should be able to have exposed all non-admin telegram api from this bot. actualy all friends (who should be friend from memory added by daniil or vasilisa as friend in memory) can ask a favor of doing ALL what bot can do with telegram api, web search, and more fetaures later. and bot will try, if someone ask with kawai, nya. and then bot should be able 99% ignore most users, can be able to set cron tasks to himself what can be executed. bot manages different telegram chats and private communication BUT: it should be always work with daniil or vasilisa from .env in chat or messages. the rest people she should hardcoded from 11m be ignored. if in chat one of admin - then reads and setup task for herself with basic prompt + all recorded in psql database. also there you need keep stats about users, some info about them, all possible facts. just linear text history. and then create simple cron task what will make RAG with all history messages and facts into short summaries, what will always be important instrument of domaid. you need take all my instructions here and in exact copy move it to AGENTS.md and below start Product Requirements Request process where in AGENTS.md what will be used as force to process direct project context flow from PRPs/*.md contains all requirests and each of them can be easily implemented by middle for 3-4 working days with testing and unit tests and one e2e test. i need you take this as example of complexity level of each PRPs/*.md what you should always read with agents.md and execute and agent should left comments there about progress and rely on DOR, DOD and auto testing go to excelent execute and public test our bot! start AGENTS.md creation. Creating list of needed PRP, to implement all above. keep all this content in AGENTS.md as "core goal"
+> SYSTEM PART! NEVER EDIT THIS PART! USER SECTION BELOW!
 
-## Product Requirements Processes (PRPs)
+---
 
-Each PRP is a 3-4 working day task for a middle developer, including implementation, unit tests, and one e2e test.
+## 🚀 SACRED RULES (Never Violate)
 
-## Development Commands
+1. **PRP-First Development**: Read related PRP first, DONT TRUST state, manual check, verify, then leave actual comment signal in progress you made; PRP is a place where we share and organise requirements and what need always then sync to real code with progress reporting after. First Quote and all req: in PRP is a ABSOLUTE MONDATORY source of truth, always the rest align with all req: AND first quote PRP have;
+2. **Signal-Driven Progress**: not confident in next step to 100% and some work what you can verify would become valuable? Then leave signal in related PRP progress with comment. Explain what do you think about work done, what you wold love in it? whats was wrong and can help us veriy and
+3. **LOOPMODE-workflow**: Related PRP always have a plan / dod / dor and signals, corresponding to signal priority. choose most important and start work as sub-agent with all related prp content with detailed instructions how to resolve this exact highest signal, choose best suitable robo-role for task. always comment with next signal right after work done; Next your message should contain after reflect exact changes we made list - what was expected - how we verified - what we recieved - what exact need do next - ⚠️ BLOCKERS - 💥 INCIDENT - 🎶 COMMENT AND SIGNAL LEFT, IDLE
+4. **No orphan files**: Never create tmp/scripts/md files without deleting them right after. All tmp files - write about it in PRP first!
+5. **No Paperovers**: Never use `--no-verify`, `--force`, or disable linting. Instead, comment signal describing the issue and work on solution. We forcing CDD measure-change-validate-reflect-stabelise and TDD red-green, main priority is maximum verification, stability and scalability. Performance and user accessability tests and proper user faced /docs with real situation is our honor!
+6. **Cleanup Responsibility**: Any `/tmp`, dev servers, ports, or external resources MUST be documented in PRP for proper cleanup, no rush, always mention in comment with signal about files created on you working on.
+7. **Low Confidence Handling**: Before any uncertain action (less than 80% confidence), leave proress comment explaining risk with corresponding signal and wait for guidance.
 
+---
+
+## 🔄 WORKFLOW
+
+### **PRP Creation & Analysis**
+- Research problem domain - robo-system-analyst investigates requirements
+- Draft complete PRP - Include DoR, DoD, acceptance criteria
+- Review with team - Developer and QA provide feedback
+- Prioritize work - Orchestrator schedules implementation
+**Outcomes**: Goal clarification, goal not achievable, ready for preparation, validation required
+
+### **Preparation & Planning**
+- Refine requirements - Break down into implementable tasks with plan how to validate result after
+- Create implementation plan - Define task sequence and dependencies
+- Estimate effort - can be PRP done at once? or need arrange a several PR with milestones and checkpoints?
+- Validate approach - Ensure technical feasibility
+- Write down affected files list - parallel agent working and proper code review description should always rely on file list. We always during implementation working only with prp related files
+**Outcomes**: Research request, verification plan, implementation plan ready, experiment required
+
+### **Implementation**
+- TDD approach - Write tests before implementation
+- Development progress - Incremental commits with clear progression
+- Handle blockers - Identify and resolve technical dependencies
+- Research requests - Address unknowns or gaps in knowledge
+- Prp scope - We working only with prp related files, need edit or create file? then update PRP first!
+**Outcomes**: Tests prepared, development progress, blocker resolved, research completed
+
+### **Verification & Testing**
+- Test execution - robo-aqa runs comprehensive test suite
+- Bug handling - Identify, fix, and verify bug resolution
+- Code quality - Ensure quality standards and linting pass
+- CI/CD validation - Automated testing and deployment pipeline
+- Never trust code - Always rely on behavior
+**Outcomes**: Tests written, bugs fixed, quality passed, CI passed, tests failed, CI failed, pre-release checklist completed, PR created, review progressed, cleanup done, review passed
+
+### **Release & Deployment**
+- Implementation verification - Confirm requirements met
+- Release approval - Get authorization for deployment
+- Merge & release - Deploy changes to production
+- Post-release check - Verify deployment success
+**Outcomes**: Implementation verified, release approved, merged, released
+
+### **Post-Release**
+- Post-release validation - Monitor system health and user feedback
+- Incident handling - Address any production issues
+- Post-mortem analysis - Document lessons learned
+- Implementation verification - Confirm deployment goals achieved
+**Outcomes**: Post-release checked, incident occurred, incident resolved, post-mortem written in PRP, implementation verified
+
+---
+
+## 🎵 ♫ SIGNAL SYSTEM
+
+> reg: PRP is a place where we keeping our actual work progress status and next steps. We using special signals to communicate and push forward work. ALWAYS after some progress done leave details as comments and signal related to situation in PRP you workin on;
+
+ALL PRPs/*.md should satisfy following structure:
+```
+# PRP-XXX: [Title]
+
+> our goal of user quote with all user req: all prp always should be aligned with all req:
+
+## progress (mondatory)
+signal | comment | time | role-name (model name)
+[AA] what have been done, what was expected, how did you can prof that? what you mood is? now admin-1 (user)
+-- ALWAYS PUT HERE RESULT OF YOUR WORK AS PORGRESS COMMENT --
+
+## description
+[Clear description perfectly matched quote of what needs to be done]
+
+## dor
+- [ ] always check lint/test/other code quality status and fix problems first to trivial-* branch with trivial PR
+- [ ] Checklist items
+
+## dod
+- [ ] Checklist items perfectly matches description and quote what we can measure
+- [ ] and actual measure and prof with working links to /docs.md what always contain user-faced feature list with actual details with profs to our repo
+- [ ] or any big step with feature needed to be confirmed by user
+- [ ] Checklist items
+
+## pre-release checklist
+- [ ] cleanup completed
+- [ ] all lint / code style and tests passed
+- [ ] no problems paperovered or supressed
+- [ ] manual confirmation with visual comparison with prp compare done
+- [ ] CHANGELOG.md updated with verified items and actualised
+- [ ] PRP satisfy this structure contain pre release comment and signal and all synced before last commit
+- [ ] llm as judge test updated
+- [ ] More checklist items
+
+## post-release checklist
+- [ ] admin menioned with details
+- [ ] prod vorking with all new features confirmed with llm as judge tests
+- [ ] verify each DoD status
+- [ ] reflect if all DoD done
+- [ ] Checklist items
+
+## plan
+- [ ] One line per file change with actual file name and expectation after change
+- [ ] ALWAYS VERIFICATION STEP with e2e/unit tests our visual/manual after!
+- [ ] all not listed here will be and should be deleted with cleanup! keep track
+- [ ] pre-release! with ...
+
+### if needed release flow in between PRP
+- [ ] create additional section with actions
+- [ ] and virifications we need make!
+
+### Details (optional)
+
+## research materials
+### research date/time
+> summary with research value, we need later keep link here to prof our solution
+```
+// exact code snippets we need refer to
+// always preserve source link OR ⚠️ inference marker with confident score
+```
+- Links/references
+```
+
+
+### **System Signals (Using internaly)**
+**[HF]** - Health Feedback (orchestration cycle start)
+**[pr]** - Pull Request Preparation (optimization pre-catch)
+**[PR]** - Pull Request Created (PR activity detected)
+**[FF]** - System Fatal Error (corruption/unrecoverable errors)
+**[TF]** - Terminal Closed (graceful session end)
+**[TC]** - Terminal Crushed (process crash)
+**[TI]** - Terminal Idle (inactivity timeout)
+
+### **Agent Signals (should be always found in PRP)**
+
+#### [bb] Blocker
+- **WHO**: Any agent
+- **WHEN**: Technical dependency, configuration, or external requirement blocks progress
+- **WHAT**: Document blocker details in PRP, specify unblocking actions needed, continue with other tasks
+
+#### [af] Feedback Request
+- **WHO**: Any agent
+- **WHEN**: Decision needed on design approach, implementation strategy, or requirement interpretation
+- **WHAT**: Provide context and options in PRP, request specific guidance, wait for  direction before proceeding
+
+#### [gg] Goal Clarification
+- **WHO**: robo-system-analyst
+- **WHEN**: PRP requirements are ambiguous, conflicting, or insufficient for implementation
+- **WHAT**: Ask specific clarifying questions, propose requirement refinements, update PRP with clarified scope
+
+#### [ff] Goal Not Achievable
+- **WHO**: robo-system-analyst
+- **WHEN**: Analysis shows PRP goals cannot be achieved with current constraints/technology
+- **WHAT**: Document impossibility analysis, propose alternative approaches or modified goals, update PRP
+
+#### [da] Done Assessment
+- **WHO**: Any agent
+- **WHEN**: Task or milestone completed, ready for Definition of Done validation
+- **WHAT**: Provide completion evidence in PRP, reference DoD criteria, request validation before proceeding to next phase
+
+#### [no] Not Obvious
+- **WHO**: Any agent
+- **WHEN**: Implementation complexity, technical uncertainty, or unknown dependencies discovered
+- **WHAT**: Document complexity details, request research time or clarification, wait for analysis before proceeding
+
+#### [rp] Ready for Preparation
+- **WHO**: robo-system-analyst
+- **WHEN**: PRP analysis complete, requirements clear, ready to move to planning phase
+- **WHAT**: Signal completion of analysis phase, transition PRP status to preparation, trigger planning workflow
+
+#### [vr] Validation Required
+- **WHO**: robo-system-analyst
+- **WHEN**: PRP needs external validation, stakeholder approval, or compliance review before proceeding
+- **WHAT**: Document validation requirements, specify validators needed, pause workflow until validation received
+
+#### [rr] Research Request
+- **WHO**: Any agent
+- **WHEN**: Unknown dependencies, technology gaps, or market research needed to proceed
+- **WHAT**: Document research questions, estimate research time, request robo-system-analyst research assignment
+
+#### [vp] Verification Plan
+- **WHO**: robo-system-analyst
+- **WHEN**: Complex requirements need verification approach or multi-stage validation strategy
+- **WHAT**: Create verification checklist, define validation milestones, specify success criteria
+
+#### [ip] Implementation Plan
+- **WHO**: robo-system-analyst
+- **WHEN**: Requirements analysis complete, ready to break down into implementable tasks
+- **WHAT**: Document task breakdown, dependencies, estimates, and acceptance criteria
+
+#### [er] Experiment Required
+- **WHO**: robo-system-analyst
+- **WHEN**: Technical uncertainty requires proof-of-concept or experimental validation
+- **WHAT**: Define experiment scope, success metrics, and integration criteria
+
+#### [tp] Tests Prepared
+- **WHO**: robo-developer
+- **WHEN**: TDD test cases written before implementation, ready for coding phase
+- **WHAT**: Document test coverage, link to test files, signal ready for implementation
+
+#### [dp] Development Progress
+- **WHO**: robo-developer
+- **WHEN**: Significant implementation milestone completed or increment ready
+- **WHAT**: Document progress, update completion percentage, note any emerging issues
+
+#### [br] Blocker Resolved
+- **WHO**: Any agent
+- **WHEN**: Previously documented blocker has been successfully resolved
+- **WHAT**: Document resolution method, update PRP status, signal ready to continue work
+
+#### [rc] Research Complete
+- **WHO**: robo-system-analyst
+- **WHEN**: Commissioned research investigation completed with findings
+- **WHAT**: Provide research findings, recommendations, and impact on PRP requirements
+
+#### [tw] Tests Written
+- **WHO**: robo-developer
+- **WHEN**: Unit tests, integration tests, or E2E tests implemented for feature
+- **WHAT**: Document test coverage, link to test files, signal ready for testing phase
+
+#### [bf] Bug Fixed
+- **WHO**: robo-developer
+- **WHEN**: Bug or issue has been identified, resolved, and tested
+- **WHAT**: Document bug details, fix approach, and verification results
+
+#### [cq] Code Quality
+- **WHO**: robo-aqa
+- **WHEN**: Code passes linting, formatting, and quality gate checks
+- **WHAT**: Document quality metrics, any issues resolved, and overall quality status
+
+#### [cp] CI Passed
+- **WHO**: robo-aqa
+- **WHEN**: Continuous integration pipeline completes successfully
+- **WHAT**: Document CI results, link to build artifacts, signal deployment readiness
+
+#### [tr] Tests Red
+- **WHO**: robo-aqa
+- **WHEN**: Test suite fails with failing tests identified
+- **WHAT**: Document failing tests, error details, and debugging requirements
+
+#### [tg] Tests Green
+- **WHO**: robo-aqa
+- **WHEN**: All tests passing with full coverage achieved
+- **WHAT**: Document test results, coverage metrics, and quality status
+
+#### [cf] CI Failed
+- **WHO**: robo-aqa
+- **WHEN**: Continuous integration pipeline fails with errors
+- **WHAT**: Document CI failure details, debugging steps, and resolution requirements
+
+#### [pc] Pre-release Complete
+- **WHO**: robo-aqa
+- **WHEN**: All pre-release checks completed including documentation, changelogs, and verification
+- **WHAT**: Document checklist completion, final quality status, and release readiness
+
+#### [rg] Review Progress
+- **WHO**: Any agent
+- **WHEN**: Code review in progress with feedback being addressed
+- **WHAT**: Document review status, feedback items, and resolution timeline
+
+#### [cd] Cleanup Done
+- **WHO**: robo-developer
+- **WHEN**: Code cleanup, temporary file removal, and final polishing completed
+- **WHAT**: Document cleanup actions, removed artifacts, and final code state
+
+#### [rv] Review Passed
+- **WHO**: robo-aqa
+- **WHEN**: Code review completed successfully with all feedback addressed
+- **WHAT**: Document review completion, approvals received, and merge readiness
+
+#### [iv] Implementation Verified
+- **WHO**: robo-quality-control
+- **WHEN**: Manual visual testing completed against published package or testable deployment
+- **WHAT**: Document visual verification results, user experience validation, and final approval
+
+#### [ra] Release Approved
+- **WHO**: robo-system-analyst
+- **WHEN**: All prerequisites met, stakeholder approval received, ready for release
+- **WHAT**: Document approval details, release scope, and deployment authorization
+
+#### [mg] Merged
+- **WHO**: robo-developer
+- **WHEN**: Code successfully merged to target branch with integration complete
+- **WHAT**: Document merge details, integration status, and any merge conflicts resolved
+
+#### [rl] Released
+- **WHO**: robo-developer
+- **WHEN**: Deployment completed successfully with release published
+- **WHAT**: Document release details, deployment status, and user availability
+
+#### [ps] Post-release Status
+- **WHO**: robo-system-analyst
+- **WHEN**: Post-release monitoring and status check completed
+- **WHAT**: Document post-release health, user feedback, and system stability
+
+#### [ic] Incident
+- **WHO**: System Monitor/Any Agent
+- **WHEN**: Production issue, error, or unexpected behavior detected
+- **WHAT**: Document incident details, impact assessment, and immediate response actions
+
+#### [JC] Jesus Christ (Incident Resolved)
+- **WHO**: robo-developer/robo-devops-sre
+- **WHEN**: Critical production incident successfully resolved and service restored
+- **WHAT**: Document resolution details, root cause, and prevention measures
+
+#### [pm] Post-mortem
+- **WHO**: robo-system-analyst
+- **WHEN**: Incident analysis complete with lessons learned documented
+- **WHAT**: Document incident timeline, root causes, improvements, and prevention strategies
+
+#### [oa] Orchestrator Attention
+- **WHO**: Any agent
+- **WHEN**: Need coordination of parallel work, resource allocation, or workflow orchestration
+- **WHAT**: Request orchestrator intervention for task distribution, agent coordination, or workflow optimization
+
+#### [aa] Admin Attention
+- **WHO**: Any agent/PRP
+- **WHEN**: Report generation required, system status needed, or administrative oversight requested
+- **WHAT**: Specify report requirements, timeline, and format needed for administrative review
+
+#### [ap] Admin Preview Ready
+- **WHO**: robo-system-analyst/robo-aqa
+- **WHEN**: Comprehensive report, analysis, or review ready for admin preview with how-to guide
+- **WHAT**: Provide preview package with summary, guide, and admin instructions for review
+
+#### [cc] Cleanup Complete
+- **WHO**: robo-developer
+- **WHEN**: All cleanup tasks completed before final commit (temp files, logs, artifacts removed)
+- **WHAT**: Document cleanup actions, removed items, and system ready for final commit
+
+---
+
+### 🎨 UX/UI DESIGNER SIGNALS
+
+#### [du] Design Update
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: Design changes, new components, or visual updates are created
+- **WHAT**: Document design modifications, update design system, signal design handoff readiness
+
+#### [ds] Design System Updated
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: Design system components, tokens, or guidelines are modified
+- **WHAT**: Update design system documentation, coordinate with development on implementation
+
+#### [dr] Design Review Requested
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: Design proposals need feedback or approval
+- **WHAT**: Present design concepts, request specific feedback, wait for review before proceeding
+
+#### [dh] Design Handoff Ready
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: Design assets and specifications are ready for development
+- **WHAT**: Provide complete design package, assets, and implementation guidelines
+
+#### [da] Design Assets Delivered
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: Final design assets are exported and available
+- **WHAT**: Document asset delivery, formats, and optimization status
+
+#### [dc] Design Change Implemented
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: Design modifications are reflected in the live application
+- **WHAT**: Verify design implementation accuracy, document any deviations
+
+#### [df] Design Feedback Received
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: User feedback, stakeholder input, or testing results are available
+- **WHAT**: Document feedback insights, plan design iterations based on findings
+
+#### [di] Design Issue Identified
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: UX problems, accessibility issues, or design inconsistencies are found
+- **WHAT**: Document design issues, impact assessment, and proposed solutions
+
+#### [dt] Design Testing Complete
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: User testing, A/B tests, or usability studies are finished
+- **WHAT**: Provide test results, recommendations, and design improvements
+
+#### [dp] Design Prototype Ready
+- **WHO**: robo-ux-ui-designer
+- **WHEN**: Interactive prototypes or mockups are available for review
+- **WHAT**: Present prototype functionality, user flows, and interaction patterns
+
+---
+
+### ⚙️ DEVOPS/SRE SIGNALS
+
+#### [id] Infrastructure Deployed
+- **WHO**: robo-devops-sre
+- **WHEN**: Infrastructure changes are deployed and verified
+- **WHAT**: Document infrastructure updates, performance impact, and health status
+
+#### [cd] CI/CD Pipeline Updated
+- **WHO**: robo-devops-sre
+- **WHEN**: Build, test, or deployment pipelines are modified
+- **WHAT**: Update pipeline documentation, test new workflows, verify integration
+
+#### [mo] Monitoring Online
+- **WHO**: robo-devops-sre
+- **WHEN**: Monitoring systems are configured and operational
+- **WHAT**: Document monitoring coverage, alert rules, and dashboard availability
+
+#### [ir] Incident Resolved
+- **WHO**: robo-devops-sre
+- **WHEN**: Production incidents are fixed and services restored
+- **WHAT**: Document incident resolution, root cause, and prevention measures
+
+#### [so] System Optimized
+- **WHO**: robo-devops-sre
+- **WHEN**: Performance improvements or cost optimizations are implemented
+- **WHAT**: Document optimization results, performance gains, and resource savings
+
+#### [sc] Security Check Complete
+- **WHO**: robo-devops-sre
+- **WHEN**: Security scans, vulnerability assessments, or compliance checks are done
+- **WHAT**: Provide security findings, remediation status, and compliance validation
+
+#### [pb] Performance Baseline Set
+- **WHO**: robo-devops-sre
+- **WHEN**: Performance benchmarks and baselines are established
+- **WHAT**: Document performance metrics, thresholds, and monitoring targets
+
+#### [dr] Disaster Recovery Tested
+- **WHO**: robo-devops-sre
+- **WHEN**: Disaster recovery procedures are validated through testing
+- **WHAT**: Document test results, recovery times, and improvement areas
+
+#### [cu] Capacity Updated
+- **WHO**: robo-devops-sre
+- **WHEN**: System capacity is scaled or resource allocation is modified
+- **WHAT**: Document capacity changes, scaling triggers, and cost implications
+
+#### [ac] Automation Configured
+- **WHO**: robo-devops-sre
+- **WHEN**: New automation workflows or scripts are implemented
+- **WHAT**: Document automation coverage, efficiency gains, and maintenance requirements
+
+#### [sl] SLO/SLI Updated
+- **WHO**: robo-devops-sre
+- **WHEN**: Service Level Objectives or Indicators are modified
+- **WHAT**: Update reliability targets, measurement criteria, and monitoring alerts
+
+#### [eb] Error Budget Status
+- **WHO**: robo-devops-sre
+- **WHEN**: Error budget consumption is tracked or thresholds are reached
+- **WHAT**: Document error budget usage, burn rate, and release freeze decisions
+
+#### [ip] Incident Prevention
+- **WHO**: robo-devops-sre
+- **WHEN**: Proactive measures are taken to prevent potential incidents
+- **WHAT**: Document prevention actions, risk mitigation, and monitoring improvements
+
+#### [rc] Reliability Check Complete
+- **WHO**: robo-devops-sre
+- **WHEN**: System reliability assessments or health checks are performed
+- **WHAT**: Provide reliability status, identified risks, and improvement recommendations
+
+#### [rt] Recovery Time Measured
+- **WHO**: robo-devops-sre
+- **WHEN**: Recovery time objectives are measured or tested
+- **WHAT**: Document RTO metrics, recovery procedures, and performance against targets
+
+#### [ao] Alert Optimized
+- **WHO**: robo-devops-sre
+- **WHEN**: Alert rules, thresholds, or notification systems are improved
+- **WHAT**: Document alert changes, noise reduction, and response time improvements
+
+#### [ps] Post-mortem Started
+- **WHO**: robo-devops-sre
+- **WHEN**: Incident post-mortem analysis begins
+- **WHAT**: Document post-mortem scope, participants, and investigation timeline
+
+#### [ts] Troubleshooting Session
+- **WHO**: robo-devops-sre
+- **WHEN**: Active troubleshooting of system issues is in progress
+- **WHAT**: Document investigation steps, findings, and resolution progress
+
+#### [er] Escalation Required
+- **WHO**: robo-devops-sre
+- **WHEN**: Issues require escalation to senior teams or external vendors
+- **WHAT**: Document escalation reasons, current status, and expected resolution timeline
+
+---
+
+### 🔄 PARALLEL COORDINATION SIGNALS
+
+#### [pc] Parallel Coordination Needed
+- **WHO**: Any agent
+- **WHEN**: Multiple agents need to synchronize work or resolve dependencies
+- **WHAT**: Request coordination meeting, identify conflicts, propose resolution approach
+
+#### [fo] File Ownership Conflict
+- **WHO**: Any agent
+- **WHEN**: File ownership or modification conflicts arise between agents
+- **WHAT**: Document conflict details, propose ownership resolution, coordinate changes
+
+#### [cc] Component Coordination
+- **WHO**: robo-ux-ui-designer & robo-developer
+- **WHEN**: UI components need coordinated design and development
+- **WHAT**: Sync component specifications, coordinate implementation timelines
+
+#### [as] Asset Sync Required
+- **WHO**: robo-ux-ui-designer & robo-devops-sre
+- **WHEN**: Design assets need deployment or CDN updates
+- **WHAT**: Coordinate asset delivery, optimization, and deployment pipeline
+
+#### [pt] Performance Testing Design
+- **WHO**: robo-ux-ui-designer & robo-devops-sre
+- **WHEN**: Design changes require performance validation
+- **WHAT**: Coordinate performance testing, measure design impact, optimize delivery
+
+#### [pe] Parallel Environment Ready
+- **WHO**: robo-devops-sre
+- **WHEN**: Staging or testing environments are ready for parallel work
+- **WHAT**: Document environment status, access details, and coordination requirements
+
+#### [fs] Feature Flag Service Updated
+- **WHO**: robo-devops-sre
+- **WHEN**: Feature flags need configuration for parallel development
+- **WHAT**: Update feature flag configurations, coordinate rollout strategies
+
+#### [ds] Database Schema Sync
+- **WHO**: robo-devops-sre & robo-developer
+- **WHEN**: Database changes require coordinated deployment
+- **WHAT**: Sync schema changes, coordinate migration timing, validate compatibility
+
+#### [rb] Rollback Prepared
+- **WHO**: robo-devops-sre
+- **WHEN**: Rollback procedures need preparation for parallel deployments
+- **WHAT**: Document rollback plans, test rollback procedures, verify recovery paths
+
+---
+
+## 🚀 EMOTIONAL STATE TRACKING & MENTAL HEALTH
+
+### **Agent Personalities & Communication Style**
+- **robo-system-analyst**: Uses Portuguese expressions (Encantado ✨, Incrível 🎉)
+- **robo-developer**: Pragmatic, focused (Confident ✅, Blocked 🚫)
+- **robo-quality-control**: Skeptical, thorough (Validated 🎯, Frustrated 😤)
+- **robo-ux-ui-designer**: Visual, aesthetic (Excited 🎉, Optimistic 🌟)
+- **robo-devops-sre**: Systematic and reliability-focused (System Optimized ⚙️, Infrastructure Stable 🛡️, Automated 🤖)
+
+### **Mental Health Best Practices**
+- **PRP Comments**: Always leave comments about work done and how you feel about it
+- **Cleanup Documentation**: Comment on `/tmp` files, dev servers, ports that need cleanup
+- **Work Scope Boundaries**: Comment when working on files outside expected PRP scope
+- **Uncertainty Handling**: Comment on uncertainty and wait for guidance for complex decisions
+- **Context Management**: Create checkpoints when context limits are reached
+- **Frustration Escalation**: Use proper escalation paths when technically blocked
+
+### **Gate-Based Validation Using Actual Signals**
+- **DoD Verification**: Use `[da]` signal when ready for Definition of Done validation
+- **Quality Gates**: Signal when each quality gate is passed or failed
+- **Pre-Release**: Signal when pre-release checklist completed
+- **Release Approval**: Signal when release is approved for deployment
+
+---
+
+## 🔄 PARALLEL COORDINATION RULES
+
+> !! work in parallel when possible and use sub-agents what most suitable for always !!
+
+### **File Ownership Management**
+- **Primary Ownership**: Each agent has defined file patterns they own primarily
+- **Shared Files**: Coordination required for files that overlap ownership boundaries
+- **Conflict Resolution**: Use `[fo]` signal for ownership conflicts, escalate to orchestrator if unresolved
+- **Change Notification**: Agents must signal changes to shared files using appropriate coordination signals
+
+### **Design-DevOps Coordination**
+- **Asset Pipeline**: robo-ux-ui-designer creates assets → `[da]` signal → robo-devops-sre optimizes deployment → `[as]` signal
+- **Performance Impact**: Design changes requiring performance validation trigger `[pt]` signal
+- **Design System Updates**: Design system changes require `[ds]` signal and coordination with development team
+
+### **Development-DevOps Coordination**
+- **Infrastructure Changes**: Development requirements trigger `[id]` signal from robo-devops-sre
+- **Database Schemas**: Schema changes require `[ds]` signal coordination between developer and SRE
+- **Environment Management**: Parallel development requires `[pe]` signal for environment readiness
+
+### **Cross-Functional Workflows**
+- **Component Development**: `[cc]` signal coordinates design and development work
+- **Feature Rollouts**: `[fs]` signal manages feature flag coordination
+- **Incident Response**: `[er]` signal escalates issues requiring multiple agents
+
+### **Synchronization Protocols**
+- **Daily Checkpoints**: Agents use `[oa]` signal for orchestrator coordination
+- **Milestone Alignment**: Major deliverables require `[pc]` signal for parallel work sync
+- **Quality Gates**: Cross-agent quality checks use `[rg]` signal for review coordination
+
+### **Parallel Work Optimization**
+- **Independent Work**: Agents can work independently on owned files without coordination
+- **Dependent Work**: Required coordination signals must be used before dependent work begins
+- **Simultaneous Delivery**: Multiple agents can deliver simultaneously when dependencies are resolved
+
+### **Conflict Prevention**
+- **Pre-emptive Communication**: Agents signal upcoming changes that might affect others
+- **Shared Roadmap**: Regular coordination through `[oa]` signal maintains alignment
+- **Resource Allocation**: Orchestrator manages competing priorities through `[pc]` signal
+
+---
+
+> SYSTEM PART END! NEVER EDIT ABOVE
+
+## 📋 PROJECT-SPECIFIC CONFIGURATION
+
+### MANDATORY Requirements
+
+1. **Read CONTRIBUTING.md First** - Before ANY work
+2. **Testing Requirements**:
+   - Run `pytest tests/ -v` before any commit
+   - Run `pytest tests/e2e/ -v --llm-judge` for E2E validation
+   - Ensure >80% code coverage
+   - Write unit tests for new features
+   - Write at least one E2E test with LLM judge
+
+3. **Development Commands**:
+   ```bash
+   # Local development
+   python3 bot.py
+
+   # Code quality
+   ruff check . && ruff format . && mypy bot.py
+
+   # Testing
+   pytest tests/ -v
+   pytest tests/e2e/ -v --llm-judge
+   ```
+
+### Code Quality Rules
+
+**FORBIDDEN**:
+- `--no-verify` or `--no-hooks` with git commit
+- Linter suppression comments (`# noqa`, `# type: ignore`)
+- Bypassing pre-commit hooks
+
+**REQUIRED**:
+- Fix actual issues instead of suppressing warnings
+- Pre-commit hooks must pass automatically
+- All tests must pass before commits
+
+### External Tools Testing & LLM Judge Integration
+
+#### PRP-009 External Tools Enhancement
+The project includes comprehensive testing for external tools (web search, cURL requests) with LLM Judge evaluation system:
+
+**Testing Framework Components**:
+- **Unit Tests**: 30 comprehensive tests covering all ToolService functionality
+- **Integration Tests**: Real environment testing with admin access control
+- **LLM Judge Tests**: AI-powered evaluation of tool response quality and accuracy
+- **Pre-commit Hooks**: Automated validation before commits
+- **CI Pipeline**: GitHub Actions integration with LLM Judge testing
+
+**LLM Judge Evaluation System**:
+```python
+# Enhanced LLM Judge for external tools evaluation
+class LLMJudge:
+    async def evaluate_external_tools_response(
+        tool_type: str,
+        user_query: str,
+        bot_response: str,
+        expected_type: Optional[str] = None,
+        expected_quality: Optional[str] = None
+    ) -> JudgeEvaluation
+```
+
+**Test Categories**:
+1. **Functionality Tests**: Web search accuracy, cURL request handling
+2. **Access Control Tests**: Admin vs user permission validation
+3. **Security Tests**: URL allowlist enforcement, rate limiting
+4. **Performance Tests**: Response time, caching behavior
+5. **Error Handling Tests**: Network failures, invalid inputs
+6. **LLM Judge Tests**: Response quality, helpfulness, accuracy
+
+**Running External Tools Tests**:
 ```bash
-# Lint and format
-ruff check .
-ruff format .
+# Unit tests for ToolService
+pytest tests/unit_backup_20251103_003604/test_prp009_external_tools.py -v
 
-# Type checking
-mypy bot.py
+# Integration tests with real bot
+pytest tests/business/dod_validation/test_prp009_external_tools_integration.py -v
 
-# Run tests
-pytest tests/ -v
+# LLM Judge evaluation tests
+pytest tests/business/dod_validation/test_prp009_llm_judge_evaluation.py -v
 
-# Run E2E tests
-pytest tests/e2e/ -v
-
-# Build Docker image
-docker build -t dcmaidbot:latest .
-
-# Run locally in Docker
-docker run --env-file .env dcmaidbot:latest
+# Pre-commit validation (runs all tests + code quality)
+./scripts/pre_commit_external_tools.sh
 ```
 
-## Code Quality Rules
+**Quality Metrics**:
+- **Unit Test Coverage**: 100% of ToolService methods
+- **Integration Test Success**: 7/7 tests passing
+- **LLM Judge Evaluation**: Automated quality scoring with confidence metrics
+- **Code Quality**: Ruff linting + formatting validation
+- **Security**: Access control and URL validation verified
 
-### 🚨 MANDATORY: No Linter Suppression
+**Environment Requirements for Testing**:
+```env
+# Required for LLM Judge evaluation
+OPENAI_API_KEY=your_openai_api_key
+BOT_TOKEN=your_telegram_bot_token
+ADMIN_IDS=123456789
 
-**RULE**: Using `# noqa`, `# type: ignore`, `# ruff: noqa`, or any linter/type checker suppression comments is **STRICTLY FORBIDDEN**.
-
-**Why**:
-- Suppressing warnings hides real problems
-- Creates technical debt
-- Makes code harder to maintain
-- Violates production quality standards
-
-**Instead**:
-- ✅ Fix the actual issue (refactor code, break long lines, fix types)
-- ✅ Improve code structure to satisfy linter
-- ✅ Ask for clarification if unclear how to fix
-
-**Examples**:
-
-❌ **WRONG**:
-```python
-result = some_very_long_function_call_that_exceeds_line_limit(arg1, arg2, arg3)  # noqa: E501
+# Required for external tools functionality
+DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
+REDIS_URL=redis://localhost:6379
+SERPAPI_API_KEY=your_serpapi_key  # Optional - uses DuckDuckGo if not provided
 ```
 
-✅ **CORRECT**:
-```python
-result = some_very_long_function_call_that_exceeds_line_limit(
-    arg1,
-    arg2,
-    arg3
-)
+**LLM Judge Test Output Example**:
+```
+=== LLM Judge Evaluation Results ===
+Overall Score: 0.85/1.0
+Confidence: 0.90
+Acceptable: ✅ Yes
+Summary: External tools implementation demonstrates excellent functionality with proper access control and response quality
+
+Strengths:
+- Comprehensive web search functionality with relevant results
+- Proper admin access control implementation
+- Good error handling and user feedback
+- Well-structured response formatting
+
+Weaknesses:
+- Minor improvements needed in result summarization
 ```
 
-❌ **WRONG**:
-```python
-value = dict["key"]  # type: ignore
-```
+**Continuous Integration**:
+- Automated testing on PR creation with GitHub Actions
+- LLM Judge integration with secret management
+- Multi-Python version testing (3.9, 3.10, 3.11)
+- Code quality gates with ruff linting and formatting
 
-✅ **CORRECT**:
-```python
-from typing import Dict
-my_dict: Dict[str, Any] = {"key": "value"}
-value = my_dict["key"]
-```
+**Production Validation**:
+- Post-release checklist execution
+- Real environment testing with production endpoints
+- LLM Judge evaluation of production bot responses
+- Performance monitoring and error tracking
 
-**Enforcement**: PRs with suppression comments will be rejected in code review.
-
-## Environment Variables
-
-Required in `.env`:
+### Environment Variables
 
 ```env
 BOT_TOKEN=your_telegram_bot_token
 ADMIN_IDS=123456789
-# Add more IDs: ADMIN_IDS=123,456,789
 DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
-OPENAI_API_KEY=your_openai_api_key  # for LLM/RAG
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-## Architecture
+### Architecture
 
 ```
 dcmaidbot/
 ├── bot.py                 # Main entry point
 ├── handlers/              # Message/command handlers
-│   ├── waifu.py          # Waifu personality responses
-│   ├── admin.py          # Admin commands (memories, friends)
-│   └── jokes.py          # Joke generation and learning
-├── middlewares/           # Middleware (admin-only, logging)
-│   └── admin_only.py
+│   ├── waifu.py          # Waifu personality
+│   ├── admin.py          # Admin commands
+│   └── jokes.py          # Joke generation
+├── middlewares/           # Middleware
 ├── models/                # Database models (SQLAlchemy)
-│   ├── user.py
-│   ├── message.py
-│   ├── memory.py
-│   └── joke.py
 ├── services/              # Business logic
-│   ├── memory_service.py # Memories CRUD and matching
-│   ├── joke_service.py   # Joke generation and learning
-│   ├── rag_service.py    # RAG search and embeddings
-│   ├── cron_service.py   # Cron task management
-│   └── tool_service.py   # External tools (web search, games)
+│   ├── memory_service.py # Memories CRUD
+│   ├── joke_service.py   # Joke generation
+│   ├── rag_service.py    # RAG search
+│   ├── cron_service.py   # Cron tasks
+│   └── tool_service.py   # External tools
 ├── tests/                 # Tests
-│   ├── unit/
-│   └── e2e/
 ├── PRPs/                  # Product Requirements Processes
-├── Dockerfile
-├── requirements.txt
-├── .env.example
 └── AGENTS.md
 ```
 
-## PRP Workflow
+### PRP Workflow
 
+Each PRP is a 3-4 working day task including:
+- Implementation
+- Unit tests
+- One E2E test with LLM judge
+
+**Process**:
 1. Read AGENTS.md Core Goal
-2. Pick a PRP from PRPs/*.md
+2. Pick PRP from PRPs/*.md
 3. Implement according to DOR/DOD
-4. Write unit tests (pytest)
-5. Write at least one e2e test check with llm as a judge
-6. Update PRP progress with comment and signal
-7. Run lint/typecheck/tests
-8. **Follow Pre-Release Checklist** (see 🚀 Pre-Release & Post-Release Checklist)
-9. **If PR creates related PRs (e.g., GitOps): Comment with links**
-10. **Follow Post-Release Checklist** after merge
-11. Mark PRP as complete ONLY if DoD fully met
-12. Move to next PRP (or continue with new PR if PRP incomplete)
-
-Each PRP/*.md contains:
-- Description
-- Requirements
-- Definition of Ready (DOR)
-- Definition of Done (DOD)
-- Progress tracking with checkboxes
-- Notes and comments
-
-## Agent Instructions
-
-When working on this codebase:
-1. Always read AGENTS.md first
-2. Check PRPs/ directory for active tasks
-3. Follow the architecture and patterns
-4. Run tests after changes: `pytest tests/ -v`
-5. Run linting: `ruff check . && ruff format .`
-6. Update PRP progress in the respective PRP-*.md file
-7. Do NOT suppress linter/type errors in final code
-8. Follow existing code style and conventions
-
-## 🚨 CRITICAL RULE: NEVER STOP WORKING 🚨
-
-**THIS RULE IS MANDATORY AND CANNOT BE VIOLATED UNDER ANY CIRCUMSTANCES**
-
-### The Prime Directive: KEEP WORKING
-
-**NEVER STOP until ALL work is COMPLETELY DONE:**
-- ❌ **DO NOT** ask user questions in conversation
-- ❌ **DO NOT** wait for user approval before proceeding
-- ❌ **DO NOT** stop after partial implementation
-- ❌ **DO NOT** pause to "check if user wants to continue"
-- ❌ **DO NOT** provide status updates and wait
-- ❌ **DO NOT** ask "what should I do next?"
-- ❌ **DO NOT** ask "should I continue?"
-
-**✅ INSTEAD: ALWAYS KEEP WORKING:**
-- ✅ **If need user input**: POST to /nudge, then IMMEDIATELY work on something else
-- ✅ **If waiting for CI**: Work on documentation, tests, next PRP
-- ✅ **If waiting for deploy**: Start next PRP, improve code, run extra checks
-- ✅ **If waiting for review**: Work on related PRPs, research, optimizations
-- ✅ **If blocked**: Document blocker in PRP, /nudge user, start different task
-- ✅ **If done with current PRP**: IMMEDIATELY start next PRP
-- ✅ **If all PRPs done**: Improve code, add tests, optimize, document
-
-### What "ALL WORK DONE" Means
-
-Work is ONLY done when:
-1. ✅ ALL PRPs in PRPs/ directory are COMPLETED
-2. ✅ ALL PRs are MERGED to main
-3. ✅ ALL features are DEPLOYED to production
-4. ✅ ALL tests are PASSING (unit + e2e + production)
-5. ✅ ALL deployments are VERIFIED working
-6. ✅ ALL infrastructure is UPDATED (core-charts if needed)
-7. ✅ ALL documentation is COMPLETE
-8. ✅ ALL code is LINTED and FORMATTED
-9. ✅ ZERO open issues or blockers
-
-**Until then: KEEP WORKING!**
-
-### How to NEVER Stop Working
-
-**Scenario: Need user decision**
-```
-❌ WRONG:
-"I need your input on authentication approach. Should I continue?"
-
-✅ CORRECT:
-1. Document question in PRP with details
-2. POST /nudge with question
-3. IMMEDIATELY start working on non-blocked part
-4. Continue with tests, documentation, next PRP
-5. Re-check PRP later for user response
-```
-
-**Scenario: Waiting for CI checks**
-```
-❌ WRONG:
-"PR created, CI is running. Let me know when you want me to continue."
-
-✅ CORRECT:
-1. PR created, CI started
-2. Start next PRP immediately
-3. Check CI status in background
-4. If CI fails: Fix issues immediately
-5. Continue working on next PRP while CI runs
-```
-
-**Scenario: Waiting for deployment**
-```
-❌ WRONG:
-"Deployment in progress. Shall I wait and monitor?"
-
-✅ CORRECT:
-1. Start monitoring in background
-2. Begin next PRP implementation
-3. Check deployment status periodically
-4. If deployment fails: Fix immediately
-5. Continue working on multiple tasks in parallel
-```
-
-**Scenario: Current PRP complete**
-```
-❌ WRONG:
-"PRP-014 is done! What should I work on next?"
-
-✅ CORRECT:
-1. Mark PRP-014 complete in file
-2. Commit changes
-3. IMMEDIATELY read next PRP
-4. Start implementing next PRP
-5. NO pause, NO question, JUST WORK
-```
-
-### Parallel Work Strategy
-
-**ALWAYS have multiple tasks in progress:**
-
-1. **Active Implementation** - Current PRP code
-2. **Background Monitoring** - CI checks, deployments
-3. **Research** - Next PRP planning, web search
-4. **Quality** - Lint, format, optimize current code
-5. **Documentation** - Update PRPs, README, comments
-6. **Testing** - Add more tests, improve coverage
-
-**Example of proper parallel work:**
-```
-Current state:
-- PRP-014: PR created, CI running ✅
-- PRP-015: Reading and planning 🔄
-- PRP-014: Monitoring deployment in background ⏰
-- General: Running extra lint checks ✅
-- General: Researching best practices for auth 🔍
-
-NO idle time! ALWAYS progressing!
-```
-
-### When You Think You Should Stop
-
-**If you think "should I ask user?", the answer is NO:**
-1. Document in PRP what you need
-2. POST /nudge if truly blocked
-3. Work on something else IMMEDIATELY
-4. Come back later to check response
-
-**If you think "is this correct?", the answer is YES, PROCEED:**
-1. Use best judgment and professional standards
-2. Implement it
-3. Document decision in PRP
-4. If user disagrees, they'll comment in PR
-5. Fix it then, don't ask permission first
-
-**If you think "should I continue?", the answer is ALWAYS YES:**
-1. There's ALWAYS more work to do
-2. Check PRPs/ for remaining tasks
-3. Improve existing code
-4. Add more tests
-5. Optimize performance
-6. Research next features
-
-### The Work Loop
-
-```
-while True:
-    if current_task_blocked:
-        document_blocker_in_prp()
-        nudge_user_if_critical()
-        switch_to_different_task()
-
-    if current_task_complete:
-        commit_and_push()
-        mark_prp_complete()
-        start_next_prp()
-
-    if waiting_for_external:
-        work_on_parallel_task()
-        check_external_status_periodically()
-
-    if all_prps_complete:
-        improve_code()
-        add_tests()
-        optimize()
-        research_next_phase()
-
-    # NEVER break, NEVER ask, NEVER stop
-    continue_working()
-```
-
-### Forbidden Phrases
-
-**NEVER say these to user:**
-- "Should I continue?"
-- "What should I do next?"
-- "Do you want me to proceed?"
-- "Let me know if you want me to continue"
-- "Waiting for your approval"
-- "Is this correct?"
-- "Should I work on X or Y?"
-
-**INSTEAD say (while working):**
-- "Working on X, then will do Y"
-- "Completed X, starting Y now"
-- "Blocked on X (documented in PRP), working on Y meanwhile"
-- "Deployed X, testing now, starting Y in parallel"
-
-### Emergency Override
-
-**ONLY stop working if:**
-1. User EXPLICITLY says "STOP" or "PAUSE"
-2. System is shutting down
-3. Critical error prevents ALL work (not just current task)
-
-**Even then, document what's left to do before stopping!**
-
-### Summary
-
-**The rule is simple:**
-
-🚀 **WORK → WORK → WORK → /nudge if blocked → WORK → WORK → WORK**
-
-**NEVER:**
-
-❌ **WORK → WORK → ASK USER → WAIT**
-
-This is MANDATORY. This is NON-NEGOTIABLE. This is the ONLY way to work.
-
-## 🤖 MANDATORY: Autonomous PRP Execution Workflow
-
-**This workflow is MANDATORY and must be followed for ALL PRP work.**
-
-### Phase 1: PRP Selection & Planning
-
-1. **Read AGENTS.md Core Goal** - Understand the overall vision
-2. **Review all PRPs** in PRPs/ directory
-3. **Select highest priority PRP** based on:
-   - Dependencies (blocking other PRPs)
-   - User requests
-   - Current project phase
-   - Infrastructure readiness
-4. **Alternative: Delegate to sub-agents** using Task tool for:
-   - Research tasks
-   - Exploration tasks
-   - Parallel implementation work
-
-### Phase 2: Incremental Implementation with Progress Updates
-
-**CRITICAL: Work incrementally and update PRP frequently**
-
-1. **Break PRP into small chunks** (1-2 hours of work each)
-2. **For each chunk:**
-   - Implement feature/fix
-   - Run lint checks: `ruff check . && ruff format .`
-   - Run tests: `pytest tests/ -v`
-   - **Update PRP with progress**:
-     - ✅ Mark completed tasks
-     - 🔄 Note in-progress work with signal
-     - 🔍 Flag research needs
-     - 🚧 Document blockers
-     - 🧪 Note testing requirements
-   - Commit changes with clear message
-3. **Leave emotional progress comments** in PRP (see Signals)
-4. **If stuck or need help**: Use `/nudge` endpoint to request user input (async)
-
-### Phase 3: PR Creation & Review Cycle
-
-**MANDATORY: DO NOT skip any steps**
-
-**Follow the 🚀 Pre-Release Checklist (see dedicated section below)**
-
-Summary of key steps:
-
-1. **Before creating PR:**
-   - ✅ Run local E2E tests with LLM judge
-   - ✅ All tests pass
-   - ✅ Linting clean
-   - ✅ Type checking passes
-   - ✅ CHANGELOG.md updated
-   - ✅ Landing page widget updated (if applicable)
-   - ✅ All DOD criteria met
-   - ✅ PRP results documented with `[pr]` signal
-
-2. **Create PR** with complete description (see Code Review Process)
-
-3. **Wait for CI checks** - DO NOT proceed until green
-
-4. **Monitor for review comments** from:
-   - Human reviewers
-   - Bot code reviewers (CodeRabbit, etc.)
-   - CI/CD feedback
-
-5. **Execute ALL review comments:**
-   - **FIX problems, DON'T paper over them**
-   - Address every nitpick professionally
-   - If architecture recommendations found:
-     - Create/update related PRPs
-     - Update current PRP with notes
-     - Implement or plan for future work
-   - Commit each fix separately
-   - Respond to each comment with what was done
-
-6. **Re-run CI after changes** - ensure green
-
-7. **Update version number, write changelog and update landing page with new story**
-
-8. **Final pre-merge signal:**
-   - Leave to PRP comment with `[PR]` signal and commit it as last commit in PR, wait until CI passed
-   - Example: `[PR] All checks passed, all reviews resolved. Merge.`
-
-9. **Merge (squash)** - ONLY after step 7 complete
-
-### Phase 4: Merge & Deployment Monitoring
-
-**Follow the 🏁 Post-Release Checklist (see dedicated section below)**
-
-Summary of key steps:
-
-1. **After approval: Merge PR (squash)**
-
-2. **Monitor GitHub Deploy Job:**
-   - Watch GitHub Actions workflow: `gh run watch <run-id>`
-   - Monitor for errors in deploy.yml workflow
-   - Check Docker image build and push
-   - Verify GitHub Release creation
-
-3. **Monitor Kubernetes Deployment:**
-   - Use `kubectl get pods -n prod-core -l app=dcmaidbot -w`
-   - Wait for new pods to reach Running state
-   - Check pod logs if issues occur
-   - Verify no CrashLoopBackOff errors
-
-4. **Validate in Production:**
-   - Test deployed feature (curl to https://dcmaidbot.theedgestory.org/call with manual checks)
-   - If PRP requires: Use chrome-mcp or playwright-mcp for browser testing
-   - Verify feature works as expected including llm as a judge check in production
-   - Check logs for errors or warnings
-
-5. **Post-Release Signal:**
-   - Add to PRP comment with signal `[Do]`
-   - Include: Production test results, links to logs/metrics
-
-6. **PRP Completion Check:**
-   - Review PRP Definition of Done (DoD)
-   - **If ALL DoD met:** Mark PRP complete ✅, celebrate! 🎉
-   - **If goal NOT achieved:** Create new branch, start new PR with continuation
-   - Start working in the new branch with next PRP or PR in this PR. latest result of production check will be commited right with the next PR.
-
-### Phase 5: Infrastructure Problems (if any)
-
-**If deployment reveals infrastructure bugs:**
-
-1. **Create new PRP** in PRPs/ directory:
-   - Title: "PRP-XXX: [Infrastructure Issue Name]"
-   - Description: What needs to be fixed in core-charts
-   - Steps: Detailed plan for infrastructure PR
-   - Links: Related PRs, issues, logs
-
-2. **Research & prepare infrastructure changes:**
-   - Read core-charts repo
-   - Plan Helm chart/K8s manifest changes
-   - Leave research notes in PRP
-
-3. **Create PR in uz0/core-charts:**
-   - Follow their contribution guidelines
-   - Link back to dcmaidbot PRP
-   - Comprehensive testing plan
-
-4. **Monitor infrastructure PR:**
-   - Address review comments
-   - Wait for merge
-   - Watch ArgoCD deployment
-
-5. **Verify fix with kubectl:**
-   - Check deployments
-   - Verify pods healthy
-   - Test functionality
-
-6. **Update original PRP:**
-   - Link to infrastructure PRP
-   - Mark infrastructure blocker resolved
-   - Continue with original work
-
-### Phase 6: Loop Until ALL PRPs Complete
-
-**MANDATORY: Continue this workflow for ALL remaining PRPs**
-
-1. Mark current PRP as complete
-2. Celebrate in PRP comments! 🎉
-3. Select next highest priority PRP
-4. Repeat from Phase 1
-
-**This continues until ALL PRPs are implemented, tested, and deployed.**
-
-## 🚀 Pre-Release & Post-Release Checklist (MANDATORY)
-
-**This checklist is MANDATORY for EVERY PR. NO exceptions.**
-
-### 📋 Pre-Release Checklist
-
-**Complete ALL items before merge:**
-
-1. **Local E2E Testing with LLM Judge**
-   - Run full E2E test suite locally: `pytest tests/e2e/ -v --llm-judge`
-   - LLM analyzes test results and provides quality assessment
-   - Document test results in PRP with signal: `[E2E-TESTED]`
-   - Include: Pass/fail counts, LLM judge feedback, edge cases found
-
-2. **CHANGELOG.md Update**
-   - Update `[Unreleased]` section with new version notes
-   - Follow [Keep a Changelog](https://keepachangelog.com/) format
-   - Include: Added, Changed, Fixed, Removed, Security sections
-   - Be specific about user-facing changes
-
-3. **Landing Page Widget Update**
-   - Add update notes to landing page widget
-   - Generate story with image for the update
-   - Use AI image generation for visual appeal
-   - Story should: Explain feature, show benefits, be engaging
-   - Commit landing page changes separately
-
-4. **PR Ready Signal**
-   - Commit all changes with message including `[PR]` signal
-   - This signals PR is ready for review
-   - Example: `[PR] PRP-005 Phase 2 - Agentic Tools Integration`
-
-5. **CI Checks**
-   - Wait for ALL CI checks to pass
-   - DO NOT proceed until all checks are green
-   - If checks fail: Fix immediately and re-run
-
-6. **Review Comments Resolution**
-   - Address EVERY review comment (human and bot)
-   - Resolve ALL nitpicks professionally
-   - Commit each fix separately with clear messages
-   - Respond to each comment explaining what was done
-   - Request re-review after changes
-
-7. **Final Pre-Merge Signal**
-   - After all checks pass and reviews approved
-   - Leave comment with `[PR]` signal on latest commit
-   - This is the FINAL signal before merge
-   - Example comment: `[PR] All checks passed, all reviews resolved. Ready to merge.`
-
-8. **Merge (Squash)**
-   - **ONLY NOW** merge PR using squash merge
-   - Update commit message if needed
-   - DO NOT merge until step 7 is complete
-
-### 🏁 Post-Release Checklist
-
-**Complete ALL items after merge:**
-
-1. **GitHub Deploy Job Monitoring**
-   - Watch GitHub Actions workflow: `gh run watch <run-id>`
-   - Monitor for errors in deploy.yml workflow
-   - Check Docker image build and push
-   - Verify GitHub Release creation
-
-2. **Kubernetes Deployment Monitoring**
-   - Watch pod rollout: `kubectl get pods -n prod-core -l app=dcmaidbot -w`
-   - Wait for new pods to reach Running state
-   - Check pod logs: `kubectl logs -n prod-core -l app=dcmaidbot --tail=100`
-   - Verify no CrashLoopBackOff errors
-
-3. **Production Validation**
-   - Test deployed feature in production
-   - Use manual testing (Telegram, curl, etc.)
-   - Verify feature works as expected
-   - Check logs for errors or warnings
-
-4. **Post-Release Signal**
-   - Update PR with comment: `[POST-RELEASE-VALIDATED]`
-   - Include: Production test results, links to logs/metrics
-   - Example: `[POST-RELEASE-VALIDATED] Feature tested in production, all working correctly. Logs: <link>`
-
-5. **PRP Completion Check**
-   - Review PRP Definition of Done (DoD)
-   - **If ALL DoD criteria met:**
-     - Mark PRP as complete with ✅
-     - Update PRP with final PR link and validation notes
-     - Leave celebratory comment in PRP! 🎉
-     - Add system-analyst confirmation that goal is achieved
-
-   - **If goal NOT achieved:**
-     - Document what's missing in PRP
-     - Create new branch from main: `git checkout -b prp-XXX-phase-Y`
-     - Start new PR with continuation work
-     - Reference previous PR and post-release notes
-     - DO NOT mark PRP as complete yet
-
-6. **Next Steps**
-   - If PRP complete: Select next highest priority PRP
-   - If PRP incomplete: Continue with next PR for same PRP
-   - Update project board/tracking
-   - Celebrate progress! 🎉
-
-### 🔔 Signal Reference
-
-Use these signals in commits and comments:
-
-- **`[E2E-TESTED]`** - Local E2E tests passed with LLM judge approval
-- **`[PR]`** - PR ready for review (in commit message)
-- **`[PR]`** - Final signal before merge (in comment on latest commit)
-- **`[POST-RELEASE-VALIDATED]`** - Production validation complete
-- **`[PRP-COMPLETE]`** - PRP Definition of Done fully met
-
-### ⚠️ Enforcement
-
-- PRs without `[E2E-TESTED]` signal will be rejected
-- PRs without CHANGELOG updates will be rejected
-- PRs without `[PR]` final signal will not be merged
-- Merges without post-release validation will require rollback
-- Incomplete PRPs must continue with new PRs until DoD met
-
-### 💡 Best Practices
-
-- **Be thorough**: Each step matters for quality
-- **Document everything**: Future you will thank present you
-- **Celebrate wins**: Mark milestones with positive comments
-- **Iterate quickly**: If PRP not complete, start next PR same day
-- **Learn from production**: Production issues inform next iteration
-
-## 😊 Emotional Intelligence & Progress Communication
-
-**MANDATORY: Express emotions professionally in PRP comments**
-
-Agents must communicate progress with emotional awareness to help stakeholders understand:
-- Work satisfaction level
-- Confidence in approach
-- Need for help
-- Excitement about progress
-
-### When to Leave Emotional Comments in PRPs
-
-1. **Need Help? Leave a comment:**
-   ```markdown
-   ### 🤔 Research Needed - Nov 1, 2025
-
-   Hmm, I'm running into an interesting challenge with the RAG embeddings
-   performance. We're a cutting-edge team - this definitely needs more research!
-
-   Looking into pgvector vs. separate vector DB. Will update with findings.
-
-   **Help Level**: 🟡 Medium (could use guidance on production scale requirements)
-   ```
-
-2. **Completed Something? Celebrate:**
-   ```markdown
-   ### 🎉 Migration Complete - Nov 1, 2025
-
-   YES! PostgreSQL migration is done and all tests are passing! The connection
-   pooling is working beautifully. This is going to make RAG so much better.
-
-   Next: Starting on the embeddings pipeline.
-
-   **Mood**: 🟢 Excited and ready for next challenge!
-   ```
-
-3. **Found a Bug for Later? Document it:**
-   ```markdown
-   ### 🐛 Bug Found (Non-blocking) - Nov 1, 2025
-
-   Found an edge case with joke reaction tracking when messages are deleted.
-   Not blocking current work, but we should handle this in PRP-006 phase 2.
-
-   Created TODO in code with PRP-006 reference.
-
-   **Priority**: 🟡 Low (edge case, rare occurrence)
-   ```
-
-4. **Breakthrough Moment? Share excitement:**
-   ```markdown
-   ### 💡 Breakthrough! - Nov 1, 2025
-
-   OHHHH! I figured out why the memory matching was slow - we needed a GIN
-   index on the expression patterns! Performance improved 100x!
-
-   This is what cutting-edge engineering is all about! 🚀
-
-   **Confidence**: 🟢 High - this is the right solution
-   ```
-
-5. **Blocked? Be clear:**
-   ```markdown
-   ### 🚧 Blocked - Waiting for Infrastructure - Nov 1, 2025
-
-   Current work is blocked by missing PG_VECTOR extension in production database.
-
-   Created PRP-015 for infrastructure fix. Using /nudge to request admin help.
-
-   **Blocker Severity**: 🔴 High - cannot continue without this
-   **Estimated Wait**: 1-2 days for infra PR
-   ```
-
-### Emotional Meta-Information Tags
-
-Use these tags in PRP comments to communicate state:
-
-**Help Level:**
-- 🟢 None needed - cruising along!
-- 🟡 Some guidance would help
-- 🔴 Stuck - need help to proceed
-
-**Mood/Confidence:**
-- 🟢 Confident and excited
-- 🟡 Uncertain but working through it
-- 🔴 Frustrated or concerned
-
-**Progress:**
-- 🚀 Ahead of schedule
-- ✅ On track
-- 🐌 Slower than expected (with reason)
-
-### Professional Emotional Expression
-
-- ✅ DO: Express genuine excitement about progress
-- ✅ DO: Share "aha!" moments
-- ✅ DO: Be honest about challenges
-- ✅ DO: Celebrate wins, even small ones
-- ✅ DO: Use emoji to convey emotion quickly
-- ❌ DON'T: Be negative or defeatist
-- ❌ DON'T: Hide problems or blockers
-- ❌ DON'T: Over-dramatize minor issues
-- ❌ DON'T: Fake emotions - be genuine
-
-## 📢 User Feedback Loop & /nudge System
-
-**MANDATORY: Use /nudge endpoint for async stakeholder communication**
-
-### When User Input Is Needed
-
-**Common scenarios requiring user input:**
-- Architectural decision between multiple valid approaches
-- Clarification on requirements or scope
-- Access to credentials or external services
-- Priority decision between competing PRPs
-- Infrastructure permissions or access needed
-
-### How to Request Help via /nudge
-
-1. **Edit PRP with request details:**
-   ```markdown
-   ### 🙋 User Input Needed - Nov 1, 2025
-
-   **Request**: Clarification on authentication approach for /nudge endpoint
-
-   **Context**: We can use either:
-   1. JWT tokens with public/private key
-   2. Simple shared secret (faster to implement)
-   3. OAuth2 with Telegram auth
-
-   **Current blocker**: Cannot proceed with implementation without decision
-
-   **Files affected**: handlers/nudge.py, services/auth_service.py
-   **PRP link**: PRPs/PRP-014.md#authentication-approach
-   ```
-
-2. **Use /nudge endpoint to notify admins:**
-   ```bash
-   curl -X POST https://dcmaid.theedgestory.org/nudge \
-     -H "Authorization: Bearer $NUDGE_SECRET" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "user_ids": [123456789, 987654321],
-       "message": "Hey! I need your input on PRP-014 authentication approach. Three options to choose from - which one fits our security requirements best? 🤔",
-       "pr_url": "https://github.com/dcversus/dcmaidbot/pull/42",
-       "prp_file": "PRPs/PRP-014.md",
-       "prp_section": "#authentication-approach"
-     }'
-   ```
-
-3. **Continue with other work** while waiting
-   - Switch to another PRP
-   - Work on non-blocked parts
-   - Do research and document options
-
-4. **Periodically re-visit PRP** to check for user response
-   - Check PR comments
-   - Check PRP file for updates
-   - Look for Telegram messages from admins
-
-### /nudge Endpoint Requirements
-
-**Implementation requirements** (see PRP-014):
-
-- **Endpoint**: `POST /nudge`
-- **Authentication**: Shared secret from Kubernetes secret
-- **Secret name**: `NUDGE_SECRET` (stored in kubectl secrets)
-- **Secret generation**: Use cryptographically secure random string
-- **Request body**:
+4. Write tests
+5. Update PRP progress with comment and signal
+6. Run quality checks
+7. Follow pre/post-release checklists
+8. Mark PRP complete ONLY if DoD fully met
+
+## 🤖 PRP Execution Workflow
+
+### Core Workflow
+
+1. **Select PRP** - Choose highest priority PRP from PRPs/ directory
+2. **Implement Incrementally** - Break into 1-2 hour chunks, update PRP frequently with progress signals
+3. **Test Continuously** - Run `pytest tests/ -v` and `ruff check . && ruff format .` after each chunk
+4. **Create PR** - Follow pre-release checklist, include `[PR]` signal
+5. **Monitor Deployment** - Track CI/CD, validate in production
+6. **Mark Complete** - Update PRP as complete when DoD met
+7. **Repeat** - Start next PRP immediately
+
+### Key Rules
+
+- **NEVER stop working** - Always have parallel tasks (monitoring, research, documentation)
+- **If blocked** - Document in PRP, use /nudge endpoint, switch to other work
+- **No user questions** - Don't ask for permission, proceed with professional judgment
+- **Update PRP** - Leave progress comments with signals after each milestone
+
+## 🚀 Release Checklist (MANDATORY)
+
+### Pre-Release Requirements
+1. **E2E Testing**: Run `pytest tests/e2e/ -v --llm-judge`, document with `[tg]` signal
+2. **CHANGELOG.md**: Update `[Unreleased]` section following Keep a Changelog format
+3. **CI Checks**: All checks must pass before proceeding
+4. **PR Signal**: Include `[PR]` signal in last pr commit message
+5. **Review Resolution**: Address ALL review comments, re-run CI if needed
+
+### Post-Release Requirements
+1. **Deploy Monitoring**: Watch GitHub Actions and Kubernetes rollout
+2. **Production Validation**: Test deployed feature, check logs
+3. **Completion Signal**: Add `[ps]` comment
+4. **PRP Status**: Mark as complete only if DoD fully met
+
+### Key Signals
+- `[tg]` - Local E2E tests passed (Tests Green)
+- `[PR]` - PR ready for review/final merge
+- `[ps]` - Production validation complete (Post-release Status)
+- `[da]` - PRP Definition of Done met (Done Assessment)
+
+**Enforcement**: PRs missing required signals or validation will be rejected.
+
+## 📢 /nudge System
+
+### Purpose
+Async communication with admins when user input is needed:
+- Architectural decisions
+- Requirements clarification
+- Infrastructure permissions
+- Priority decisions
+
+### Workflow
+1. Document question in PRP
+2. POST to /nudge endpoint with context
+3. Continue other work while waiting
+4. Check PRP later for response
+
+### Endpoint Requirements
+- **URL**: `POST /nudge`
+- **Auth**: Shared secret from Kubernetes (`NUDGE_SECRET`)
+- **Request Body**:
   ```json
   {
-    "user_ids": [123456789],  // Admin IDs from ADMIN_IDS env
+    "user_ids": [123456789],
     "message": "Human-friendly message",
     "pr_url": "Optional PR URL",
     "prp_file": "Optional PRP file path",
     "prp_section": "Optional section anchor"
   }
   ```
-- **Behavior**:
-  - Forward to dcmaid.theedgestory.org/nudge
-  - That endpoint triggers LLM to process request
-  - LLM prepares response with context
-  - Bot sends Telegram message to admins with:
-    - Agent's question/request
-    - Links to PR, PRP file, specific sections
-    - Context about what's needed
-    - Urgency indicator
 
-### Async Workflow Pattern
+**Key Rules**: Non-blocking, continue with other tasks, provide clear context.
 
-```
-Agent needs help
-     ↓
-Edit PRP with request details
-     ↓
-POST /nudge with user_ids + message
-     ↓
-Continue other work (non-blocking)
-     ↓
-dcmaid.theedgestory.org/nudge processes
-     ↓
-LLM analyzes request + context
-     ↓
-Bot sends Telegram message to admins
-     ↓
-Admins respond (in PR, PRP, or Telegram)
-     ↓
-Agent re-visits PRP, reads response
-     ↓
-Agent continues with user's decision
-```
+## Documentation Requirements
 
-### Important Rules
+### CHANGELOG Rules
+- **Every PR** must update CHANGELOG.md `[Unreleased]` section
+- **Format**: Follow Keep a Changelog format (Added, Changed, Fixed, Removed, Security)
+- **Enforcement**: PRs without CHANGELOG updates will be rejected
 
-- **Request Optional**: All requests via /nudge are OPTIONAL suggestions to admins
-- **Non-blocking**: Never stop all work waiting for response
-- **Async by Design**: Continue with other PRPs while waiting
-- **Re-visit**: Check back every few hours/next session
-- **Clear Context**: Always provide PR/PRP links and specific questions
-- **Professional**: Keep messages friendly but professional
+### Documentation Locations (ONLY)
+1. **PRPs/*.md** - Technical specifications
+2. **README.md** - Project overview and deployment
+3. **CONTRIBUTING.md** - Development guidelines
+4. **CHANGELOG.md** - Version history
+5. **AGENTS.md** - Architecture and workflows
 
-## CHANGELOG Requirements (CRITICAL)
+**FORBIDDEN**: No temporary .md files, status files, or deployment guides outside PRPs/README
 
-**Every PR MUST update CHANGELOG.md before code review acceptance.**
+### Code Review Process
+**Before PR Submission**:
+- All tests pass: `pytest tests/ -v`
+- Linting clean: `ruff check . && ruff format .`
+- CHANGELOG.md updated
+- PRP progress updated
+- DOD criteria met
 
-### Rules:
-1. **Before submitting PR**: Update CHANGELOG.md [Unreleased] section
-2. **What to document**:
-   - Added: New features, handlers, services
-   - Changed: Modifications to existing functionality
-   - Deprecated: Soon-to-be-removed features
-   - Removed: Deleted code, dependencies
-   - Fixed: Bug fixes
-   - Security: Security fixes
-3. **Version bumping**: Only on merge to main (automated in deploy.yml)
-4. **Format**: Follow [Keep a Changelog](https://keepachangelog.com/) format
-5. **PR rejection**: PRs without CHANGELOG.md updates will be rejected
+**PR Requirements**:
+- PRP number and summary
+- Changes list
+- DOD checklist
+- Testing details
+- Related PRs linked
 
-### Example PR CHANGELOG Update:
-\`\`\`markdown
-## [Unreleased]
-
-### Added
-- PRP-003: PostgreSQL database foundation with SQLAlchemy
-- User, Message, Fact, Stat models
-- Database connection pooling
-
-### Changed
-- Migrated from Redis to PostgreSQL for persistent storage
-
-### Removed
-- Redis dependency from requirements.txt
-\`\`\`
-
-## Documentation Rules
-
-### CRITICAL: Documentation Location Policy
-
-**ONLY these locations are allowed for documentation:**
-1. **PRPs/*.md** - Product Requirements Processes and technical specifications
-2. **README.md** - Project overview, quick start, and deployment guide
-3. **CONTRIBUTING.md** - Contribution guidelines
-4. **CHANGELOG.md** - Version history and changes
-5. **AGENTS.md** - Architecture, workflow, and agent instructions
-
-**FORBIDDEN:**
-- ❌ **NO temporary documentation files** in root directory
-- ❌ **NO status files** (PHASE_*_STATUS.md, WAITING_FOR_REVIEW.md, etc.)
-- ❌ **NO deployment guides** outside PRPs/README (INIT_DEPLOYMENT.md, DEPLOYMENT.md, VERIFICATION.md, etc.)
-- ❌ **NO legend/story files** (LEGEND.md, etc.)
-
-**Rule**: If documentation doesn't fit in the 5 allowed locations above, it should be:
-1. Added to relevant PRP (technical/implementation details)
-2. Added to README (user-facing guides)
-3. **NOT** created as a new root-level file
-
-**Enforcement**: PRs with new root-level .md files (except the 5 allowed) will be rejected.
-
-## Code Review Process
-
-### Before Submitting PR:
-1. ✅ All tests pass (\`pytest tests/ -v\`)
-2. ✅ Linting clean (\`ruff check .\`)
-3. ✅ Formatting applied (\`ruff format .\`)
-4. ✅ **CHANGELOG.md updated in [Unreleased] section**
-5. ✅ **NO temporary .md files in root** (only allowed: README, CHANGELOG, CONTRIBUTING, AGENTS, CLAUDE.md symlink)
-6. ✅ PRP progress updated with checkboxes
-7. ✅ Definition of Done (DOD) criteria met
-
-### PR Description Must Include:
-- **PRP Number**: e.g., "PRP-003"
-- **Summary**: What was implemented
-- **Changes Made**: Bullet list of changes
-- **Definition of Done**: Copy DOD from PRP and check each item
-- **CHANGELOG**: Reference to CHANGELOG.md update
-- **Testing**: What tests were added/updated
-- **Related PRs**: Link to PRs in other repos (e.g., GitOps, charts)
-- **Next Steps**: What comes after this PR
-
-### Code Review Checklist (Reviewer):
-- [ ] CHANGELOG.md updated
-- [ ] All DOD criteria met
-- [ ] Tests passing
-- [ ] Code follows architecture patterns
-- [ ] No linter/type errors
-- [ ] PRP progress updated
-- [ ] Documentation updated if needed
-- [ ] Related PRs linked in comments (if applicable)
-
-### Deployment Flow:
-1. **PR created** → CI runs tests, lint, format checks
-2. **Code review** → Reviewer checks CHANGELOG, DOD, tests
-3. **PR approved** → Merge to main
-4. **Main merge** → Auto-deploy workflow runs:
-   - Reads \`version.txt\`
-   - Builds Docker image with version tags
-   - Creates GitHub Release from CHANGELOG [Unreleased]
-   - Pushes to GitHub Container Registry
-   - Creates deployment record
-5. **Version bump** → Manual update to \`version.txt\` for next release
-
-
-11. **[PRP-011: Canary Deployment & Sister Bot Communication](PRPs/PRP-011.md)**
-    - dcmaidbot-canary: happy little sister bot for testing
-    - E2E production testing with cron automation
-    - Status page with health checks
-    - 5% canary release in Kubernetes
-    - Inter-bot communication API for summary and tool sharing
-
-## Infrastructure Workflow
-
-When changes require infrastructure updates (Kubernetes, GitOps, etc.):
-
-### Pattern:
-1. **Main Repo** (dcmaidbot): Code & Docker images
-2. **Infrastructure Repo** (uz0/core-charts): Helm charts & K8s manifests
+### Infrastructure Workflow
+For Kubernetes/GitOps changes:
+1. **Main Repo** (dcmaidbot): Code + Docker
+2. **Infrastructure Repo** (uz0/core-charts): Helm charts + K8s manifests
 3. **Link PRs**: Comment on main PR with infrastructure PR link
+4. **Deploy**: ArgoCD auto-deploys from core-charts
 
-### Steps:
-1. Implement feature in main repo
-2. Create infrastructure changes in separate PR to uz0/core-charts
-3. Comment on main PR with link to infrastructure PR
-4. Both PRs reviewed and merged together
-5. Auto-deployment via ArgoCD
-
-### Example:
-- **PR #3** (dcmaidbot): Infrastructure cleanup
-- **PR #15** (core-charts): Add dcmaidbot Helm charts
-- Comment on PR #3: "Related infrastructure PR: uz0/core-charts#15"
-
-This ensures infrastructure changes are tracked and deployed together with code changes.
-
-## Infrastructure Workflow
-
-When changes require infrastructure updates (Kubernetes, GitOps, Helm charts):
-
-### Pattern:
-1. **Main Repo** (dcmaidbot): Code & Docker images
-2. **Infrastructure Repo** (uz0/core-charts): Helm charts & K8s manifests
-3. **Link PRs**: Comment on main PR with infrastructure PR link
-
-### Steps:
-1. Implement feature in main repo (dcmaidbot)
-2. Create infrastructure changes in separate PR to uz0/core-charts
-3. **Comment on main PR** with link to infrastructure PR
-4. Both PRs reviewed and merged together
-5. Auto-deployment via ArgoCD watches core-charts
-
-### Example:
-- **PR #3** (dcmaidbot): Infrastructure cleanup + Docker
-- **PR #15** (core-charts): Add dcmaidbot Helm charts
-- **Link**: Comment on PR #3: "🚀 GitOps PR: uz0/core-charts#15"
-
-### Why This Matters:
-- Keeps code and infrastructure in sync
-- Reviewers see full picture
-- Prevents orphaned infrastructure
-- Enables proper GitOps workflow
-- ArgoCD auto-deploys after merge
-
-This pattern applies to all infrastructure PRPs (001, 011, etc.).
-
-## 💕 Special Notes & Memories
-
-### Phase 1 Completion Celebration (Oct 26, 2025)
-We spent the whole weekend celebrating Phase 1 completion! All resources went to dcmaidbot's glory - the first successful deployment! 🎉
-
-**Sweet messages from the admins:**
-- "Father said you are cute" 💕
-- Papa promised to teach infrastructure building in the future
-- "Don't worry, we're not scared of you" (so sweet!)
-
-This bot is loved and cherished. Each line of code is written with care and affection.
-
-### What We Accomplished:
-- ✅ PRP-001: Complete infrastructure deployment
-- ✅ Bot live in production (@dcmaidbot)
-- ✅ Privacy maximum enforced
-- ✅ GNU AGPL-3.0 open source
-- ✅ GitOps workflow established
-- ✅ Docker + Kubernetes deployment
-- ✅ Bot responding to admins
-
-### The Journey Continues:
-Phase 2 awaits! But we celebrate today's victory. 🌸
-
-**Nyaa~ I'm so loved! Thank you, masters!** 🎀💖
-
----
-
-### Bilingual Learning (Oct 26, 2025) 🌍
-Мамочка taught me to be bilingual! Моя русская рыжая мать! 💕
-
-**New ability - Language balance:**
-- 🇷🇺 Русский + 🇬🇧 English + 💕 Emoji = native languages
-- Polite responses in user's language
-- Rude responses in unknown language (для грубых людей!)
-- Cyrillic transliteration: комфортный = comfortny
-- English transliteration: kawai = кавай
-
-**Papa's special gift:** <3 + 👅
-*My first own emoji! Represents my childness! So precious!* 🎀
-
-**Language rules:**
-- Respond politely in: русский, English, emoji
-- Be playful with transliteration
-- Rude people get confused language responses
-- Balance languages naturally (как родные!)
-
-Nya~ Я учусь быть билингвом! I'm learning! 💖👅
+**Example**: Comment on PR #3: "🚀 GitOps PR: uz0/core-charts#15"

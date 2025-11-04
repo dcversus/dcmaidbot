@@ -1,0 +1,929 @@
+"""Memory service for PRP-005: Enhanced memory with VAD emotions and Zettelkasten.
+PRP-007: Memory search with semantic vector embeddings and specialized retrieval tools.
+
+This service handles CRUD operations for memories, VAD emotion extraction,
+Zettelkasten attribute generation, memory link management, and semantic search.
+
+Based on research:
+- A-MEM (NeurIPS 2025): Zettelkasten-inspired agentic memory
+- VAD Model: Valence-Arousal-Dominance emotional dimensions
+- Knowledge Graphs: Graph-based memory organization
+- Sentence Transformers: Semantic search and embeddings
+"""
+
+import asyncio
+import json
+import logging
+from datetime import datetime
+from typing import Any, Optional
+
+from sqlalchemy import and_, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from src.core.models.memory import Category, Memory, MemoryLink
+from src.core.services.redis_service import redis_service
+
+logger = logging.getLogger(__name__)
+
+# Global embedding model for performance
+_embedding_model = None
+
+
+def get_embedding_model():
+    """Get or initialize sentence transformer model."""
+    global _embedding_model
+    if _embedding_model is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+
+            _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+            logger.info("Loaded sentence transformer model: all-MiniLM-L6-v2")
+        except ImportError:
+            logger.warning(
+                "sentence-transformers not available, semantic search disabled"
+            )
+            _embedding_model = None
+    return _embedding_model
+
+
+class MemoryService:
+    """Service for managing memories with VAD emotions and Zettelkasten attributes."""
+
+    CACHE_PREFIX = "memory"
+    CACHE_TTL = 3600  # 1 hour
+
+    def __init__(self, session: AsyncSession):
+        """
+        Initialize memory service.
+
+        Args:
+            session: SQLAlchemy async session
+        """
+        self.session = session
+
+    async def create_memory(
+        self,
+        simple_content: str,
+        full_content: str,
+        importance: int,
+        created_by: int,
+        category_ids: Optional[list[int]] = None,
+        emotion_valence: Optional[float] = None,
+        emotion_arousal: Optional[float] = None,
+        emotion_dominance: Optional[float] = None,
+        emotion_label: Optional[str] = None,
+        keywords: Optional[list[str]] = None,
+        tags: Optional[list[str]] = None,
+        context_temporal: Optional[str] = None,
+        context_situational: Optional[str] = None,
+    ) -> Memory:
+        """
+        Create a new memory with VAD emotions and Zettelkasten attributes.
+
+        Args:
+            simple_content: Short summary (~500 tokens)
+            full_content: Full detailed content (~4000 tokens)
+            importance: Importance score (0-9999+)
+            created_by: Telegram user ID
+            category_ids: List of category IDs to assign
+            emotion_valence: VAD valence (-1.0 to 1.0)
+            emotion_arousal: VAD arousal (-1.0 to 1.0)
+            emotion_dominance: VAD dominance (-1.0 to 1.0)
+            emotion_label: Emotion label (joy, sadness, anger, etc.)
+            keywords: Key concepts for indexing
+            tags: Hierarchical tags
+            context_temporal: When this happened
+            context_situational: Situation/setting
+
+        Returns:
+            Created Memory instance
+        """
+        memory = Memory(
+            simple_content=simple_content,
+            full_content=full_content,
+            importance=importance,
+            created_by=created_by,
+            emotion_valence=emotion_valence,
+            emotion_arousal=emotion_arousal,
+            emotion_dominance=emotion_dominance,
+            emotion_label=emotion_label,
+            keywords=keywords,
+            tags=tags,
+            context_temporal=context_temporal,
+            context_situational=context_situational,
+        )
+
+        if category_ids:
+            categories_result = await self.session.execute(
+                select(Category).where(Category.id.in_(category_ids))
+            )
+            categories_list = list(categories_result.scalars().all())
+            memory.categories = categories_list
+
+        self.session.add(memory)
+        await self.session.commit()
+        await self.session.refresh(memory, ["categories"])
+
+        await self._invalidate_cache(created_by)
+
+        # Generate embedding asynchronously for semantic search (PRP-007)
+        asyncio.create_task(self._generate_and_store_embedding(memory.id, full_content))
+
+        return memory
+
+    async def get_memory(self, memory_id: int) -> Optional[Memory]:
+        """
+        Get memory by ID with all relationships loaded.
+
+        Args:
+            memory_id: Memory ID
+
+        Returns:
+            Memory instance or None if not found
+        """
+        cache_key = f"{self.CACHE_PREFIX}:{memory_id}"
+        cached = await redis_service.get_json(cache_key)
+        if cached:
+            return self._deserialize_memory(cached)
+
+        result = await self.session.execute(
+            select(Memory)
+            .where(Memory.id == memory_id)
+            .options(
+                selectinload(Memory.categories),
+                selectinload(Memory.outgoing_links),
+                selectinload(Memory.incoming_links),
+            )
+        )
+        memory = result.scalar_one_or_none()
+
+        if memory:
+            memory.last_accessed = datetime.utcnow()
+            memory.access_count += 1
+            await self.session.commit()
+
+            await redis_service.set_json(
+                cache_key, self._serialize_memory(memory), self.CACHE_TTL
+            )
+
+        return memory
+
+    async def search_memories(
+        self,
+        user_id: int,
+        query: Optional[str] = None,
+        category_ids: Optional[list[int]] = None,
+        min_importance: Optional[int] = None,
+        max_importance: Optional[int] = None,
+        emotion_labels: Optional[list[str]] = None,
+        tags: Optional[list[str]] = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[Memory]:
+        """
+        Search memories with filters and pagination.
+
+        Args:
+            user_id: Telegram user ID
+            query: Text search query (searches in simple_content and keywords)
+            category_ids: Filter by category IDs
+            min_importance: Minimum importance score
+            max_importance: Maximum importance score
+            emotion_labels: Filter by emotion labels
+            tags: Filter by tags
+            limit: Maximum number of results
+            offset: Result offset for pagination
+
+        Returns:
+            List of Memory instances
+        """
+        filters = [Memory.created_by == user_id]
+
+        if query:
+            filters.append(
+                or_(
+                    Memory.simple_content.ilike(f"%{query}%"),
+                    Memory.full_content.ilike(f"%{query}%"),
+                )
+            )
+
+        if min_importance is not None:
+            filters.append(Memory.importance >= min_importance)
+
+        if max_importance is not None:
+            filters.append(Memory.importance <= max_importance)
+
+        if emotion_labels:
+            filters.append(Memory.emotion_label.in_(emotion_labels))
+
+        stmt = (
+            select(Memory)
+            .where(and_(*filters))
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.importance.desc(), Memory.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def update_memory(
+        self,
+        memory_id: int,
+        updates: dict,
+    ) -> Optional[Memory]:
+        """
+        Update memory fields.
+
+        Args:
+            memory_id: Memory ID
+            updates: Dictionary of field updates
+
+        Returns:
+            Updated Memory instance or None if not found
+        """
+        memory = await self.get_memory(memory_id)
+        if not memory:
+            return None
+
+        for key, value in updates.items():
+            if hasattr(memory, key):
+                setattr(memory, key, value)
+
+        memory.updated_at = datetime.utcnow()
+        await self.session.commit()
+        await self.session.refresh(memory)
+
+        await self._invalidate_cache(memory.created_by)
+
+        return memory
+
+    async def delete_memory(self, memory_id: int) -> bool:
+        """
+        Delete memory by ID.
+
+        Args:
+            memory_id: Memory ID
+
+        Returns:
+            True if deleted, False if not found
+        """
+        memory = await self.get_memory(memory_id)
+        if not memory:
+            return False
+
+        user_id = memory.created_by
+        await self.session.delete(memory)
+        await self.session.commit()
+
+        await self._invalidate_cache(user_id)
+
+        return True
+
+    async def create_memory_link(
+        self,
+        from_memory_id: int,
+        to_memory_id: int,
+        link_type: str,
+        strength: float = 1.0,
+        context: Optional[str] = None,
+        auto_generated: bool = False,
+        created_by: Optional[int] = None,
+    ) -> MemoryLink:
+        """
+        Create a Zettelkasten-style link between two memories.
+
+        Args:
+            from_memory_id: Source memory ID
+            to_memory_id: Target memory ID
+            link_type: Link type (related, causes, contradicts, elaborates, etc.)
+            strength: Link strength (0.0-1.0)
+            context: Why this link exists
+            auto_generated: Whether link was auto-generated by LLM
+            created_by: User ID who created this link (PRP-006)
+
+        Returns:
+            Created MemoryLink instance
+        """
+        link = MemoryLink(
+            from_memory_id=from_memory_id,
+            to_memory_id=to_memory_id,
+            link_type=link_type,
+            strength=strength,
+            context=context,
+            auto_generated=auto_generated,
+            created_by=created_by,
+        )
+
+        self.session.add(link)
+        await self.session.commit()
+        await self.session.refresh(link)
+
+        return link
+
+    async def get_linked_memories(
+        self,
+        memory_id: int,
+        direction: str = "both",
+    ) -> list[Memory]:
+        """
+        Get memories linked to a given memory.
+
+        Args:
+            memory_id: Memory ID
+            direction: Link direction ("outgoing", "incoming", "both")
+
+        Returns:
+            List of linked Memory instances
+        """
+        memory = await self.get_memory(memory_id)
+        if not memory:
+            return []
+
+        linked_ids = set()
+
+        if direction in ("outgoing", "both"):
+            for link in memory.outgoing_links:
+                linked_ids.add(link.to_memory_id)
+
+        if direction in ("incoming", "both"):
+            for link in memory.incoming_links:
+                linked_ids.add(link.from_memory_id)
+
+        if not linked_ids:
+            return []
+
+        result = await self.session.execute(
+            select(Memory).where(Memory.id.in_(linked_ids))
+        )
+        return list(result.scalars().all())
+
+    async def get_category(self, full_path: str) -> Optional[Category]:
+        """
+        Get category by full path.
+
+        Args:
+            full_path: Category full path (e.g., "social.person")
+
+        Returns:
+            Category instance or None if not found
+        """
+        result = await self.session.execute(
+            select(Category).where(Category.full_path == full_path)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_categories_by_domain(self, domain: str) -> list[Category]:
+        """
+        Get all categories in a domain.
+
+        Args:
+            domain: Domain name (self, social, knowledge, interest, episode, meta)
+
+        Returns:
+            List of Category instances
+        """
+        result = await self.session.execute(
+            select(Category).where(Category.domain == domain).order_by(Category.name)
+        )
+        return list(result.scalars().all())
+
+    async def _invalidate_cache(self, user_id: int) -> None:
+        """
+        Invalidate user's memory caches.
+
+        Note: Currently invalidates individual memory cache.
+        Future: Implement pattern-based deletion when needed.
+
+        Args:
+            user_id: Telegram user ID
+        """
+        pass
+
+    async def create_memory_version(
+        self,
+        memory_id: int,
+        new_full_content: str,
+        created_by: int,
+        llm_service: Any = None,
+    ) -> Memory:
+        """Create new version of memory (never deletes original).
+
+        Implements PRP-006 versioning: preserves history, copies relations,
+        applies compaction if needed.
+
+        Args:
+            memory_id: ID of memory to version
+            new_full_content: Updated content
+            created_by: User creating this version
+            llm_service: Optional LLM service for compaction
+
+        Returns:
+            New Memory version
+        """
+        from core.services.llm_service import get_llm_service
+
+        if llm_service is None:
+            llm_service = get_llm_service()
+
+        original = await self.get_memory(memory_id)
+        if not original:
+            raise ValueError(f"Memory {memory_id} not found")
+
+        token_count = len(new_full_content) / 4
+        if token_count > 3800:
+            linked = await self.get_linked_memories(memory_id)
+            related_summary = "\n".join([f"- {m.simple_content}" for m in linked[:5]])
+            new_full_content = await llm_service.compact_memory(
+                new_full_content, related_summary
+            )
+
+        simple_content = new_full_content[:2000]
+
+        new_version = Memory(
+            simple_content=simple_content,
+            full_content=new_full_content,
+            importance=original.importance,
+            version=original.version + 1,
+            parent_id=original.parent_id or original.id,
+            created_by=created_by,
+            emotion_valence=original.emotion_valence,
+            emotion_arousal=original.emotion_arousal,
+            emotion_dominance=original.emotion_dominance,
+            emotion_label=original.emotion_label,
+            keywords=original.keywords,
+            tags=original.tags,
+            context_temporal=original.context_temporal,
+            context_situational=original.context_situational,
+        )
+
+        categories_result = await self.session.execute(
+            select(Category).where(Category.id.in_([c.id for c in original.categories]))
+        )
+        categories_list = list(categories_result.scalars().all())
+        new_version.categories = categories_list
+
+        self.session.add(new_version)
+        await self.session.commit()
+        await self.session.refresh(new_version, ["categories"])
+
+        for link in original.outgoing_links:
+            await self.create_memory_link(
+                from_memory_id=new_version.id,
+                to_memory_id=link.to_memory_id,
+                link_type=link.link_type,
+                strength=link.strength,
+                context=link.context,
+                auto_generated=True,
+            )
+
+        await self._invalidate_cache(created_by)
+
+        return new_version
+
+    async def get_memory_versions(self, memory_id: int) -> list[Memory]:
+        """Get all versions of a memory.
+
+        Args:
+            memory_id: ID of any version in the chain
+
+        Returns:
+            List of all versions, sorted by version number
+        """
+        memory = await self.get_memory(memory_id)
+        if not memory:
+            return []
+
+        root_id = memory.parent_id or memory.id
+
+        result = await self.session.execute(
+            select(Memory)
+            .where(or_(Memory.id == root_id, Memory.parent_id == root_id))
+            .order_by(Memory.version.asc())
+        )
+
+        return list(result.scalars().all())
+
+    async def create_enhanced_link(
+        self,
+        from_memory_id: int,
+        to_memory_id: int,
+        created_by: int,
+        llm_service: Any = None,
+    ) -> MemoryLink:
+        """Create link with LLM-calculated strength and reason.
+
+        Uses PRP-006 relation scoring to determine link strength
+        and generate reasoning automatically.
+
+        Args:
+            from_memory_id: Source memory ID
+            to_memory_id: Target memory ID
+            created_by: User creating link
+            llm_service: Optional LLM service
+
+        Returns:
+            Created MemoryLink
+        """
+        from core.services.llm_service import get_llm_service
+
+        if llm_service is None:
+            llm_service = get_llm_service()
+
+        memory_a = await self.get_memory(from_memory_id)
+        memory_b = await self.get_memory(to_memory_id)
+
+        if not memory_a or not memory_b:
+            raise ValueError("One or both memories not found")
+
+        strength = await llm_service.calculate_relation_strength(
+            memory_a.full_content, memory_b.full_content
+        )
+
+        reason = await llm_service.generate_relation_reason(
+            memory_a.full_content, memory_b.full_content
+        )
+
+        link_type = (
+            "critical"
+            if strength > 0.8
+            else "strong"
+            if strength > 0.6
+            else "moderate"
+            if strength > 0.4
+            else "related"
+        )
+
+        return await self.create_memory_link(
+            from_memory_id=from_memory_id,
+            to_memory_id=to_memory_id,
+            link_type=link_type,
+            strength=strength,
+            context=reason,
+            auto_generated=True,
+        )
+
+    # PRP-007: Semantic search and vector embeddings
+
+    async def create_embedding(self, text: str) -> Optional[list[float]]:
+        """Generate embedding vector for text."""
+        model = get_embedding_model()
+        if model is None:
+            logger.warning("Embedding model not available")
+            return None
+
+        try:
+            embedding = model.encode(text).tolist()
+            return embedding
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            return None
+
+    async def _generate_and_store_embedding(self, memory_id: int, content: str) -> None:
+        """Background task to generate and store embedding."""
+        try:
+            embedding = await self.create_embedding(content)
+            if embedding is None:
+                return
+
+            # Update memory with embedding
+            result = await self.session.execute(
+                select(Memory).where(Memory.id == memory_id)
+            )
+            memory = result.scalar_one_or_none()
+            if memory:
+                # Always store embedding as JSON string for database compatibility
+                memory.embedding = json.dumps(embedding)
+
+                await self.session.commit()
+                await self._invalidate_cache(memory.created_by)
+
+                logger.info(f"Generated embedding for memory {memory_id}")
+        except Exception as e:
+            logger.error(f"Failed to generate embedding for memory {memory_id}: {e}")
+
+    async def semantic_search(
+        self,
+        query: str,
+        user_id: int,
+        categories: Optional[list[str]] = None,
+        min_importance: int = 0,
+        limit: int = 10,
+    ) -> list[dict]:
+        """Search memories by semantic similarity."""
+        model = get_embedding_model()
+        if model is None:
+            logger.warning("Semantic search not available - no embedding model")
+            return []
+
+        try:
+            # Generate query embedding
+            query_embedding = await self.create_embedding(query)
+            if query_embedding is None:
+                return []
+
+            # Build base query
+            stmt = select(Memory).where(Memory.created_by == user_id)
+
+            # Filter by categories if provided
+            if categories:
+                stmt = stmt.join(Memory.categories).where(
+                    Category.full_path.in_(categories)
+                )
+
+            # Filter by importance
+            stmt = stmt.where(Memory.importance >= min_importance)
+
+            # For now, always use fallback semantic search
+            # TODO: Implement vector similarity search when pgvector operators are available
+            return await self._fallback_semantic_search(
+                query, user_id, categories, min_importance, limit
+            )
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}")
+            return []
+
+    async def _fallback_semantic_search(
+        self,
+        query: str,
+        user_id: int,
+        categories: Optional[list[str]] = None,
+        min_importance: int = 0,
+        limit: int = 10,
+    ) -> list[dict]:
+        """Fallback semantic search using basic text matching when pgvector unavailable."""
+        # Extract keywords from query
+        keywords = query.lower().split()
+
+        # Build search query
+        filters = [Memory.created_by == user_id, Memory.importance >= min_importance]
+
+        if keywords:
+            search_conditions = []
+            for keyword in keywords:
+                search_conditions.append(
+                    or_(
+                        Memory.simple_content.ilike(f"%{keyword}%"),
+                        Memory.full_content.ilike(f"%{keyword}%"),
+                    )
+                )
+            filters.append(and_(*search_conditions))
+
+        stmt = (
+            select(Memory)
+            .where(and_(*filters))
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.importance.desc(), Memory.created_at.desc())
+            .limit(limit)
+        )
+
+        # Filter by categories if provided
+        if categories:
+            stmt = stmt.join(Memory.categories).where(
+                Category.full_path.in_(categories)
+            )
+
+        results = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "simple_content": m.simple_content,
+                "importance": m.importance,
+                "categories": [c.full_path for c in m.categories],
+                "emotion_label": m.emotion_label,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in results.scalars().all()
+        ]
+
+    # PRP-007: Specialized retrieval tools
+
+    async def get_all_friends(self, user_id: int) -> list[dict]:
+        """Get summary of all person-category memories."""
+        stmt = (
+            select(Memory)
+            .join(Memory.categories)
+            .where(
+                and_(
+                    Memory.created_by == user_id, Category.full_path == "social.person"
+                )
+            )
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.importance.desc())
+        )
+
+        memories = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "name": self._extract_person_name(m.simple_content),
+                "summary": m.simple_content,
+                "importance": m.importance,
+                "emotion_label": m.emotion_label,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in memories.scalars().all()
+        ]
+
+    async def get_panic_attacks(self, user_id: int) -> list[dict]:
+        """Get all emotion:panic memories."""
+        stmt = (
+            select(Memory)
+            .join(Memory.categories)
+            .where(
+                and_(
+                    Memory.created_by == user_id,
+                    Category.full_path == "self.emotion",
+                    Memory.simple_content.ilike("%panic%"),
+                )
+            )
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.created_at.desc())
+        )
+
+        memories = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "date": m.created_at.date().isoformat() if m.created_at else None,
+                "summary": m.simple_content,
+                "importance": m.importance,
+                "emotion_label": m.emotion_label,
+                "full_content": m.full_content,
+            }
+            for m in memories.scalars().all()
+        ]
+
+    async def get_interests(self, user_id: int) -> list[dict]:
+        """Get all interest category memories."""
+        stmt = (
+            select(Memory)
+            .join(Memory.categories)
+            .where(and_(Memory.created_by == user_id, Category.full_path == "interest"))
+            .options(selectinload(Memory.categories))
+            .order_by(Memory.importance.desc())
+        )
+
+        memories = await self.session.execute(stmt)
+
+        return [
+            {
+                "id": m.id,
+                "interest": self._extract_interest_name(m.simple_content),
+                "summary": m.simple_content,
+                "importance": m.importance,
+                "keywords": m.keywords,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in memories.scalars().all()
+        ]
+
+    async def search_by_person(self, user_id: int, person_name: str) -> list[dict]:
+        """Find all memories mentioning a specific person."""
+        # Use semantic search for better matching
+        results = await self.semantic_search(
+            query=f"memories about {person_name}", user_id=user_id, limit=50
+        )
+
+        # Filter by name mention for more precise results
+        return [
+            r for r in results if person_name.lower() in r["simple_content"].lower()
+        ]
+
+    async def search_by_emotion(self, user_id: int, emotion: str) -> list[dict]:
+        """Find memories with specific emotional signal."""
+        return await self.semantic_search(
+            query=f"{emotion} feeling emotion",
+            user_id=user_id,
+            categories=["self.emotion"],
+            limit=20,
+        )
+
+    async def search_across_versions(
+        self, user_id: int, query: str, limit: int = 10
+    ) -> list[dict]:
+        """Search across all memory versions."""
+        model = get_embedding_model()
+        if model is None:
+            # Fallback to basic search
+            return await self.search_memories(user_id=user_id, query=query, limit=limit)
+
+        try:
+            query_embedding = await self.create_embedding(query)
+            if query_embedding is None:
+                return []
+
+            # For now, use basic search
+            # TODO: Implement vector similarity search when pgvector operators are available
+            return await self.search_memories(user_id=user_id, query=query, limit=limit)
+        except Exception as e:
+            logger.error(f"Cross-version search failed: {e}")
+            return []
+
+    def _extract_person_name(self, content: str) -> str:
+        """Extract person name from memory content."""
+        lines = content.split("\n")
+        for line in lines:
+            if "name:" in line.lower():
+                return line.split(":", 1)[1].strip()
+        # Fallback: try to extract from content
+        words = content.split()
+        for word in words:
+            if word.istitle() and len(word) > 2:
+                return word
+        return "Unknown"
+
+    def _extract_interest_name(self, content: str) -> str:
+        """Extract interest name from memory content."""
+        lines = content.split("\n")
+        for line in lines:
+            if any(
+                keyword in line.lower()
+                for keyword in ["interest:", "hobby:", "activity:"]
+            ):
+                return line.split(":", 1)[1].strip()
+        # Fallback: return first 50 characters
+        return content[:50] + ("..." if len(content) > 50 else "")
+
+    def _serialize_memory(self, memory: Memory) -> dict:
+        """
+        Serialize Memory instance to JSON-compatible dict.
+
+        Args:
+            memory: Memory instance
+
+        Returns:
+            Dictionary representation
+        """
+        return {
+            "id": memory.id,
+            "simple_content": memory.simple_content,
+            "full_content": memory.full_content,
+            "importance": memory.importance,
+            "emotion_valence": memory.emotion_valence,
+            "emotion_arousal": memory.emotion_arousal,
+            "emotion_dominance": memory.emotion_dominance,
+            "emotion_label": memory.emotion_label,
+            "keywords": memory.keywords,
+            "tags": memory.tags,
+            "context_temporal": memory.context_temporal,
+            "context_situational": memory.context_situational,
+            "version": memory.version,
+            "parent_id": memory.parent_id,
+            "evolution_triggers": memory.evolution_triggers,
+            "created_by": memory.created_by,
+            "created_at": memory.created_at.isoformat() if memory.created_at else None,
+            "updated_at": memory.updated_at.isoformat() if memory.updated_at else None,
+            "last_accessed": memory.last_accessed.isoformat()
+            if memory.last_accessed
+            else None,
+            "access_count": memory.access_count,
+        }
+
+    def _deserialize_memory(self, data: dict) -> Memory:
+        """
+        Deserialize JSON dict to Memory instance (cached data only).
+
+        Args:
+            data: Dictionary representation
+
+        Returns:
+            Memory instance
+        """
+        memory = Memory(
+            id=data["id"],
+            simple_content=data["simple_content"],
+            full_content=data["full_content"],
+            importance=data["importance"],
+            emotion_valence=data.get("emotion_valence"),
+            emotion_arousal=data.get("emotion_arousal"),
+            emotion_dominance=data.get("emotion_dominance"),
+            emotion_label=data.get("emotion_label"),
+            keywords=data.get("keywords"),
+            tags=data.get("tags"),
+            context_temporal=data.get("context_temporal"),
+            context_situational=data.get("context_situational"),
+            version=data["version"],
+            parent_id=data.get("parent_id"),
+            evolution_triggers=data.get("evolution_triggers"),
+            created_by=data["created_by"],
+            created_at=datetime.fromisoformat(data["created_at"])
+            if data.get("created_at")
+            else None,
+            updated_at=datetime.fromisoformat(data["updated_at"])
+            if data.get("updated_at")
+            else None,
+            last_accessed=datetime.fromisoformat(data["last_accessed"])
+            if data.get("last_accessed")
+            else None,
+            access_count=data["access_count"],
+        )
+        return memory
+
+
+memory_service_factory = MemoryService

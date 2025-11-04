@@ -1,279 +1,402 @@
-# DCMaidBot E2E Testing
+# DCMAIDBot Testing Suite
 
-This directory contains end-to-end tests for DCMaidBot in production.
+This document describes the complete testing strategy for DCMAIDBot, following the refined approach with only 3 E2E tests and focused unit tests aligned with PRPs.
 
-## Test Files
+## 🎯 Testing Philosophy
 
-### 1. `e2e_call_endpoint.py` - Direct Bot Logic Tests ⭐ **RECOMMENDED**
-**NEW**: Tests bot functionality by calling `/call` endpoint directly, bypassing Telegram entirely.
+**Streamlined to 3 Core Tests:**
+1. **Comprehensive Conversation Journey** - Single long conversation covering all features (with optional LLM Judge evaluation)
+2. **Status Check** - Single status call with automated analysis
+3. **Platform Integration** - Manual TG/Discord testing
 
-This is the **simplest and most reliable** E2E testing approach:
-- ✅ No Telegram API credentials needed
-- ✅ No user interaction required
-- ✅ Tests actual bot logic (LLM, commands, personality)
-- ✅ Fast and deterministic
-- ✅ Perfect for CI/CD
+**Behavioral Unit Tests:**
+- Focus on PRP requirements and DoD validation
+- Test user-visible behavior, not implementation details
+- Aligned with business outcomes
 
-**How it works:**
-- Calls `/call` endpoint with user_id and command/message
-- Bot processes request using same logic as Telegram handlers
-- Returns response directly (no Telegram involved)
+## 📁 Refined Test Structure
 
-**Usage:**
+### 🚀 E2E Tests (3 Core Tests)
+
+#### 1. **Comprehensive Conversation Journey**
+- **File**: `tests/e2e/test_comprehensive_conversation_journey.py`
+- **Coverage**: Single natural conversation testing all features
+- **PRP Coverage**: PRP-002 (Call Endpoint), PRP-005 (Emotional Memory), PRP-009 (External Tools)
+- **When to Run**: Automated in CI, pre/post-release
+- **Test Cases**:
+  - Memory creation and recall (line 65-85) → PRP-005 DOD: Memory Persistence
+  - Lessons system (line 88-98) → PRP-002 DOD: Educational Content
+  - VAD and mood tracking (line 101-117) → PRP-005 DOD: Emotional Intelligence
+  - Complex reasoning (line 138-155) → PRP-002 DOD: Problem Solving
+  - External tools (line 158-170) → PRP-009 DOD: Tool Integration
+  - Admin features (line 173-190) → PRP-017 DOD: RBAC
+- **Optional LLM Judge Evaluation**: Runs automatically if OPENAI_API_KEY is set (line 340-397)
+
+#### 2. **Status Check with Thoughts**
+- **File**: `tests/e2e/test_status_check.py`
+- **Purpose**: Single status call with thoughts polling and LLM Judge analysis
+- **Coverage**: System health, version thoughts, self-check thoughts, crypto thoughts
+- **When to Run**: CI monitoring, post-release health check
+- **Features**:
+  - Calls /status endpoint
+  - Polls for thoughts generation (version, self-check, crypto)
+  - LLM Judge evaluation of status and thoughts
+  - Component health validation
+  - Minimum 70% health requirement
+
+#### 3. **Platform Integration (Manual)**
+- **File**: `tests/e2e/test_platform_integration_manual.py`
+- **Purpose**: Manual TG/Discord validation
+- **Coverage**: Real platform functionality
+- **When to Run**: Pre-release (staging), Post-release (production)
+- **Manual Steps**:
+  - Telegram functionality (line 45-85)
+  - Discord functionality (line 90-130)
+  - Cross-platform consistency (line 135-165)
+
+### 🧪 Unit Tests
+**Status**: No unit tests currently - all implementation-focused tests were removed
+**Focus**: Business/DoD validation tests are used instead
+
+### 🧠 LLM Judge Framework (Evaluation Tool)
+- **Core**: `tests/llm_judge.py`
+- **Purpose**: AI evaluation framework (NOT a test)
+- **Used By**: E2E journey test as optional post-conversation analysis
+
+## 🏃‍♂️ Running Tests
+
+### Quick Start
 ```bash
-export NUDGE_SECRET="your_secret"
-python tests/e2e_call_endpoint.py
+# Start test server (for E2E tests)
+python3 run_test_server.py --port 8000 --db sqlite &
+
+# Run comprehensive conversation journey (includes optional LLM Judge)
+PYTHONPATH=/Users/dcversus/Documents/GitHub/dcmaidbot pytest tests/e2e/test_comprehensive_conversation_journey.py -v -s
+
+# Run business validation tests
+pytest tests/business/dod_validation/ -v
 ```
 
-**What It Tests:**
-- Authentication (same secret as /nudge)
-- `/start`, `/help`, `/status`, `/love` commands
-- `/joke` command (LLM integration)
-- Waifu personality with natural messages (LLM)
+### Development Tests (Fast)
+```bash
+# Business validation tests only
+pytest tests/business/dod_validation/ -v --maxfail=1
 
-**Why This Approach:**
-- Telegram bots can't message users who haven't initiated chat
-- `/call` bypasses Telegram entirely
-- Tests the actual bot logic, not Telegram API
-- Can be automated in CI/CD without credentials
+# Code quality
+ruff check . && ruff format .
+mypy src/
+```
+
+### Pre-Release Tests (Comprehensive)
+```bash
+# Full test suite
+pytest tests/e2e/test_comprehensive_conversation_journey.py -v
+pytest tests/business/dod_validation/ -v
+
+# Manual platform testing (staging)
+pytest tests/e2e/test_platform_integration_manual.py -v -s
+```
+
+### Post-Release Tests (Validation)
+```bash
+# Production health check
+curl -f https://your-bot-url/health
+
+# E2E validation
+pytest tests/e2e/test_comprehensive_conversation_journey.py -v
+
+# Manual platform verification
+pytest tests/e2e/test_platform_integration_manual.py -v -s
+```
+
+## 📊 Test Coverage Mapping
+
+### PRP-002: Call Endpoint & Command System
+| DOD Item | Test File | Line | Status |
+|----------|-----------|------|--------|
+| Natural message handling | test_comprehensive_conversation_journey.py | 65-75 | ✅ |
+| Command recognition | test_comprehensive_conversation_journey.py | 211-225 | ✅ |
+| Educational content delivery | test_comprehensive_conversation_journey.py | 88-98 | ✅ |
+| Complex problem solving | test_comprehensive_conversation_journey.py | 138-155 | ✅ |
+
+### PRP-005: Emotional Memory System
+| DOD Item | Test File | Line | Status |
+|----------|-----------|------|--------|
+| Memory creation & storage | test_comprehensive_conversation_journey.py | 65-75 | ✅ |
+| Memory recall & retrieval | test_comprehensive_conversation_journey.py | 120-135 | ✅ |
+| VAD emotional scoring | test_comprehensive_conversation_journey.py | 101-117 | ✅ |
+| Mood tracking | test_comprehensive_conversation_journey.py | 101-117 | ✅ |
+| Relationship progression | test_comprehensive_conversation_journey.py | 120-135 | ✅ |
+| TDD RED-GREEN cycle | test_prp005_emotional_memory_tdd.py | 25-45 | ✅ |
+
+### PRP-009: External Tools Integration
+| DOD Item | Test File | Line | Status |
+|----------|-----------|------|--------|
+| Web search functionality | test_comprehensive_conversation_journey.py | 158-170 | ✅ |
+| cURL/HTTP requests | test_comprehensive_conversation_journey.py | 158-170 | ✅ |
+| Admin access control | test_comprehensive_conversation_journey.py | 173-190 | ✅ |
+| Tool result formatting | test_comprehensive_conversation_journey.py | 158-170 | ✅ |
+
+### PRP-017: Role-Based Access Control
+| DOD Item | Test File | Line | Status |
+|----------|-----------|------|--------|
+| Admin command access | test_comprehensive_conversation_journey.py | 173-190 | ✅ |
+| Non-admin denial | test_comprehensive_conversation_journey.py | 173-190 | ✅ |
+| Permission validation | test_comprehensive_conversation_journey.py | 173-190 | ✅ |
+
+## 🗂️ Deprecated Tests (To Be Removed)
+
+The following test files are deprecated and will be removed:
+- `tests/business/dod_validation/test_prp005_emotional_memory.py` → Replaced by comprehensive journey
+- `tests/business/dod_validation/test_prp005_tdd_complete.py` → Replaced by unit tests
+- `tests/business/user_journeys/test_*` → Consolidated into comprehensive journey
+- `tests/business/dod_validation/test_prp009_*` → Integrated into journey test
+- `tests/e2e/test_lesson_injection_e2e.py` → Part of comprehensive journey
+- `tests/e2e/test_webapp_events.py` → Not needed
+
+## 🛠️ Environment Setup
+
+### Local Development Environment
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# 2. Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys and configuration
+
+# 3. Initialize test database
+createdb dcmaidbot_test
+alembic upgrade head
+
+# 4. Start test server
+python3 run_test_server.py --port 8000 --db sqlite &
+
+# 5. Run tests
+pytest tests/ -v
+```
+
+### Required Environment Variables
+```bash
+# Core functionality
+BOT_TOKEN=your_telegram_bot_token
+ADMIN_IDS=122657093
+DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
+OPENAI_API_KEY=your_openai_api_key
+
+# External tools (optional)
+SERPAPI_API_KEY=your_serpapi_key
+REDIS_URL=redis://localhost:6379
+
+# LLM Judge evaluation
+OPENAI_API_KEY=your_openai_api_key  # Required for LLM Judge tests
+```
+
+### Docker Environment
+```bash
+# Build test image
+docker build -t dcmaidbot-test .
+
+# Run tests in Docker
+docker run --rm -v $(pwd):/app dcmaidbot-test pytest tests/ -v
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. Server connection failed
+```
+❌ Could not connect to server at http://localhost:8000
+```
+**Solution**: Ensure test server is running:
+```bash
+python3 run_test_server.py --port 8000 --db sqlite &
+```
+
+#### 2. OpenAI API key not set
+```
+OPENAI_API_KEY not set in environment
+```
+**Solution**: Set the API key in your environment:
+```bash
+export OPENAI_API_KEY=your_key_here
+```
+
+#### 3. Database connection errors
+```
+sqlalchemy.exc.OperationalError: could not connect to server
+```
+**Solution**: Use SQLite for testing or set up PostgreSQL:
+```bash
+# For SQLite testing
+export DATABASE_URL=sqlite:///./test.db
+
+# For PostgreSQL
+createdb dcmaidbot_test
+export DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot_test
+```
+
+#### 4. VAD/Mood features not working
+**Symptoms**: `/mood` command doesn't show VAD scores
+**Solution**: VAD requires:
+- Database tables created via migrations
+- OpenAI API key set
+- Emotional analysis service enabled
+
+#### 5. External tools not responding
+**Symptoms**: Web search returns empty results
+**Solution**: Check API keys:
+```bash
+# For SerpAPI
+export SERPAPI_API_KEY=your_key
+
+# Or use DuckDuckGo (no key needed)
+export WEB_SEARCH_ENGINE=duckduckgo
+```
+
+### Debug Mode
+Enable debug logging:
+```bash
+pytest tests/ -v -s --log-cli-level=DEBUG
+```
+
+## 📋 Legacy Testing Information
+
+The original E2E testing approach has been preserved in the technical backup. For reference on how testing was previously structured, see `tests/technical_tests_backup/README.md`.
+
+## 🎯 Business Test Examples
+
+### User Journey Example
+```python
+async def test_user_can_start_conversation():
+    """Business Requirement: User can start conversation with /start"""
+    # Test actual user experience, not internal implementation
+    user_sends_message("/start")
+    bot_responds_with_welcome_message()
+    assert "welcome" in bot_response
+```
+
+### DoD Validation Example
+```python
+async def test_prp009_external_tools_dod():
+    """Validate PRP-009 DoD: External tools work for admin users"""
+    admin_user_uses_web_search()
+    assert search_results_returned()
+    non_admin_tries_tools()
+    assert access_denied()
+```
+
+## 🔍 Test Criteria
+
+Business tests must meet ALL of these criteria:
+1. **User-Focused**: Tests user experience, not technical implementation
+2. **Journey-Based**: Validates complete user workflows
+3. **Outcome-Driven**: Confirms business requirements are met
+4. **DoD-Aligned**: Validates Definition of Done criteria
+5. **Production-Relevant**: Tests what matters in production
+
+Tests failing any criterion should be moved to technical backup.
+
+## 📊 Best Practices
+
+### Writing Good Tests
+1. **Test Behavior, Not Implementation**
+   ```python
+   # Good: Tests user-visible behavior
+   async def test_user_can_retrieve_memories():
+       response = await call_bot("/memories", user_id, is_admin=True)
+       assert "memories found" in response["response"]
+
+   # Bad: Tests internal implementation
+   async def test_memory_service_called():
+       # Don't test internal service calls
+       pass
+   ```
+
+2. **Use Realistic Data**
+   ```python
+   # Good: Realistic user message
+   "Hi! I'm Sarah, a data scientist from San Francisco"
+
+   # Bad: Unhelpful test data
+   "test message 123"
+   ```
+
+3. **Test Error Scenarios**
+   ```python
+   # Test both success and failure cases
+   async def test_admin_access_control():
+       # Admin should succeed
+       admin_response = await call_bot("/memories", admin_id, is_admin=True)
+       assert "found" in admin_response["response"]
+
+       # Non-admin should be denied
+       user_response = await call_bot("/memories", user_id, is_admin=False)
+       assert "access denied" in user_response["response"]
+   ```
+
+### Test Maintenance
+- Review and update tests when features change
+- Keep test data and fixtures up to date
+- Remove duplicate or redundant tests
+- Add new tests for new features immediately
+
+### CI/CD Integration
+- Run all tests in CI/CD pipeline
+- Use pytest markers for different test categories
+- Fail fast on critical test failures
+- Generate test reports for review
+
+## 🚀 Quick Start Checklist
+
+For new developers joining the project:
+
+1. **[ ]** Install dependencies
+   ```bash
+   pip install -r requirements.txt -r requirements-dev.txt
+   ```
+
+2. **[ ]** Set up environment
+   ```bash
+   cp .env.example .env
+   # Edit .env with required API keys
+   ```
+
+3. **[ ]** Start test server
+   ```bash
+   python3 run_test_server.py --port 8000 &
+   ```
+
+4. **[ ]** Run unit tests (fast)
+   ```bash
+   pytest tests/business/dod_validation/ -v --maxfail=1
+   ```
+
+5. **[ ]** Run E2E tests (comprehensive)
+   ```bash
+   pytest tests/e2e/test_comprehensive_conversation_journey.py -v -s
+   ```
+
+6. **[ ]** Check code quality
+   ```bash
+   ruff check . && ruff format .
+   mypy src/
+   ```
+
+7. **[ ]** Run LLM Judge evaluation (requires OpenAI key)
+   ```bash
+   pytest tests/e2e/test_llm_judge_evaluation.py -v
+   ```
+
+## 📞 Getting Help
+
+- **Documentation**: Check this README and PRP files for detailed requirements
+- **Debug Mode**: Use `-s -v --log-cli-level=DEBUG` with pytest
+- **Team Communication**: Use `/nudge` endpoint for async questions
+- **Test Issues**: Check troubleshooting section above
 
 ---
 
-### 2. `e2e_production.py` - Infrastructure Tests
-Tests infrastructure health and availability:
-- `/health` endpoint
-- Landing page
-- Bot info (via Telegram API)
-- Bot commands configuration
-- Webhook configuration
-- Database connection
-- Redis connection
-- Message sending capability
-
-**Usage:**
-```bash
-export BOT_TOKEN="your_bot_token"
-export TEST_ADMIN_ID="your_telegram_id"
-python tests/e2e_production.py
-```
-
-### 3. `e2e_user_stories.py` - User Story Tests
-Tests all user stories and bot features:
-- Bot commands: /start, /help, /status, /joke, /love
-- LLM integration: waifu personality, streaming responses
-- Memory system: PostgreSQL, Redis
-- /nudge endpoint for agent communication
-
-**Usage:**
-```bash
-export BOT_TOKEN="your_bot_token"
-export TEST_ADMIN_ID="your_telegram_id"
-python tests/e2e_user_stories.py
-```
-
-### 4. `e2e_with_userbot.py` - Real User Interaction Tests (Advanced)
-**NEW**: Tests bot responses using a real Telegram user account via Pyrogram.
-
-This script acts as a **real user** to send messages to the bot and verify responses. This solves the "chat not found" error that occurs when a bot tries to message a user who hasn't initiated contact first.
-
-**Why This Approach?**
-- Bots cannot send messages to users who haven't started a chat
-- Bots cannot message other bots directly
-- Pyrogram uses MTProto (Telegram's native protocol) to act as a user
-- Enables automated testing without manual user interaction
-
-**Setup:**
-
-1. **Get Telegram API credentials:**
-   - Visit https://my.telegram.org/apps
-   - Log in with your Telegram account
-   - Create a new application
-   - Copy your `api_id` and `api_hash`
-
-2. **Set environment variables:**
-   ```bash
-   export TELEGRAM_API_ID="12345"
-   export TELEGRAM_API_HASH="your_hash_here"
-   export TELEGRAM_USER_PHONE="+1234567890"  # Your phone number
-   ```
-
-3. **Install Pyrogram:**
-   ```bash
-   pip install 'pyrogram[fast]' tgcrypto
-   ```
-
-4. **First run (authentication):**
-   ```bash
-   python tests/e2e_with_userbot.py
-   ```
-   - You'll receive a login code via Telegram
-   - Enter the code when prompted
-   - Session saved to `tests/userbot.session`
-   - **Keep this file secure!** (like a password)
-
-5. **Subsequent runs:**
-   ```bash
-   python tests/e2e_with_userbot.py
-   ```
-   - Uses saved session (no login prompt)
-
-**What It Tests:**
-- `/start` command and bot response
-- `/help` command and bot response
-- `/status` command and bot response
-- `/joke` command and LLM-generated joke
-- Waifu personality with natural messages
-
-**Security Notes:**
-- `userbot.session` contains your login session - **keep it secret!**
-- Add `tests/*.session` to `.gitignore`
-- Never commit session files to git
-- Use a dedicated test account if possible
-
-## GitHub Actions Integration
-
-E2E tests run automatically after each deployment via `.github/workflows/e2e-production.yml`.
-
-**Required Secrets:**
-- `BOT_TOKEN`: Test bot token (@dcnotabot)
-- `TEST_ADMIN_ID`: Admin Telegram ID for testing
-- `TELEGRAM_API_ID`: Telegram API ID for user client tests
-- `TELEGRAM_API_HASH`: Telegram API hash for user client tests
-
-**Manual Trigger:**
-```bash
-gh workflow run e2e-production.yml
-```
-
-## Test Bots
-
-### Production Bot: @dcmaidbot
-- Used for production deployment
-- Configured with webhook: https://dcmaidbot.theedgestory.org/webhook
-- Full waifu personality and features
-
-### Test Bot: @dcnotabot
-- Used for E2E testing
-- Test bot token: stored in `.env` and Kubernetes secrets
-- No webhook configuration (not needed for testing)
-
-## Recommended Testing Strategy
-
-### For Automated CI/CD: Use `/call` Endpoint ⭐
-```bash
-export NUDGE_SECRET="your_secret"
-python tests/e2e_call_endpoint.py
-```
-- **Fastest and most reliable**
-- No Telegram credentials needed
-- Tests actual bot logic
-- Perfect for automated testing
-
-### For Manual Verification: Real Telegram Testing
-After deployment, manually test with real Telegram:
-1. Open Telegram app
-2. Send messages to @dcmaidbot
-3. Verify responses match expected behavior
-4. Check UI elements (buttons, formatting)
-
-### For Advanced Telegram Integration Testing: Pyrogram
-Only needed if testing Telegram-specific features:
-- Callback queries
-- Inline keyboards
-- Message editing
-- Media handling
-
-## Local Testing
-
-1. **Copy environment template:**
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **Edit `.env` with credentials:**
-   ```env
-   # For /call endpoint tests (RECOMMENDED)
-   NUDGE_SECRET=your_nudge_secret_here
-
-   # For Telegram API tests (optional)
-   BOT_TOKEN=8496821321:AAFEnAzi4gdND2g70xeVWE8Iz0O-JIDrdz0
-   ADMIN_IDS=122657093,196907653
-   TEST_ADMIN_ID=122657093
-
-   # For userbot tests (advanced, optional)
-   TELEGRAM_API_ID=12345
-   TELEGRAM_API_HASH=your_hash_here
-   TELEGRAM_USER_PHONE=+1234567890
-   ```
-
-3. **Run tests:**
-   ```bash
-   # Direct bot logic tests (RECOMMENDED)
-   python tests/e2e_call_endpoint.py
-
-   # Infrastructure tests
-   python tests/e2e_production.py
-
-   # User story tests
-   python tests/e2e_user_stories.py
-
-   # User client tests (advanced)
-   python tests/e2e_with_userbot.py
-   ```
-
-## Expected Results
-
-### Infrastructure Tests (e2e_production.py)
-When using test bot:
-- ✅ Health Endpoint: PASS
-- ✅ Landing Page: PASS
-- ✅ Bot Info: PASS
-- ✅ Database Connection: PASS
-- ✅ Redis Connection: PASS
-- ❌ Bot Commands: FAIL (test bot has no commands)
-- ❌ Webhook Config: FAIL (test bot has no webhook)
-- ❌ Send Message: FAIL (no chat initiated)
-
-### User Story Tests (e2e_user_stories.py)
-When using test bot without initiated chat:
-- ❌ All message tests: FAIL ("chat not found")
-- ✅ Database tests: PASS
-- ✅ Redis tests: PASS
-- ✅ /nudge endpoint: PASS
-
-### User Client Tests (e2e_with_userbot.py)
-When using Pyrogram user client:
-- ✅ ALL tests should PASS
-- Bot responds to all commands
-- LLM integration working
-- Waifu personality active
-
-## Troubleshooting
-
-**"chat not found" error:**
-- Use `e2e_with_userbot.py` instead
-- Or manually start a chat with the bot first
-
-**Pyrogram authentication issues:**
-- Check TELEGRAM_API_ID and TELEGRAM_API_HASH are correct
-- Delete `tests/userbot.session` and try again
-- Verify phone number format: +1234567890
-
-**"Flood wait" error:**
-- You're sending messages too fast
-- Wait a few minutes before retrying
-- Telegram rate limits apply
-
-**Session file security:**
-- Never commit `tests/*.session` files
-- Keep session files as secure as passwords
-- Use `.gitignore` to exclude them
-
-## Contributing
-
-When adding new E2E tests:
-1. Add test to appropriate file (infrastructure vs user stories)
-2. Use the `log_test()` function for consistent output
-3. Handle exceptions gracefully
-4. Document expected behavior
-5. Update this README if needed
+**Remember**: Tests are our safety net. Keep them clean, focused, and valuable! 🎯
