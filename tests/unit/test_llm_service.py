@@ -25,6 +25,39 @@ def test_load_base_prompt():
         assert "kawai" in service.base_prompt
 
 
+def test_openai_base_url_override():
+    """Test that a custom OpenAI-compatible base URL is respected."""
+    base_url = "https://custom-openai.example.com/v1"
+    with patch.dict(
+        os.environ,
+        {"OPENAI_API_KEY": "test-key", "OPENAI_BASE_URL": base_url},
+    ):
+        with patch("services.llm_service.AsyncOpenAI") as mock_client:
+            LLMService()
+
+    mock_client.assert_called_once()
+    _, kwargs = mock_client.call_args
+    assert kwargs["base_url"] == base_url
+
+
+def test_model_overrides_from_env():
+    """Test that model tiers can be overridden via environment variables."""
+    overrides = {
+        "OPENAI_API_KEY": "test-key",
+        "TEST_MODEL": "custom-test",
+        "DEFAULT_MODEL": "custom-default",
+        "COMPLEX_MODEL": "custom-complex",
+    }
+
+    with patch.dict(os.environ, overrides):
+        with patch("services.llm_service.AsyncOpenAI"):
+            service = LLMService()
+
+    assert service.test_model == overrides["TEST_MODEL"]
+    assert service.default_model == overrides["DEFAULT_MODEL"]
+    assert service.complex_model == overrides["COMPLEX_MODEL"]
+
+
 def test_construct_prompt():
     """Test prompt construction with BASE_PROMPT and LESSONS."""
     with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
