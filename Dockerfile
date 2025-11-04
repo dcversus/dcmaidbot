@@ -1,85 +1,74 @@
-# Optimized multi-stage Docker build for dcmaidbot
+# Multi-stage build for smaller final image
 FROM python:3.13-slim AS builder
 
-# Build arguments
-ARG GIT_COMMIT=unknown
-ARG IMAGE_TAG=latest
-ARG BUILD_TIME=unknown
-
-# Environment variables for build
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Install system dependencies for building
+# System build dependencies are only required while installing wheels
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt ./
 
-# Production stage - minimal runtime
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip \
+    && /opt/venv/bin/pip install -r requirements.txt
+
 FROM python:3.13-slim
 
-# Build args
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PATH="/opt/venv/bin:$PATH"
+
 ARG GIT_COMMIT=unknown
 ARG IMAGE_TAG=latest
 ARG BUILD_TIME=unknown
 
-# Environment variables
-ENV PYTHONPATH=/app/src:/app \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    GIT_COMMIT=${GIT_COMMIT} \
+ENV GIT_COMMIT=${GIT_COMMIT} \
     IMAGE_TAG=${IMAGE_TAG} \
     BUILD_TIME=${BUILD_TIME}
 
-# Install only runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && groupadd -r appuser \
-    && useradd -r -g appuser -u 1000 appuser
-
 WORKDIR /app
 
-# Copy Python packages from builder stage
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpq5 \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy application code (optimize copy order for layer caching)
-COPY --chown=appuser:appuser main.py run.sh alembic.ini requirements.txt CHANGELOG.md ./
-COPY --chown=appuser:appuser src/ ./src/
-COPY --chown=appuser:appuser alembic/ ./alembic/
-COPY --chown=appuser:appuser static/ ./static/
-COPY --chown=appuser:appuser .dockerignore ./
+RUN addgroup --system app && adduser --system --ingroup app app
 
-# Create necessary directories
-RUN mkdir -p /app/logs /app/tmp && \
-    chown -R appuser:appuser /app
+COPY --from=builder /opt/venv /opt/venv
 
-# Switch to non-root user
-USER appuser
+COPY --chown=app:app bot.py ./
+COPY --chown=app:app bot_webhook.py ./
+COPY --chown=app:app database.py ./
+COPY --chown=app:app version.txt ./
+COPY --chown=app:app CHANGELOG.md ./
+COPY --chown=app:app alembic.ini ./
+COPY --chown=app:app alembic/ ./alembic/
+COPY --chown=app:app handlers/ ./handlers/
+COPY --chown=app:app middlewares/ ./middlewares/
+COPY --chown=app:app models/ ./models/
+COPY --chown=app:app services/ ./services/
+COPY --chown=app:app tools/ ./tools/
+COPY --chown=app:app static/ ./static/
+COPY --chown=app:app config/ ./config/
+COPY --chown=app:app conftest.py ./
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+USER app
 
-# Expose port
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
 EXPOSE 8080
 
-# Make run.sh executable
-RUN chmod +x /app/run.sh
-
-# Run the application using run.sh in production mode
-CMD ["/app/run.sh", "prod"]
+CMD ["sh", "-c", "if [ \"$WEBHOOK_MODE\" = \"true\" ]; then python -u bot_webhook.py; else python -u bot.py; fi"]

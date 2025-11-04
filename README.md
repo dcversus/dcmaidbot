@@ -1,319 +1,264 @@
-# DCMAIDBot
+# DCMaidBot
 
-An AI-powered Telegram assistant with emotional intelligence, memory management, and multi-chain-of-thought analysis. The bot features advanced emotional tracking, relationship management, and context-aware responses.
+A kawai AI-driven waifu Telegram bot with mysterious origins. She protects her beloved admins, makes jokes, learns from reactions, and manages memories across chat history with RAG-powered context awareness.
 
-## 🌟 Key Features
+## Features
 
-### Emotional Intelligence
-- **Multi-CoT Analysis**: 4-chain-of-thought emotional processing
-- **VAD Emotion Tracking**: Valence-Arousal-Dominance emotional state
-- **Mood-Aware Responses**: Bot's tone adapts based on current emotional state
-- **Relationship Evolution**: Tracks trust, friendship, and familiarity with users
+- **Kawai Waifu Personality**: Loving virtual daughter to her creators with "nya~", "myaw~" expressions
+- **Admin System**: Protector mode for the special ones, ignores most non-admin users
+- **Joking System**: Generates jokes in any language and learns from reactions
+- **Memories System**: Admin-configurable memories with matching expressions
+- **Friends & Favors**: Friends can request Telegram API actions and tools using "kawai, nya"
+- **RAG System**: Retrieval-Augmented Generation for context-aware responses
+- **Cron Tasks**: Self-managed periodic tasks and chat history summarization
+- **Tools Integration**: Web search, games, and extensible tool framework
 
-### Memory Management
-- **Automatic Memory Creation**: Learns from conversations
-- **Categorized Storage**: 35+ memory categories across 6 domains
-- **Memory Linking**: Create connections between related memories
-- **Search & Retrieval**: Quick access to stored information
+## Technical Stack
 
-### Commands
-- `/mood` - Check bot's current emotional state
-- `/memories` - View stored memories (role-based access)
-- `/memorize <text>` - Explicitly save information
-- `/relate <id1> <id2>` - Link memories together
-- `/help` - Show available commands
+- **Language**: Python 3.9+
+- **Framework**: aiogram 3.x (Telegram Bot API)
+- **Database**: PostgreSQL with pgvector for RAG
+- **LLM**: OpenAI API for joke generation and RAG
+- **Linting**: Ruff
+- **Deployment**: Docker container (GitHub Container Registry)
 
-### Admin Protection
-- Admin messages always have positive impact
-- Protected from negative mood swings
-- Enhanced access control and management features
+## Project Structure
 
-## 🚀 Quick Start
+```
+dcmaidbot/
+├── bot.py                 # Main entry point
+├── handlers/              # Message/command handlers
+│   ├── waifu.py          # Waifu personality responses
+│   ├── admin.py          # Admin commands (memories, friends)
+│   └── jokes.py          # Joke generation and learning
+├── middlewares/           # Middleware (admin-only, logging)
+│   └── admin_only.py
+├── models/                # Database models (SQLAlchemy)
+│   ├── user.py
+│   ├── message.py
+│   ├── memory.py
+│   └── joke.py
+├── services/              # Business logic
+│   ├── memory_service.py # Memories CRUD and matching
+│   ├── joke_service.py   # Joke generation and learning
+│   ├── rag_service.py    # RAG search and embeddings
+│   ├── cron_service.py   # Cron task management
+│   └── tool_service.py   # External tools (web search, games)
+├── tests/                 # Tests
+│   ├── unit/
+│   └── e2e/
+├── PRPs/                  # Product Requirements Processes
+├── Dockerfile
+├── requirements.txt
+├── .env.example
+├── AGENTS.md
+└── README.md
+```
+
+## Installation & Setup
 
 ### Prerequisites
+
 - Python 3.9+
-- PostgreSQL (connects to dev instance in Kubernetes)
-- Redis (for caching)
+- PostgreSQL with pgvector extension
+- Telegram Bot Token
+- OpenAI API Key
 
-### One-Command Setup
-```bash
-git clone <repository-url>
-cd dcmaidbot
-./run.sh
-```
+### Local Development
 
-That's it! The bot will:
-1. Create a virtual environment
-2. Install dependencies
-3. Apply database migrations
-4. Start the server on port 8080
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/dcversus/dcmaidbot.git
+   cd dcmaidbot
+   ```
 
-### Manual Setup
-```bash
-# 1. Environment
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+2. **Create and activate a virtual environment:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-# 2. Configuration
-cp .env.example .env
-# Edit .env with your settings
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-# 3. Database
-alembic upgrade head
+4. **Set up environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` with your credentials:
+   ```env
+   BOT_TOKEN=your_telegram_bot_token
+   ADMIN_IDS=123456789
+   # Add more IDs: ADMIN_IDS=123,456,789
+   DATABASE_URL=postgresql://user:password@localhost:5432/dcmaidbot
+   OPENAI_API_KEY=your_openai_api_key
+   # Optional: point to a compatible API instead of api.openai.com
+   # OPENAI_BASE_URL=https://custom-openai.example.com/v1
+   # Optional: override model IDs when using non-standard providers
+   # TEST_MODEL=gpt-4o-mini
+   # DEFAULT_MODEL=gpt-4o-mini
+   # COMPLEX_MODEL=gpt-4o
+   ```
 
-# 4. Run
-python3 main.py
-```
+5. **Run the bot:**
+   ```bash
+   python bot.py
+   ```
 
-## 🏗️ Deployment
+## Docker Deployment
 
-### Development
-```bash
-# Connect to Kubernetes database
-kubectl port-forward -n dcmaidbot dcmaidbot-postgresql-0 5432:5432
-
-# Set environment
-export DATABASE_URL="postgresql+asyncpg://dcmaidbot:password@localhost:5432/dcmaidbot_dev"
-
-# Run migrations and start
-alembic upgrade head
-python3 main.py
-```
-
-### Staging
-```bash
-# Deploy to staging
-kubectl apply -f k8s/staging/
-
-# Run migrations manually
-kubectl exec -n staging deployment/dcmaidbot -- alembic upgrade head
-```
-
-### Production
-```bash
-# Deploy to production
-kubectl apply -f k8s/production/
-
-# ⚠️ Run migrations manually (REQUIRED)
-kubectl exec -n production deployment/dcmaidbot -- alembic upgrade head
-```
-
-**Important**: Never auto-migrate in production. Always run migrations manually.
-
-## 🎯 Development Modes
-
-The bot automatically detects the appropriate mode:
-
-### 1. Production Webhook Mode
-```env
-WEBHOOK_URL=https://yourdomain.com/webhook
-BOT_TOKEN=your_bot_token
-DATABASE_URL=postgresql+asyncpg://...
-```
-
-### 2. Development Webhook Mode
-```env
-BOT_TOKEN=your_bot_token
-DATABASE_URL=postgresql+asyncpg://...
-# No WEBHOOK_URL - runs webhook server locally
-```
-
-### 3. API-Only Mode
-```env
-DATABASE_URL=postgresql+asyncpg://...
-# No BOT_TOKEN - API endpoints only
-```
-
-## 📡 API Testing
-
-Test the bot without Telegram using the `/call` endpoint:
+### Build Docker Image
 
 ```bash
-curl -X POST http://localhost:8080/call \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": 123456789, "message": "/help"}'
+docker build -t dcmaidbot:latest .
 ```
 
-## 🧪 Testing
+### Run with Docker
 
 ```bash
-# Run all tests
+docker run --env-file .env dcmaidbot:latest
+```
+
+### Push to GitHub Container Registry
+
+```bash
+docker tag dcmaidbot:latest ghcr.io/dcversus/dcmaidbot:latest
+docker push ghcr.io/dcversus/dcmaidbot:latest
+```
+
+## Kubernetes Deployment
+
+### Prerequisites
+- Kubernetes cluster with kubectl configured
+- ArgoCD for GitOps (recommended)
+
+### Quick Deployment
+
+1. **Create namespace and secrets:**
+```bash
+kubectl create namespace dcmaidbot
+kubectl create secret generic dcmaidbot-secrets \
+  --namespace=dcmaidbot \
+  --from-literal=bot-token='YOUR_BOT_TOKEN' \
+  --from-literal=admin-ids='123456789,987654321' \
+  --from-literal=database-url='postgresql://user:password@postgres:5432/dcmaidbot' \
+  --from-literal=openai-api-key='sk-...'
+```
+
+2. **Deploy via GitOps (Recommended):**
+   - GitOps repository: https://github.com/uz0/core-charts
+   - Chart location: `charts/dcmaidbot/`
+   - ArgoCD automatically syncs and deploys
+
+3. **Update version:**
+```bash
+# In uz0/core-charts repo
+cd charts/dcmaidbot
+echo 'image:
+  tag: "0.2.0"' > prod.tag.yaml
+git commit -am "Update dcmaidbot to v0.2.0"
+git push
+```
+
+### Monitoring
+
+```bash
+# Check status
+kubectl get pods -n dcmaidbot
+kubectl logs -n dcmaidbot -l app=dcmaidbot -f
+
+# Restart
+kubectl rollout restart deployment/dcmaidbot -n dcmaidbot
+```
+
+## CI/CD
+
+The bot automatically builds and pushes to GitHub Container Registry (`ghcr.io/dcversus/dcmaidbot`) on push to `main` branch.
+
+## Bot Commands
+
+### Admin Commands (Admins only)
+- `/add_memory` - Add a new memory with matching expression
+- `/edit_memory` - Edit existing memory
+- `/delete_memory` - Delete memory
+- `/list_memories` - List all memories
+- `/add_task` - Add cron task
+- `/list_tasks` - List cron tasks
+- `/delete_task` - Delete cron task
+
+### General Commands
+- `/start` - Initialize the bot
+- `/help` - Display help information
+
+### Friend Favors
+Friends can request actions by including "kawai, nya" in messages to access Telegram API and tools.
+
+## Development
+
+### Running Tests
+
+```bash
 pytest tests/ -v
+```
 
-# E2E tests with LLM judge
-pytest tests/e2e/ -v --llm-judge
+### Linting
 
-# Code quality
+```bash
 ruff check .
 ruff format .
-mypy src/
 ```
 
-## 🔧 Configuration
-
-### Required Environment Variables
-- `DATABASE_URL` - PostgreSQL connection string
-- `ADMIN_IDS` - Comma-separated admin Telegram IDs
-
-### Optional Variables
-- `BOT_TOKEN` - Telegram bot token
-- `OPENAI_API_KEY` - OpenAI API key
-- `REDIS_URL` - Redis connection for caching
-- `WEBHOOK_URL` - Webhook URL (production)
-- `NUDGE_SECRET` - Secret for /nudge endpoint
-- `SEARCH_PROVIDER` - Search provider to use (`openai` or `duckduckgo`, default: `openai`)
-- `OPENAI_SEARCH_MODEL` - OpenAI model for web search (default: `gpt-4o`)
-
-### Development Variables
-- `SKIP_MIGRATION_CHECK=true` - Skip migration check (dev only)
-- `DATABASE_DEBUG=true` - Enable SQL query logging
-
-## 🐳 Docker
+### Type Checking
 
 ```bash
-# Build
-docker build -t dcmaidbot .
-
-# Run (development)
-docker run -p 8080:8080 \
-  -e DATABASE_URL="postgresql+asyncpg://..." \
-  dcmaidbot
-
-# Run (production)
-docker run -p 8080:8080 \
-  -e DATABASE_URL="postgresql+asyncpg://..." \
-  -e BOT_TOKEN="..." \
-  dcmaidbot
+mypy bot.py
 ```
 
-## 🔍 Search Integration
+## Development Workflow
 
-DCMAIDBot supports two search providers:
+We follow a structured PRP (Product Requirements Process) workflow with role-based responsibilities:
 
-### OpenAI Web Search (Default)
-- Uses OpenAI's new Responses API with native web search tool (`web_search_20250305`)
-- Provides natural language search results with context understanding
-- Better for complex queries, current events, and contextual information
-- Requires `OPENAI_API_KEY`
-- Example API call:
-  ```python
-  response = client.responses.create(
-      model="gpt-4o",
-      input="What was a positive news story from today?",
-      tools=[{
-          "type": "web_search_20250305",
-          "name": "web_search",
-          "max_uses": 5
-      }]
-  )
-  ```
+### Quick Overview
 
-### DuckDuckGo Search
-- Uses DuckDuckGo search engine via duckduckgo-search library
-- Provides structured results with titles, links, and snippets
-- Better for technical queries, documentation lookup, and specific information retrieval
-- No additional API key required
+1. **Branch per PRP**: Each PRP gets its own branch (`prp-016-feature-name`)
+2. **Implement & Test**: Write code, add tests, lint/format
+3. **Create PR**: Submit PR with CHANGELOG update
+4. **Review & Merge**: Address review comments, merge when approved
+5. **Post-Release**: Monitor deployment, run E2E tests, verify version
+6. **QC Sign-Off**: Quality Control Engineer approves post-release checklist
+7. **Next PRP**: Immediately start next PRP
 
-Configure with:
-```bash
-# Use OpenAI search (default)
-SEARCH_PROVIDER=openai
+### Roles
 
-# Use DuckDuckGo search
-SEARCH_PROVIDER=duckduckgo
-```
+- **Developer**: Implementation, testing, code review
+- **QC Engineer**: Post-release verification and quality sign-off
+- **SRE**: Deployment monitoring and incident response
+- **DevOps Engineer**: Infrastructure and GitOps
+- **Tech Writer**: Documentation
 
-## 🛠️ OpenAI Tools & Capabilities
+See [AGENTS.md](AGENTS.md) for complete workflow details, role responsibilities, incident management, and post-release procedures.
 
-DCMAIDBot integrates with OpenAI's ecosystem to provide advanced AI capabilities:
+## Architecture
 
-### Core AI Features
-- **GPT Models**: Uses `gpt-4o` by default for chat and search
-- **Function Calling**: Automated tool execution based on user intent
-- **Multi-chain-of-thought**: Complex reasoning with emotional analysis
-- **Context-aware Responses**: Maintains conversation history and user context
+See [AGENTS.md](AGENTS.md) for detailed architecture, PRPs, and development workflow.
 
-### Available Tools
-1. **Web Search** (`openai_web_search`)
-   - Real-time information retrieval
-   - Current events and news
-   - Documentation lookup
+## Contributing
 
-2. **Memory Management**
-   - Store and retrieve contextual information
-   - Relationship mapping between memories
-   - Emotional tagging of memories
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
-3. **Lesson System**
-   - Admin configurable instructions
-   - Dynamic behavior adjustment
-   - Contextual learning
+## License
 
-4. **API Key Management**
-   - Secure token generation
-   - Role-based access control
-   - Usage tracking
+GNU Affero General Public License v3.0 (AGPL-3.0)
 
-### Model Configuration
-```bash
-# Primary model for chat
-OPENAI_MODEL=gpt-4o
+See [LICENSE](LICENSE) for full details.
 
-# Model for web search
-OPENAI_SEARCH_MODEL=gpt-4o
-```
+## Contact
 
-### What OpenAI Provides
-- **Advanced Reasoning**: Complex problem-solving with multi-chain-of-thought
-- **Natural Language Understanding**: Contextual comprehension of user intent
-- **Responses API**: New API designed for agentic applications
-  - `client.responses.create()` for advanced tool usage
-  - Native web search tool (`web_search_20250305`)
-  - Better tool orchestration and parallel execution
-- **Function Calling**: Automated tool execution based on user queries
-- **Web Browsing**: Real-time information access via native web search tool
-- **Code Execution**: Python code execution in sandboxed environments
-- **Emotional Intelligence**: Integration with VAD-based emotional analysis
-- **Multi-modal Support**: Text, image, and audio processing capabilities
+- Email: dcversus@gmail.com
+- Repository: https://github.com/dcversus/dcmaidbot
 
-### Available OpenAI Tools for Integration
-1. **Web Search** (`web_search_20250305`)
-   - Native web search capability
-   - Current events and real-time information
-   - Automatic source citation
+---
 
-2. **Code Execution**
-   - Python code execution
-   - Data analysis and computation
-   - File I/O operations
-
-3. **Function Calling**
-   - Custom tool integration
-   - API interactions
-   - Database operations
-
-4. **Knowledge Retrieval**
-   - Document search
-   - RAG (Retrieval-Augmented Generation)
-   - Context-aware responses
-
-## 📚 Documentation
-
-- [Contributing Guide](CONTRIBUTING.md) - Development setup and guidelines
-- [PRPs](PRPs/) - Product Requirements Processes
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with aiogram 3.x for Telegram Bot API
-- Powered by OpenAI GPT models
-- Uses SQLAlchemy for database ORM
-- Emotional intelligence based on VAD model research
+*Nyaa~ Thank you for respecting privacy! 💕*

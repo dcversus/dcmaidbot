@@ -29,14 +29,17 @@ class LLMService:
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set")
 
-        self.client = AsyncOpenAI(api_key=api_key)
+        base_url = os.getenv("OPENAI_BASE_URL")
+        client_kwargs: dict[str, Any] = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+
+        self.client = AsyncOpenAI(**client_kwargs)
         self.base_prompt = self.load_base_prompt()
 
-        # Model tiers for cost efficiency
-        self.test_model = "gpt-4o-mini"  # Cheapest for testing/judging
-        self.default_model = (
-            "gpt-4o-mini"  # Main bot, supports tools (agentic baseline)
-        )
+        # Model tiers for cost efficiency (override via environment for compatibility)
+        self.test_model = os.getenv("TEST_MODEL", "gpt-4o-mini")
+        self.default_model = os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
         self.complex_model = os.getenv("COMPLEX_MODEL", "gpt-4o")  # Production: gpt-5
 
         # Production readiness: gpt-4o-mini supports function calling (agentic tools)
